@@ -221,5 +221,5 @@ class SQLQuery():
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
-        print "https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
-            urllib.unquote(self.instance_crn).decode('utf8'))
+        print("https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
+            urllib.unquote(self.instance_crn).decode('utf8')))
