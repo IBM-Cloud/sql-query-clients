@@ -14,6 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
+import sys
 import urllib
 import json
 import time
@@ -51,7 +52,10 @@ class SQLQuery():
         self.logged_on = False
 
     def logon(self):
-        data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
+        if sys.version_info >= (3, 0):
+            data = urllib.parse.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
+        else:
+            data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
 
         response = self.client.fetch(
             'https://iam.ng.bluemix.net/oidc/token',
