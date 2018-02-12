@@ -58,7 +58,7 @@ class SQLQuery():
             data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
 
         response = self.client.fetch(
-            'https://iam.ng.bluemix.net/oidc/token',
+            'https://iam.bluemix.net/identity/token',
             method='POST',
             headers=self.request_headers_xml_content,
             validate_cert=False,

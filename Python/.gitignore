@@ -4,6 +4,14 @@
 *.EGG
 *.EGG-INFO
 
+### Local Python env and test
+ibmcloudsql/bin
+ibmcloudsql/.Python
+ibmcloudsql/lib
+ibmcloudsql/include
+ibmcloudsql/pip-selfcheck.json
+ibmcloudsql/test.py
+
 ### Build and distribution
 build/
 dist/
