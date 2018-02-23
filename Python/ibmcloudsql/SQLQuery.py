@@ -133,8 +133,13 @@ class SQLQuery():
             print("You are not logged on to IBM Cloud")
             return
 
-        result_location = "https://{}/{}?prefix={}jobid={}/part".format(self.target_cos_endpoint,
+        if self.target_cos_prefix != '':
+            result_location = "https://{}/{}?prefix={}/jobid={}/part".format(self.target_cos_endpoint,
                                                                         self.target_cos_bucket, self.target_cos_prefix,
+                                                                        jobId)
+        else:
+            result_location = "https://{}/{}?prefix=jobid={}/part".format(self.target_cos_endpoint,
+                                                                        self.target_cos_bucket,
                                                                         jobId)
 
         response = self.client.fetch(
