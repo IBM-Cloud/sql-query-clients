@@ -168,11 +168,12 @@ class SQLQuery():
         body = cos_client.get_object(Bucket=self.target_cos_bucket, Key=result_object)['Body']
         # add missing __iter__ method, so pandas accepts body as file-like object
         if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
-
+        
+        print("The SQL jobId for this query is: {}\n".format(jobId))
         result_df = pd.read_csv(body)
 
         return result_df
-
+    
     def get_jobs(self):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
