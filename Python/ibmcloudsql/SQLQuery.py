@@ -173,6 +173,55 @@ class SQLQuery():
 
         return result_df
 
+    def delete_result(self, jobId):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        response = self.client.fetch(
+            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+        if response.code == 200 or response.code == 201:
+            result_location = json_decode(response.body)['resultset_location'].replace("cos", "https", 1)
+        else:
+            print("Could not retrieve details for jobID {}".format(jobId))
+            return
+
+        fourth_slash=result_location.replace('/', 'X', 3).find('/')
+        print(fourth_slash)
+        print(result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash+1:])
+        response = self.client.fetch(
+            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash+1:],
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+        if response.code == 200 or response.code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.body)
+            object_list='<?xml version="1.0" encoding="UTF-8"? >< Delete >'
+            for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                key = contents.find('s3:Key', ns)
+                object_list += '<Object><Key>' + key.text + '</Key></Object>'
+            object_list+='</Delete>'
+            print(object_list)
+        else:
+            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
+                                                                                           response.code))
+            return
+
+        response = self.client.fetch(
+            result_location + '?delete=',
+            method='POST',
+            headers=self.request_headers,
+            validate_cert=False,
+            body=object_list)
+        if response.code != 200 and response.code != 201:
+            print("Error while deleting result for jobID {}".format(jobId))
+
+        return
+
     def get_jobs(self):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
