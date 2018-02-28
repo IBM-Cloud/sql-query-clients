@@ -19,3 +19,7 @@ This calls the function with a simple sample statement passing to the function a
 
 *Note*: you can also decide to provide or override the COS and SQL Query instance information at invocation time by passing the parameters there. You can also decide to register the function with a hard coded SQL statement text by providing the `sql` parameter in the bind script.
 
+ * More background on [Python cloud function](https://console.bluemix.net/docs/openwhisk/openwhisk_actions.html#creating-python-actions) creation and handling.
+ * [Python environments](https://console.bluemix.net/docs/openwhisk/openwhisk_reference.html#openwhisk_ref_python_environments) for cloud functions
+ * IBM Cloud CLI [download](https://console.bluemix.net/docs/cli/reference/bluemix_cli/download_cli.html#download_install)
+ * Cloud functions [CLI plug-in](https://console.bluemix.net/docs/openwhisk/bluemix_cli.html#cloudfunctions_cli)
