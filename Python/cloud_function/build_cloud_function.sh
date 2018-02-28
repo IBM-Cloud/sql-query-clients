@@ -6,7 +6,7 @@ source virtualenv/bin/activate
 
 # Install ibmcloudsql and afterwards remove dependencies that are already
 # available in cloud function python-jessie:3 runtime:
-pip install ibmcloudsql
+pip install --upgrade --force-reinstall ibmcloudsql 
 pip uninstall --yes urllib3 simplejson six setuptools python-dateutil pytz pandas numpy jmespath docutils
 
 # Create zip package with cloud function code in __main__.py and with packages in virtualenv:
