@@ -171,7 +171,7 @@ class SQLQuery():
         body = cos_client.get_object(Bucket=self.target_cos_bucket, Key=result_object)['Body']
         # add missing __iter__ method, so pandas accepts body as file-like object
         if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
-
+        
         result_df = pd.read_csv(body)
 
         return result_df
@@ -293,6 +293,62 @@ class SQLQuery():
         else:
             print("Job list retrieval failed with http code {}".format(response.code))
         return job_list_df
+
+    def delete_result(self, jobId):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        response = self.client.fetch(
+            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+        if response.code == 200 or response.code == 201:
+            result_location = json_decode(response.body)['resultset_location'].replace("cos", "https", 1)
+        else:
+            print("Could not retrieve details for jobID {}".format(jobId))
+            return
+
+        fourth_slash=result_location.replace('/', 'X', 3).find('/')
+
+        response = self.client.fetch(
+            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash+1:],
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+
+        if response.code == 200 or response.code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.body)
+            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_objects=[]
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    key = contents.find('s3:Key', ns)
+                    bucket_objects.append({'Key': key.text}) 
+            else: 
+                print('There are no objects with the jobid {} in the bucket {}'.format(jobId, bucket_name))
+                return
+        else:
+            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
+                                                                                           response.code))
+            return
+        
+        cos_client = ibm_boto3.client(service_name='s3',
+                                      ibm_api_key_id=self.api_key,
+                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                                      config=Config(signature_version='oauth'),
+                                      endpoint_url='https://' + self.target_cos_endpoint)
+        
+        response = cos_client.delete_objects(Bucket=bucket_name, Delete={'Objects': bucket_objects})
+
+        deleted_list_df = pd.DataFrame(columns=['Deleted Object'])   
+        for deleted_object in response['Deleted']:
+            deleted_list_df = deleted_list_df.append([{'Deleted Object':deleted_object['Key']}],ignore_index=True)
+        
+        return deleted_list_df
+            
 
     def run_sql(self, sql_text):
         self.logon()
