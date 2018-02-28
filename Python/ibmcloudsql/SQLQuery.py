@@ -68,8 +68,10 @@ class SQLQuery():
             # print("Authentication successful")
             bearer_response = json_decode(response.body)
             self.bearer_token = 'Bearer ' + bearer_response['access_token']
+            self.request_headers = HTTPHeaders({'Content-Type': 'application/json'})
+            self.request_headers.add('Accept', 'application/json')
+            self.request_headers.add('User-Agent', self.user_agent)
             self.request_headers.add('authorization', self.bearer_token)
-            self.request_headers_xml_content.add('authorization', self.bearer_token)
             self.logged_on = True
 
         else:
