@@ -210,7 +210,7 @@ class SQLQuery():
                     key = contents.find('s3:Key', ns)
                     bucket_objects.append({'Key': key.text})
             else:
-                print('There are no objects with the jobid {} in the bucket {}'.format(jobId, bucket_name))
+                print('There are no result objects for the jobid {}'.format(jobId))
                 return
         else:
             print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
