@@ -222,6 +222,22 @@ class SQLQuery():
 
         return
 
+    def get_job(self, jobId):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        response = self.client.fetch(
+            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+        if response.code == 200 or response.code == 201:
+            return json_decode(response.body)
+        else:
+            print("Job details retrieval for jobId {} failed with http code {}".format(jobId, response.code))
+        return
+
     def get_jobs(self):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
