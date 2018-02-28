@@ -49,5 +49,6 @@ def main(args):
     jobId = sqlClient.submit_sql(sql_statement_text)
     sqlClient.wait_for_job(jobId)
     result = sqlClient.get_result(jobId)
+    result_location = sqlClient.get_job(jobId)['resultset_location']
 
-    return {'jobId': jobId, 'result_set_sample': result.head(10).to_json(orient='table')}
+    return {'jobId': jobId, 'result_location': result_location, 'result_set_sample': result.head(10).to_json(orient='table')}
