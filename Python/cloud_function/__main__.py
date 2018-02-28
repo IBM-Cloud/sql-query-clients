@@ -32,19 +32,14 @@ def main(args):
     sql_instance_crn = args.get("sqlquery_instance_crn", "")
     if sql_instance_crn == "":
         return {'error': 'No SQL Query instance CRN specified'}
-    target_endpoint  = args.get("cos_endpoint", "")
-    if target_endpoint == "":
-        return {'error': 'No Cloud Object Storage target endpoint specified'}
-    target_bucket = args.get("cos_bucket", "")
-    if target_bucket == "":
-        return {'error': 'No Cloud Object Storage target bucket specified'}
-    target_prefix = args.get("cos_prefix", "")
+    target_url  = args.get("target_url", "")
+    if target_url == "":
+        return {'error': 'No Cloud Object Storage target URL specified'}
     client_infofmation = args.get("client_info", "ibmcloudsql cloud function")
     sql_statement_text = args.get("sql", "")
     if sql_statement_text == "":
         return {'error': 'No SQL statement specified'}
-    sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_endpoint, target_bucket,
-                                     target_cos_prefix=target_prefix, client_info=client_infofmation)
+    sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_infofmation)
     sqlClient.logon()
     jobId = sqlClient.submit_sql(sql_statement_text)
     sqlClient.wait_for_job(jobId)

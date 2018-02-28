@@ -30,19 +30,20 @@ import ibm_boto3
 
 
 class SQLQuery():
-    def __init__(self, api_key, instance_crn, target_cos_endpoint, target_cos_bucket, target_cos_prefix='',
-                 client_info=''):
+    def __init__(self, api_key, instance_crn, target_cos_url, client_info=''):
         self.api_key = api_key
         self.instance_crn = instance_crn
-        self.target_cos_endpoint = target_cos_endpoint
-        self.target_cos_bucket = target_cos_bucket
-        self.target_cos_prefix = target_cos_prefix
+        self.target_cos = target_cos_url
+        self.target_cos_endpoint = target_cos_url.split("/")[2]
+        self.target_cos_bucket = target_cos_url.split("/")[3]
+        self.target_cos_prefix = target_cos_url[target_cos_url.replace('/', 'X', 3).find('/')+1:]
+        if self.target_cos_endpoint == '' or self.target_cos_bucket == '':
+            raise ValueError("target_cos_url value is \'{}\'. Expecting format cos://<endpoint>/<bucket>/[<prefix>]. ")
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
             self.user_agent = client_info
-        self.target_cos = "cos://{}/{}/{}".format(target_cos_endpoint, target_cos_bucket, target_cos_prefix)
-        self.client = client = HTTPClient()
+        self.client = HTTPClient()
         self.request_headers = HTTPHeaders({'Content-Type': 'application/json'})
         self.request_headers.add('Accept', 'application/json')
         self.request_headers.add('User-Agent', self.user_agent)
@@ -191,38 +192,44 @@ class SQLQuery():
             print("Could not retrieve details for jobID {}".format(jobId))
             return
 
-        fourth_slash=result_location.replace('/', 'X', 3).find('/')
-        print(fourth_slash)
-        print(result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash+1:])
+        fourth_slash = result_location.replace('/', 'X', 3).find('/')
+
         response = self.client.fetch(
-            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash+1:],
+            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
             method='GET',
             headers=self.request_headers,
             validate_cert=False)
+
         if response.code == 200 or response.code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
-            object_list='<?xml version="1.0" encoding="UTF-8"? >< Delete >'
-            for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                key = contents.find('s3:Key', ns)
-                object_list += '<Object><Key>' + key.text + '</Key></Object>'
-            object_list+='</Delete>'
-            print(object_list)
+            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_objects = []
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    key = contents.find('s3:Key', ns)
+                    bucket_objects.append({'Key': key.text})
+            else:
+                print('There are no objects with the jobid {} in the bucket {}'.format(jobId, bucket_name))
+                return
         else:
             print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
                                                                                            response.code))
             return
 
-        response = self.client.fetch(
-            result_location + '?delete=',
-            method='POST',
-            headers=self.request_headers,
-            validate_cert=False,
-            body=object_list)
-        if response.code != 200 and response.code != 201:
-            print("Error while deleting result for jobID {}".format(jobId))
+        cos_client = ibm_boto3.client(service_name='s3',
+                                      ibm_api_key_id=self.api_key,
+                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                                      config=Config(signature_version='oauth'),
+                                      endpoint_url='https://' + self.target_cos_endpoint)
 
-        return
+        response = cos_client.delete_objects(Bucket=bucket_name, Delete={'Objects': bucket_objects})
+
+        deleted_list_df = pd.DataFrame(columns=['Deleted Object'])
+        for deleted_object in response['Deleted']:
+            deleted_list_df = deleted_list_df.append([{'Deleted Object': deleted_object['Key']}], ignore_index=True)
+
+        return deleted_list_df
 
     def get_job(self, jobId):
         if not self.logged_on:
