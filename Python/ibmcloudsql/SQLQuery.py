@@ -50,8 +50,8 @@ class SQLQuery():
         self.target_cos_endpoint = endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
         self.target_cos_bucket = target_cos_url.split("/")[3]
         self.target_cos_prefix = target_cos_url[target_cos_url.replace('/', 'X', 3).find('/')+1:]
-        if self.target_cos_endpoint == '' or self.target_cos_bucket == '':
-            raise ValueError("target_cos_url value is \'{}\'. Expecting format cos://<endpoint>/<bucket>/[<prefix>]. ")
+        if self.target_cos_endpoint == '' or self.target_cos_bucket == '' or self.target_cos_prefix == target_cos_url:
+            raise ValueError("target_cos_url value is \'{}\'. Expecting format cos://<endpoint>/<bucket>/[<prefix>]. ".format(target_cos_url))
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
