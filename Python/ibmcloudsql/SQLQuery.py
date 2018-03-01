@@ -31,10 +31,23 @@ import ibm_boto3
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url, client_info=''):
+        endpoint_alias_mapping = {
+            "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
+            "dal": "s3-api.dal-us-geo.objectstorage.softlayer.net",
+            "wdc": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
+            "sjc": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
+            "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
+            "ams": "s3.ams-eu-geo.objectstorage.softlayer.net",
+            "fra": "s3.fra-eu-geo.objectstorage.softlayer.net",
+            "mil": "s3.mil-eu-geo.objectstorage.softlayer.net",
+            "us-south": "s3.us-south.objectstorage.softlayer.net",
+            "us-east": "s3.us-east.objectstorage.softlayer.net"
+        }
         self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
-        self.target_cos_endpoint = target_cos_url.split("/")[2]
+        provided_cos_endpoint = target_cos_url.split("/")[2]
+        self.target_cos_endpoint = endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
         self.target_cos_bucket = target_cos_url.split("/")[3]
         self.target_cos_prefix = target_cos_url[target_cos_url.replace('/', 'X', 3).find('/')+1:]
         if self.target_cos_endpoint == '' or self.target_cos_bucket == '':
