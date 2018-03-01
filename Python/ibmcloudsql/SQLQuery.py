@@ -20,7 +20,7 @@ import json
 import time
 import xml.etree.ElementTree as ET
 from tornado.escape import json_decode
-from tornado.httpclient import HTTPClient
+from tornado.httpclient import HTTPClient, HTTPError
 from tornado.httputil import HTTPHeaders
 import sys
 import types
@@ -98,26 +98,22 @@ class SQLQuery():
         sqlData = {'statement': sql_text,
                    'resultset_target': self.target_cos}
 
-        response = self.client.fetch(
-            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
-            method='POST',
-            headers=self.request_headers,
-            validate_cert=False,
-            body=json.dumps(sqlData))
+        try:
+            response = self.client.fetch(
+                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
+                method='POST',
+                headers=self.request_headers,
+                validate_cert=False,
+                body=json.dumps(sqlData))
+        except HTTPError as e:
+            raise SyntaxError("SQL submission failed: {}".format(json_decode(e.response.body)['errors'][0]['message']))
 
-        if response.code == 200 or response.code == 201:
-            job_response = json_decode(response.body)
-            jobId = job_response['job_id']
-            # print("SQL job submission successful with jobId={}".format(jobId))
-        else:
-            print("SQL job submission failed with http code {}".format(response.code))
-
-        return jobId
+        return json_decode(response.body)['job_id']
 
     def wait_for_job(self, jobId):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
-            return
+            return "Not logged on"
 
         while True:
             response = self.client.fetch(
@@ -140,6 +136,7 @@ class SQLQuery():
                 print("Job status check failed with http code {}".format(response.code))
                 break
             time.sleep(1)
+        return jobStatus
 
     def __iter__(self):
         return 0
@@ -309,9 +306,16 @@ class SQLQuery():
 
     def run_sql(self, sql_text):
         self.logon()
-        jobId = self.submit_sql(sql_text)
-        self.wait_for_job(jobId)
-        return (self.get_result(jobId))
+        try:
+            jobId = self.submit_sql(sql_text)
+        except SyntaxError as e:
+            return "SQL job submission failed. {}".format(str(e))
+        if self.wait_for_job(jobId) == 'failed':
+            details = self.get_job(jobId)
+            return "SQL job {} failed while executing with error {}. Detailed message: {}".format(jobId, details['error'],
+                                                                                                  details['error_message'])
+        else:
+            return self.get_result(jobId)
 
     def sql_ui_link(self):
         if not self.logged_on:
