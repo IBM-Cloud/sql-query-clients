@@ -19,6 +19,7 @@ sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQU
  * `wait_for_job(jobId)`
  * `get_result(jobId)` returns SQL result data frame
  * `delete_result(jobId)` deletes all result set objects in cloud object storage for the given jobId
- * `get_job(jobId)` returns details for the given job as a json object
+ * `get_job(jobId)` returns details for the given SQL job as a json object
+ * `get_jobs()` returns the list of recent 30 submitted SQL jobs with all details as a data frame
  * `run_sql(sql_text)` Compound method that calls `submit_sql`, `wait_for_job` and `wait_for_job` in sequenceA
  * `sql_ui_link()` Returns browser link for SQL Query web console for currently configured instance
