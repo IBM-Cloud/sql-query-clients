@@ -1,15 +1,14 @@
-ibmcloudsql
------------
+#ibmcloudsql
 
 Allows you to run SQL statements in the IBM Cloud on data stored on object storage::
 
 ## Example usage
-    import ibmcloudsql
-    my_ibmcloud_apikey = '<your api key here>'
-    my_instance_crn='<your ibm cloud sql query instance CRN here>'
-    my_target_cos_url='<Cloud Object Storage URL for the SQL result target. Format: cos://<endpoint>/<bucket>/[<prefix>]>'
-    sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn, my_target_cos_url)
-    sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5").head()
+```import ibmcloudsql
+my_ibmcloud_apikey = '<your api key here>'
+my_instance_crn='<your ibm cloud sql query instance CRN here>'
+my_target_cos_url='<Cloud Object Storage URL for the SQL result target. Format: cos://<endpoint>/<bucket>/[<prefix>]>'
+sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn, my_target_cos_url)
+sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5").head()```
 
 ## SQLQuery method list
  * `SQLQuery(api_key, instance_crn, target_cos_url, client_info='')` Constructor
