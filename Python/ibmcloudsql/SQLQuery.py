@@ -146,6 +146,12 @@ class SQLQuery():
             print("You are not logged on to IBM Cloud")
             return
 
+        job_status = self.get_job(jobId)['status']
+        if job_status == 'running':
+            raise ValueError('SQL job with jobId {} still running. Come back later.')
+        elif job_status != 'completed':
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
+
         if self.target_cos_prefix != '':
             result_location = "https://{}/{}?prefix={}/jobid={}/part".format(self.target_cos_endpoint,
                                                                         self.target_cos_bucket, self.target_cos_prefix,
@@ -191,16 +197,13 @@ class SQLQuery():
             print("You are not logged on to IBM Cloud")
             return
 
-        response = self.client.fetch(
-            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
-            method='GET',
-            headers=self.request_headers,
-            validate_cert=False)
-        if response.code == 200 or response.code == 201:
-            result_location = json_decode(response.body)['resultset_location'].replace("cos", "https", 1)
-        else:
-            print("Could not retrieve details for jobID {}".format(jobId))
-            return
+        job_details = self.get_job(jobId)
+        if job_details['status'] == 'running':
+            raise ValueError('SQL job with jobId {} still running. Come back later.')
+        elif job_details['status'] != 'completed':
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
+
+        result_location = job_status['resultset_location'].replace("cos", "https", 1)
 
         fourth_slash = result_location.replace('/', 'X', 3).find('/')
 
@@ -246,16 +249,19 @@ class SQLQuery():
             print("You are not logged on to IBM Cloud")
             return
 
-        response = self.client.fetch(
-            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
-            method='GET',
-            headers=self.request_headers,
-            validate_cert=False)
-        if response.code == 200 or response.code == 201:
-            return json_decode(response.body)
-        else:
-            print("Job details retrieval for jobId {} failed with http code {}".format(jobId, response.code))
-        return
+        try:
+            response = self.client.fetch(
+                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                method='GET',
+                headers=self.request_headers,
+                validate_cert=False)
+        except HTTPError as e:
+            if e.response.code == 400:
+                raise ValueError("SQL jobId {} unknown".format(jobId))
+            else:
+                raise e
+
+        return json_decode(response.body)
 
     def get_jobs(self):
         if not self.logged_on:
@@ -328,4 +334,3 @@ class SQLQuery():
         else:
             print ("https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
                 urllib.unquote(self.instance_crn).decode('utf8')))
-
