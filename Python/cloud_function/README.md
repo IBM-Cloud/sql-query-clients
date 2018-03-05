@@ -8,13 +8,16 @@ This directory contains a simple IBM Cloud Function in Python that calls a custo
   * `target_url` - Cloud Object Storage URL for the SQL result target. Format: `cos://<endpoint>/<bucket>/[<prefix>]`
   * `client_info` (optional) - Tracking information to identify your client application inside IBM cloud
 
-## 1. Build using `build_cloud_function.sh`
-This creates a virtual Python environmet with the required dependencies and packages everything up into `ibmcloudsql_cloudfunction.zip` and registers a Cloud Function called `ibmcloudsql_cloudfunction`into your IBM Cloud org and space.
+## 1. Optional: Build and publish SQL cloud function docker image using `build.sh`
+This creates a new docker image with all required dependencies and packages and the according client code to invoke the SQL Query API. You only need to do this if you made changes to things in this repository.
 
-## 2. Bind using `bind_cloud_function.sh` to your COS and SQL Query instances
+## 2. Register the SQL cloud function using `register.sh`
+This registers a Cloud Function called `sqlcloudfunction`inside your IBM Cloud org and space.
+
+## 3. Bind using `bind.sh` to your COS and SQL Query instances
 This sets the required parameters for API key, instance CRN and COS URL for SQL results. You need to edit the script with your instance data before running it.
 
-## 3. Call the function with a SQL statement using `call_cloud_function.sh`
+## 4. Call the function with a SQL statement using `call.sh`
 This calls the function with a simple sample statement passing to the function as a function parameter. You can change the SQL statement text to any other statement that works for you and your data.
 
 *Note*: you can also decide to provide or override the COS and SQL Query instance information at invocation time by passing the parameters there. You can also decide to register the function with a hard coded SQL statement text by providing the `sql` parameter in the bind script.

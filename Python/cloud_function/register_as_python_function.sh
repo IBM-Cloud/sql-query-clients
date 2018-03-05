@@ -17,5 +17,5 @@ zip -r ibmcloudsql_cloudfunction.zip virtualenv __main__.py
 
 # Create/Replace the cloud function
 # We set the maximum allowed timeout of 5 minutes:
-bx wsk action delete ibmcloudsql_cloudfunction
-bx wsk action create ibmcloudsql_cloudfunction --timeout 300000 --kind python-jessie:3 ibmcloudsql_cloudfunction.zip
+bx wsk action delete sqlcloudfunction_as_python
+bx wsk action create sqlcloudfunction_as_python --timeout 300000 --kind python-jessie:3 ibmcloudsql_cloudfunction.zip

@@ -3,8 +3,8 @@
 # Call the cloud function with a SQL statement as parameter
 # We use the -br parameter so that it is a blocking call and the function results
 # get displayed on the console afterwards:
-bx wsk action invoke -br --result ibmcloudsql_cloudfunction \
- --param sql "SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET"
+bx wsk action invoke -br --result sqlcloudfunction \
+ --param sql "SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 3"
 
 # List the recent cloud function executions (a.k.a. activations):
 bx wsk activation list

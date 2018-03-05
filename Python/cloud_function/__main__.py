@@ -35,11 +35,11 @@ def main(args):
     target_url  = args.get("target_url", "")
     if target_url == "":
         return {'error': 'No Cloud Object Storage target URL specified'}
-    client_infofmation = args.get("client_info", "ibmcloudsql cloud function")
+        client_information = args.get("client_info", "ibmcloudsql cloud function")
     sql_statement_text = args.get("sql", "")
     if sql_statement_text == "":
         return {'error': 'No SQL statement specified'}
-    sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_infofmation)
+    sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
     sqlClient.logon()
     jobId = sqlClient.submit_sql(sql_statement_text)
     sqlClient.wait_for_job(jobId)
@@ -47,3 +47,4 @@ def main(args):
     result_location = sqlClient.get_job(jobId)['resultset_location']
 
     return {'jobId': jobId, 'result_location': result_location, 'result_set_sample': result.head(10).to_json(orient='table')}
+
