@@ -9,7 +9,7 @@ This directory contains a simple IBM Cloud Function in Python that calls a custo
   * `client_info` (optional) - Tracking information to identify your client application inside IBM cloud
 
 ## 1. Optional: Build and publish SQL cloud function docker image using `build.sh`
-This creates a new docker image with all required dependencies and packages and the according client code to invoke the SQL Query API. You only need to do this if you made changes to things in this repository.
+This creates a new docker image with all required dependencies and packages and the according client code to invoke the SQL Query API. You only need to do this if you made changes to things in this repository. You will then also need to adapt the `register.sh` script to reference your own pushed docker image. You can use the `invoke.py`script to test your docker image as an action locally before pushing to docker hub and creating a real IBM Cloud Function with it. Here is an [article](https://medium.com/openwhisk/advanced-debugging-of-openwhisk-actions-518414636932) describing the usage of this test script.
 
 ## 2. Register the SQL cloud function using `register.sh`
 This registers a Cloud Function called `sqlcloudfunction`inside your IBM Cloud org and space.

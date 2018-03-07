@@ -28,16 +28,20 @@ args = json.loads(sys.argv[1])
 ibmcloud_apikey = args.get("apikey", "")
 if ibmcloud_apikey == "":
     print({'error': 'No API key specified'})
+    quit()
 sql_instance_crn = args.get("sqlquery_instance_crn", "")
 if sql_instance_crn == "":
     print({'error': 'No SQL Query instance CRN specified'})
+    quit()
 target_url  = args.get("target_url", "")
 if target_url == "":
     print({'error': 'No Cloud Object Storage target URL specified'})
+    quit()
 client_information = args.get("client_info", "ibmcloudsql cloud function")
 sql_statement_text = args.get("sql", "")
 if sql_statement_text == "":
     print({'error': 'No SQL statement specified'})
+    quit()
 sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
 sqlClient.logon()
 jobId = sqlClient.submit_sql(sql_statement_text)
