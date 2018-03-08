@@ -203,7 +203,7 @@ class SQLQuery():
         elif job_details['status'] != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
-        result_location = job_status['resultset_location'].replace("cos", "https", 1)
+        result_location = job_details['resultset_location'].replace("cos", "https", 1)
 
         fourth_slash = result_location.replace('/', 'X', 3).find('/')
 
