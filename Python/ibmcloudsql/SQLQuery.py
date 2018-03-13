@@ -373,11 +373,12 @@ class SQLQuery():
                         oldest_modification = modified
                     if modified > newest_modification:
                         newest_modification = modified
+                return {'url': url, 'total_objects': count, 'total_volume': size,
+                        'oldest_object_timestamp': oldest_modification, 'newest_object_timestamp': newest_modification,
+                        'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
+
             else:
                 print('There are no objects for url {}'.format(url))
-            return {'url': url, 'total_objects': count, 'total_volume': size,
-                    'oldest_object_timestamp': oldest_modification, 'newest_object_timestamp': newest_modification,
-                    'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
         else:
             print("Volume check for url {} failed with http code {}".format(url, response.code))
             return
