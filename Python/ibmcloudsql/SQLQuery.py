@@ -31,7 +31,7 @@ import ibm_boto3
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url, client_info=''):
-        endpoint_alias_mapping = {
+        self.endpoint_alias_mapping = {
             "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
             "dal": "s3-api.dal-us-geo.objectstorage.softlayer.net",
             "wdc": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
@@ -47,7 +47,7 @@ class SQLQuery():
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
         provided_cos_endpoint = target_cos_url.split("/")[2]
-        self.target_cos_endpoint = endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+        self.target_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
         self.target_cos_bucket = target_cos_url.split("/")[3]
         self.target_cos_prefix = target_cos_url[target_cos_url.replace('/', 'X', 3).find('/')+1:]
         if self.target_cos_endpoint == '' or self.target_cos_bucket == '' or self.target_cos_prefix == target_cos_url:
@@ -135,7 +135,7 @@ class SQLQuery():
             else:
                 print("Job status check failed with http code {}".format(response.code))
                 break
-            time.sleep(1)
+            time.sleep(2)
         return jobStatus
 
     def __iter__(self):
@@ -334,3 +334,50 @@ class SQLQuery():
         else:
             print ("https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
                 urllib.unquote(self.instance_crn).decode('utf8')))
+
+    def get_cos_summary(self, url):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        endpoint = url.split("/")[2]
+        endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
+        bucket = url.split("/")[3]
+        prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
+
+        response = self.client.fetch(
+            "https://" + endpoint + "/" + bucket + "?prefix=" + prefix,
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+
+        if response.code == 200 or response.code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.body)
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                size=0
+                smallest_size = 9999999999999999
+                largest_size = 0
+                count=0
+                oldest_modification = 'Z'
+                newest_modification = '0'
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    size += int(contents.find('s3:Size', ns).text)
+                    if size < smallest_size:
+                        smallest_size = size
+                    if size > largest_size:
+                        largest_size = size
+                    count += 1
+                    modified = contents.find('s3:LastModified', ns).text
+                    if modified < oldest_modification:
+                        oldest_modification = modified
+                    if modified > newest_modification:
+                        newest_modification = modified
+            else:
+                print('There are no objects for url {}'.format(url))
+            return {'url': url, 'total_objects': count, 'total_volume': size,
+                    'oldest_object_timestamp': oldest_modification, 'newest_object_timestamp': newest_modification,
+                    'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
+        else:
+            print("Volume check for url {} failed with http code {}".format(url, response.code))
+            return
