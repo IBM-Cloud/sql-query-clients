@@ -290,6 +290,9 @@ class SQLQuery():
                     error = None
                     if 'error' in job_details:
                         error = job_details['error']
+                        end_time = None
+                    else:
+                        end_time = job_details['end_time']
                     error_message = None
                     if 'error_message' in job_details:
                         error_message = job_details['error_message']
@@ -299,7 +302,7 @@ class SQLQuery():
                                                        'statement': job_details['statement'],
                                                        'resultset_location': job_details['resultset_location'],
                                                        'submit_time': job_details['submit_time'],
-                                                       'end_time': job_details['end_time'],
+                                                       'end_time': end_time,
                                                        'error': error,
                                                        'error_message': error_message,
                                                        }], ignore_index=True)
