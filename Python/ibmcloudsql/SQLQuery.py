@@ -337,6 +337,13 @@ class SQLQuery():
                 urllib.unquote(self.instance_crn).decode('utf8')))
 
     def get_cos_summary(self, url):
+        def sizeof_fmt(num, suffix='B'):
+            for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+                if abs(num) < 1024.0:
+                    return "%3.1f %s%s" % (num, unit, suffix)
+                num /= 1024.0
+            return "%.1f %s%s" % (num, 'Y', suffix)
+
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
@@ -385,7 +392,7 @@ class SQLQuery():
             oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
             newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
 
-        return {'url': url, 'total_objects': count, 'total_volume': size,
+        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(size),
                 'oldest_object_timestamp': oldest_modification,
                 'newest_object_timestamp': newest_modification,
-                'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
+                'smallest_object_size': sizeof_fmt(smallest_size), 'largest_object_size': sizeof_fmt(largest_size)}
