@@ -27,6 +27,7 @@ import types
 import pandas as pd
 from botocore.client import Config
 import ibm_boto3
+from datetime import datetime
 
 
 class SQLQuery():
@@ -345,40 +346,46 @@ class SQLQuery():
         bucket = url.split("/")[3]
         prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
 
-        response = self.client.fetch(
-            "https://" + endpoint + "/" + bucket + "?prefix=" + prefix,
-            method='GET',
-            headers=self.request_headers,
-            validate_cert=False)
+        cos_client = ibm_boto3.client(service_name='s3',
+                                      ibm_api_key_id=self.api_key,
+                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                                      config=Config(signature_version='oauth'),
+                                      endpoint_url='https://' + endpoint)
 
-        if response.code == 200 or response.code == 201:
-            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.body)
-            if responseBodyXMLroot.findall('s3:Contents', ns):
-                size=0
-                smallest_size = 9999999999999999
-                largest_size = 0
-                count=0
-                oldest_modification = 'Z'
-                newest_modification = '0'
-                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                    size += int(contents.find('s3:Size', ns).text)
+        paginator = cos_client.get_paginator("list_objects")
+        page_iterator = paginator.paginate(Bucket=bucket, Prefix=prefix)
+
+        size = 0
+        smallest_size = 9999999999999999
+        largest_size = 0
+        count = 0
+        oldest_modification = datetime.max.replace(tzinfo=None)
+        newest_modification = datetime.min.replace(tzinfo=None)
+
+        for page in page_iterator:
+            if "Contents" in page:
+                for key in page['Contents']:
+                    size += int(key["Size"])
                     if size < smallest_size:
                         smallest_size = size
                     if size > largest_size:
                         largest_size = size
                     count += 1
-                    modified = contents.find('s3:LastModified', ns).text
+                    modified = key['LastModified'].replace(tzinfo=None)
                     if modified < oldest_modification:
                         oldest_modification = modified
                     if modified > newest_modification:
                         newest_modification = modified
-                return {'url': url, 'total_objects': count, 'total_volume': size,
-                        'oldest_object_timestamp': oldest_modification, 'newest_object_timestamp': newest_modification,
-                        'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
 
-            else:
-                print('There are no objects for url {}'.format(url))
+        if count == 0:
+            smallest_size=None
+            oldest_modification=None
+            newest_modification=None
         else:
-            print("Volume check for url {} failed with http code {}".format(url, response.code))
-            return
+            oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
+            newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
+
+        return {'url': url, 'total_objects': count, 'total_volume': size,
+                'oldest_object_timestamp': oldest_modification,
+                'newest_object_timestamp': newest_modification,
+                'smallest_object_size': smallest_size, 'largest_object_size': largest_size}
