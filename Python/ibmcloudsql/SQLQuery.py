@@ -362,21 +362,26 @@ class SQLQuery():
         paginator = cos_client.get_paginator("list_objects")
         page_iterator = paginator.paginate(Bucket=bucket, Prefix=prefix)
 
-        size = 0
+        total_size = 0
         smallest_size = 9999999999999999
         largest_size = 0
         count = 0
         oldest_modification = datetime.max.replace(tzinfo=None)
         newest_modification = datetime.min.replace(tzinfo=None)
+        smallest_object = None
+        largest_object = None
 
         for page in page_iterator:
             if "Contents" in page:
                 for key in page['Contents']:
-                    size += int(key["Size"])
+                    size = int(key["Size"])
+                    total_size += size
                     if size < smallest_size:
                         smallest_size = size
+                        smallest_object = key["Key"]
                     if size > largest_size:
                         largest_size = size
+                        largest_object = key["Key"]
                     count += 1
                     modified = key['LastModified'].replace(tzinfo=None)
                     if modified < oldest_modification:
@@ -392,7 +397,8 @@ class SQLQuery():
             oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
             newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
 
-        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(size),
+        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(total_size),
                 'oldest_object_timestamp': oldest_modification,
                 'newest_object_timestamp': newest_modification,
-                'smallest_object_size': sizeof_fmt(smallest_size), 'largest_object_size': sizeof_fmt(largest_size)}
+                'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
+                'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
