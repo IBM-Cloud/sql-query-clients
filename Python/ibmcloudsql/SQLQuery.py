@@ -153,13 +153,13 @@ class SQLQuery():
         elif job_status != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
-        if self.target_cos_prefix != '':
+        if self.target_cos_prefix != '' and not self.target_cos_prefix.endswith('/'):
             result_location = "https://{}/{}?prefix={}/jobid={}/part".format(self.target_cos_endpoint,
                                                                         self.target_cos_bucket, self.target_cos_prefix,
                                                                         jobId)
         else:
-            result_location = "https://{}/{}?prefix=jobid={}/part".format(self.target_cos_endpoint,
-                                                                        self.target_cos_bucket,
+            result_location = "https://{}/{}?prefix={}jobid={}/part".format(self.target_cos_endpoint,
+                                                                        self.target_cos_bucket, self.target_cos_prefix,
                                                                         jobId)
 
         response = self.client.fetch(
