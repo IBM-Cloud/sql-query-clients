@@ -49,7 +49,12 @@ sqlClient.wait_for_job(jobId)
 result = sqlClient.get_result(jobId)
 result_location = sqlClient.get_job(jobId)['resultset_location']
 
-result_json={'jobId': jobId, 'result_location': result_location, 'result_set_sample': result.head(10).to_json(orient='table')}
+access_code = 'import ibmcloudsql\n'
+access_code += 'sqlClient = ibmcloudsql.SQLQuery(' + ibmcloud_apikey + ', ' + sql_instance_crn + ', ' + target_url + ')\n'
+access_code += 'sqlClient.logon()\n'
+access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
+
+result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.head(10).to_json(orient='table')}
 print(json.dumps(result_json))
 
 
