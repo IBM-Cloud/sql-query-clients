@@ -50,7 +50,8 @@ result = sqlClient.get_result(jobId)
 result_location = sqlClient.get_job(jobId)['resultset_location']
 
 access_code = 'import ibmcloudsql\n'
-access_code += 'sqlClient = ibmcloudsql.SQLQuery(' + ibmcloud_apikey + ', ' + sql_instance_crn + ', ' + target_url + ')\n'
+access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
+access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn + ', ' + target_url + ')\n'
 access_code += 'sqlClient.logon()\n'
 access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
