@@ -53,21 +53,27 @@ if sql_job_id == "":
     print({'info': 'No job id specified'})    
 sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
 sqlClient.logon()
-if sql_job_id == "":
-    print({'info': 'New query'})    
+if sql_job_id == "":  
     jobId = sqlClient.submit_sql(sql_statement_text)
     sqlClient.wait_for_job(jobId)
     if sql_max_results == "":
         result = sqlClient.get_result(jobId)
     else:
-        result = sqlClient.get_result(jobId).iloc[0:sql_max_results]   
+        result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
+    if  len(sqlClient.get_result(jobId).index) > sql_max_results:
+        is_truncated = True
+    else:
+        is_truncated = False
     result_location = sqlClient.get_job(jobId)['resultset_location']
-else:    
-    print({'info': 'Job id specified'})    
+else:     
     first_index = sql_last_index+1
     new_last_index = first_index+sql_max_results   
     result = sqlClient.get_result(sql_job_id).iloc[first_index:new_last_index]
     jobId = sql_job_id
+    if  len(sqlClient.get_result(sql_job_id).index) > new_last_index:
+        is_truncated = True
+    else:
+        is_truncated = False
     result_location = sqlClient.get_job(sql_job_id)['resultset_location'] 
 access_code = 'import ibmcloudsql\n'
 access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
@@ -75,7 +81,7 @@ access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn +
 access_code += 'sqlClient.logon()\n'
 access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
-result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.to_json(orient='table')}
+result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.to_json(orient='table'), 'result_is_truncated': is_truncated}
 print(json.dumps(result_json))
 
 
