@@ -61,17 +61,14 @@ if sql_job_id == "":
         result = sqlClient.get_result(jobId)
     else:
         result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
-    if  len(sqlClient.get_result(jobId).index) > sql_max_results:
-        next_index = sql_max_results
-    result_location = sqlClient.get_job(jobId)['resultset_location']
+    if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
 else:     
     first_index = sql_index
     last_index = first_index+sql_max_results   
     result = sqlClient.get_result(sql_job_id).iloc[first_index:last_index]
     jobId = sql_job_id
-    if  len(sqlClient.get_result(sql_job_id).index) > last_index:
-        next_index = last_index
-    result_location = sqlClient.get_job(sql_job_id)['resultset_location'] 
+    if  len(sqlClient.get_result(sql_job_id).index) > last_index: next_index = last_index
+result_location = sqlClient.get_job(jobId)['resultset_location'] 
 access_code = 'import ibmcloudsql\n'
 access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
 access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn + ', ' + target_url + ')\n'
