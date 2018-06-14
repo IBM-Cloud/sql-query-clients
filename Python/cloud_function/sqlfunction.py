@@ -26,31 +26,33 @@ import json
 
 args = json.loads(sys.argv[1])
 ibmcloud_apikey = args.get("apikey", "")
+sql_instance_crn = args.get("sqlquery_instance_crn", "")
+target_url  = args.get("target_url", "")
+client_information = args.get("client_info", "ibmcloudsql cloud function")
+sql_job_id = args.get("jobid", "")
+sql_statement_text = args.get("sql", "")
+sql_index = args.get("index", "")
+sql_max_results = args.get("maxresults", "")
+
 if ibmcloud_apikey == "":
     print({'error': 'No API key specified'})
     quit()
-sql_instance_crn = args.get("sqlquery_instance_crn", "")
 if sql_instance_crn == "":
     print({'error': 'No SQL Query instance CRN specified'})
     quit()
-target_url  = args.get("target_url", "")
-if target_url == "":
-    print({'error': 'No Cloud Object Storage target URL specified'})
-    quit()
-client_information = args.get("client_info", "ibmcloudsql cloud function")
-sql_statement_text = args.get("sql", "")
 if sql_statement_text == "":
-    print({'error': 'No SQL statement specified'})
-    quit()
-sql_max_results = args.get("maxresults", "")
+    if sql_job_id == "":
+        print({'error': 'Neither SQL statement nor job id specified'})
+        quit()
+    if sql_index == "":
+        print({'info': 'No starting index specified. Will return starting with first row'})
+else:
+    if target_url == "":
+        print({'error': 'No Cloud Object Storage target URL specified'})
+        quit()
 if sql_max_results == "":
-    print({'info': 'No max results specified'})
-sql_index = args.get("index", "")
-if sql_index == "":
-    print({'info': 'No starting index specified'})
-sql_job_id = args.get("jobid", "")
-if sql_job_id == "":
-    print({'info': 'No job id specified'})    
+    print({'info': 'No max results specified. Will return all results'})
+
 sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
 sqlClient.logon()
 next_index = ""
@@ -61,7 +63,7 @@ if sql_job_id == "":
         result = sqlClient.get_result(jobId)
     else:
         result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
-    if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
+        if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
 else:     
     first_index = sql_index
     last_index = first_index+sql_max_results   
