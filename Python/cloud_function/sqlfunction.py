@@ -26,36 +26,58 @@ import json
 
 args = json.loads(sys.argv[1])
 ibmcloud_apikey = args.get("apikey", "")
+sql_instance_crn = args.get("sqlquery_instance_crn", "")
+target_url  = args.get("target_url", "")
+client_information = args.get("client_info", "ibmcloudsql cloud function")
+sql_job_id = args.get("jobid", "")
+sql_statement_text = args.get("sql", "")
+sql_index = args.get("index", "")
+sql_max_results = args.get("maxresults", "")
+
 if ibmcloud_apikey == "":
     print({'error': 'No API key specified'})
     quit()
-sql_instance_crn = args.get("sqlquery_instance_crn", "")
 if sql_instance_crn == "":
     print({'error': 'No SQL Query instance CRN specified'})
     quit()
-target_url  = args.get("target_url", "")
-if target_url == "":
-    print({'error': 'No Cloud Object Storage target URL specified'})
-    quit()
-client_information = args.get("client_info", "ibmcloudsql cloud function")
-sql_statement_text = args.get("sql", "")
 if sql_statement_text == "":
-    print({'error': 'No SQL statement specified'})
-    quit()
+    if sql_job_id == "":
+        print({'error': 'Neither SQL statement nor job id specified'})
+        quit()
+    if sql_index == "":
+        print({'info': 'No starting index specified. Will return starting with first row'})
+else:
+    if target_url == "":
+        print({'error': 'No Cloud Object Storage target URL specified'})
+        quit()
+if sql_max_results == "":
+    print({'info': 'No max results specified. Will return all results'})
+
 sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
 sqlClient.logon()
-jobId = sqlClient.submit_sql(sql_statement_text)
-sqlClient.wait_for_job(jobId)
-result = sqlClient.get_result(jobId)
-result_location = sqlClient.get_job(jobId)['resultset_location']
-
+next_index = ""
+if sql_job_id == "":  
+    jobId = sqlClient.submit_sql(sql_statement_text)
+    sqlClient.wait_for_job(jobId)
+    if sql_max_results == "":
+        result = sqlClient.get_result(jobId)
+    else:
+        result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
+        if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
+else:     
+    first_index = sql_index
+    last_index = first_index+sql_max_results   
+    result = sqlClient.get_result(sql_job_id).iloc[first_index:last_index]
+    jobId = sql_job_id
+    if  len(sqlClient.get_result(sql_job_id).index) > last_index: next_index = last_index
+result_location = sqlClient.get_job(jobId)['resultset_location'] 
 access_code = 'import ibmcloudsql\n'
 access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
 access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn + ', ' + target_url + ')\n'
 access_code += 'sqlClient.logon()\n'
 access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
-result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.head(10).to_json(orient='table')}
+result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.to_json(orient='table'), 'result_next_index': next_index}
 print(json.dumps(result_json))
 
 
