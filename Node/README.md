@@ -2,14 +2,18 @@
 
 Allows you to run SQL statements in the IBM Cloud on data stored on object storage.
 
+## Installation
+
+using npm:
+
+```
+$ npm install -g npm
+$ npm install --save ibm-cloud-sql
+```
 
 ## Example Usage
 
 ```
-var apiKey = process.env.API_KEY;
-var crn = process.env.IBM_SQL_CRN;
-var targetCosUrl = process.env.IBM_COS_TARGET_URL;
-
 var sqlQuery = new SqlQuery(apikey, crn, targetCosUrl);
 
 sqlQuery.runSql("select * from cos://us-south/employees/banklist.csv limit 5").then(data => console.log(data));
