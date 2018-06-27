@@ -14,6 +14,10 @@ $ npm install --save ibm-cloud-sql
 ## Example Usage
 
 ```
+var apikey = process.env.IBM_API_KEY;
+var crn = process.env.IBM_SQL_CRN;
+var targetCosUrl = process.env.IBM_COS_TARGET_BUCKET_URL;
+
 var sqlQuery = new SqlQuery(apikey, crn, targetCosUrl);
 
 sqlQuery.runSql("select * from cos://us-south/employees/banklist.csv limit 5").then(data => console.log(data));
