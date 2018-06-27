@@ -1,15 +1,6 @@
-# ibmcloudsql - Node
+# ibmcloudsql - Node.js
 
 Allows you to run SQL statements in the IBM Cloud on data stored on object storage.
-
-## Installation
-
-using npm:
-
-```
-$ npm install -g npm
-$ npm install --save ibm-cloud-sql
-```
 
 ## Example Usage
 
@@ -23,7 +14,7 @@ var sqlQuery = new SqlQuery(apikey, crn, targetCosUrl);
 sqlQuery.runSql("select * from cos://us-south/employees/banklist.csv limit 5").then(data => console.log(data));
 ```
 
-## SQLQuery method list
+## SQLQuery function list
  * `SqlQuery(api_key, instance_crn, target_cos_url)` Constructor
  * `logon()` Needs to be called before any other method below. Logon is valid for one hour.
  * `submitSql(sql_text)` returns `jobId`as string
