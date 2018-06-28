@@ -6,6 +6,9 @@
   "scripts": {
     "test": "mocha"
   },
+  "engines": {
+    "node": ">=6.0"
+  },  
   "keywords": [
     "IBM sql-query",
     "IBM cloud sql-query",
@@ -16,6 +19,14 @@
   "contributors": [
     "John O'Connor <john.oconnor@ibm.com>"
   ],
+  "homepage": "https://console.bluemix.net/docs/services/sql-query/getting-started.html",
+  "bugs": { 
+    "url" : "https://github.com/IBM-Cloud/sql-query-clients/issues"
+  },
+  "repository" : { 
+    "type" : "git",
+    "url" : "github:IBM-Cloud/sql-query-clients"
+  }, 
   "license": "Apache-2.0",
   "devDependencies": {
     "chai": "^4.1.2",
