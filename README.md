@@ -6,4 +6,5 @@ Please refer to [SQL Query Getting Started](https://console.bluemix.net/docs/ser
 ## List of clients
  * [`ibmcloudsql`](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python) Python SDK
  * [Cloud Function](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function) for SQL Query (uses `ibmcloudsql`)
+ * [`sqlQuerty`](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK
 
