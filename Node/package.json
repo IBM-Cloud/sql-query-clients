@@ -2,7 +2,7 @@
   "name": "ibmcloudsql",
   "version": "0.1.0",
   "description": "Node module to interact with IBM Cloud SQL Query",
-  "main": "lib/sqlQuery.js",
+  "main": "sqlQuery.js",
   "scripts": {
     "test": "mocha"
   },
