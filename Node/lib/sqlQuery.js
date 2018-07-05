@@ -26,15 +26,16 @@ function SQLQuery(apikey, instanceCRN, targetCOS) {
     this.targetCOS = targetCOS;
     this.endpointAliasMapping = {
         "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
-        "dal": "s3-api.dal-us-geo.objectstorage.softlayer.net",
-        "wdc": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
-        "sjc": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
         "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
-        "ams": "s3.ams-eu-geo.objectstorage.softlayer.net",
-        "fra": "s3.fra-eu-geo.objectstorage.softlayer.net",
-        "mil": "s3.mil-eu-geo.objectstorage.softlayer.net",
+        "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
+        "eu-de": "s3.eu-de.objectstorage.softlayer.net",
+        "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
         "us-south": "s3.us-south.objectstorage.softlayer.net",
-        "us-east": "s3.us-east.objectstorage.softlayer.net"
+        "us-east": "s3.us-east.objectstorage.softlayer.net",
+        "ams": "s3.ams03.objectstorage.softlayer.net",
+        "che": "s3.che01.objectstorage.softlayer.net",
+        "mel": "s3.mel01.objectstorage.softlayer.net",
+        "tor": "s3.tor01.objectstorage.softlayer.net"
     };
 
     let cosSplit = targetCOS.split('/');
