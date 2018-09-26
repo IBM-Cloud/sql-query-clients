@@ -47,7 +47,7 @@ def main(args):
     result_location = sqlClient.get_job(jobId)['resultset_location']
 
     access_code = 'import ibmcloudsql\n'
-    access_code += 'sqlClient = ibmcloudsql.SQLQuery(' + ibmcloud_apikey + ', ' + sql_instance_crn + ', ' + target_url + ')\n' +
+    access_code += 'sqlClient = ibmcloudsql.SQLQuery(' + ibmcloud_apikey + ', ' + sql_instance_crn + ', ' + target_url + ')\n'
     access_code += 'sqlClient.logon()\n'
     access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
