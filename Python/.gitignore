@@ -10,7 +10,7 @@ ibmcloudsql/.Python
 ibmcloudsql/lib
 ibmcloudsql/include
 ibmcloudsql/pip-selfcheck.json
-ibmcloudsql/test.py
+ibmcloudsql/test_credentials.py
 cloud_function/my_bind_as_python_function.sh
 cloud_function/my_bind.sh
 cloud_function/virtualenv
