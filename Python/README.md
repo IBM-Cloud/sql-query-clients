@@ -8,16 +8,17 @@ import ibmcloudsql
 my_ibmcloud_apikey = '<your api key here>'
 my_instance_crn='<your ibm cloud sql query instance CRN here>'
 my_target_cos_url='<Cloud Object Storage URL for the SQL result target. Format: cos://<endpoint>/<bucket>/[<prefix>]>'
-sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn, my_target_cos_url)
-sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5').head()
+sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn)
+sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5 INTO {} STORED AS CSV'.format(my_target_cos_url)).head()
 ```
 
 ## SQLQuery method list
- * `SQLQuery(api_key, instance_crn, target_cos_url, client_info='')` Constructor
+ * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
  * `logon()` Needs to be called before any other method below. Logon is valid for one hour.
  * `submit_sql(sql_text)` returns `jobId`as string
  * `wait_for_job(jobId)` Waits for job to end and returns job completion state (either `completed` or `failed`)
  * `get_result(jobId)` returns SQL result data frame
+ * `list_results(jobId)` returns a data frame with the list of result objects written
  * `delete_result(jobId)` deletes all result set objects in cloud object storage for the given jobId
  * `get_job(jobId)` returns details for the given SQL job as a json object
  * `get_jobs()` returns the list of recent 30 submitted SQL jobs with all details as a data frame

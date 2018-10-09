@@ -31,28 +31,32 @@ from datetime import datetime
 
 
 class SQLQuery():
-    def __init__(self, api_key, instance_crn, target_cos_url, client_info=''):
+    def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
         self.endpoint_alias_mapping = {
             "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
-            "dal": "s3-api.dal-us-geo.objectstorage.softlayer.net",
-            "wdc": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
-            "sjc": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
+            "dal-us-geo": "s3-api.dal-us-geo.objectstorage.softlayer.net",
+            "wdc-us-geo": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
+            "sjc-us-geo": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
             "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
-            "ams": "s3.ams-eu-geo.objectstorage.softlayer.net",
-            "fra": "s3.fra-eu-geo.objectstorage.softlayer.net",
-            "mil": "s3.mil-eu-geo.objectstorage.softlayer.net",
+            "ams-eu-geo": "s3.ams-eu-geo.objectstorage.softlayer.net",
+            "fra-eu-geo": "s3.fra-eu-geo.objectstorage.softlayer.net",
+            "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
             "us-south": "s3.us-south.objectstorage.softlayer.net",
-            "us-east": "s3.us-east.objectstorage.softlayer.net"
+            "us-east": "s3.us-east.objectstorage.softlayer.net",
+            "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
+            "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
+            "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
+            "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
+            "eu-de": "s3.eu-de.objectstorage.softlayer.net",
+            "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
+            "ams": "s3.ams03.objectstorage.softlayer.net",
+            "che": "s3.che01.objectstorage.softlayer.net",
+            "mel": "s3.mel01.objectstorage.softlayer.net",
+            "tor": "s3.tor01.objectstorage.softlayer.net"
         }
         self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
-        provided_cos_endpoint = target_cos_url.split("/")[2]
-        self.target_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
-        self.target_cos_bucket = target_cos_url.split("/")[3]
-        self.target_cos_prefix = target_cos_url[target_cos_url.replace('/', 'X', 3).find('/')+1:]
-        if self.target_cos_endpoint == '' or self.target_cos_bucket == '' or self.target_cos_prefix == target_cos_url:
-            raise ValueError("target_cos_url value is \'{}\'. Expecting format cos://<endpoint>/<bucket>/[<prefix>]. ".format(target_cos_url))
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
@@ -96,12 +100,13 @@ class SQLQuery():
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
-        sqlData = {'statement': sql_text,
-                   'resultset_target': self.target_cos}
+        sqlData = {'statement': sql_text}
+        if self.target_cos:
+            sqlData.update({'resultset_target': self.target_cos})
 
         try:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 method='POST',
                 headers=self.request_headers,
                 validate_cert=False,
@@ -118,7 +123,7 @@ class SQLQuery():
 
         while True:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 method='GET',
                 headers=self.request_headers,
                 validate_cert=False)
@@ -147,20 +152,20 @@ class SQLQuery():
             print("You are not logged on to IBM Cloud")
             return
 
-        job_status = self.get_job(jobId)['status']
+        job_details = self.get_job(jobId)
+        job_status = job_details['status']
         if job_status == 'running':
             raise ValueError('SQL job with jobId {} still running. Come back later.')
         elif job_status != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
-        if self.target_cos_prefix != '' and not self.target_cos_prefix.endswith('/'):
-            result_location = "https://{}/{}?prefix={}/jobid={}/part".format(self.target_cos_endpoint,
-                                                                        self.target_cos_bucket, self.target_cos_prefix,
-                                                                        jobId)
-        else:
-            result_location = "https://{}/{}?prefix={}jobid={}/part".format(self.target_cos_endpoint,
-                                                                        self.target_cos_bucket, self.target_cos_prefix,
-                                                                        jobId)
+        result_cos_url = job_details['resultset_location']
+        provided_cos_endpoint = result_cos_url.split("/")[2]
+        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+        result_cos_bucket = result_cos_url.split("/")[3]
+        result_cos_prefix = result_cos_url[result_cos_url.replace('/', 'X', 3).find('/')+1:]
+        result_location = "https://{}/{}?prefix={}".format(result_cos_endpoint, result_cos_bucket, result_cos_prefix)
+        result_format = job_details['resultset_format']
 
         response = self.client.fetch(
             result_location,
@@ -174,24 +179,76 @@ class SQLQuery():
             for contents in responseBodyXMLroot.findall('s3:Contents', ns):
                 key = contents.find('s3:Key', ns)
                 result_object = key.text
-                # print("Job result for {} stored at: {}".format(jobId, result_object))
+                #print("Job result for {} stored at: {}".format(jobId, result_object))
         else:
-            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
+            raise ValueError("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
                                                                                            response.code))
 
         cos_client = ibm_boto3.client(service_name='s3',
                                       ibm_api_key_id=self.api_key,
                                       ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
                                       config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + self.target_cos_endpoint)
+                                      endpoint_url='https://' + result_cos_endpoint)
 
-        body = cos_client.get_object(Bucket=self.target_cos_bucket, Key=result_object)['Body']
+        body = cos_client.get_object(Bucket=result_cos_bucket, Key=result_object)['Body']
         # add missing __iter__ method, so pandas accepts body as file-like object
         if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
-        result_df = pd.read_csv(body)
+        if result_format == "csv":
+            result_df = pd.read_csv(body)
+        else:
+            raise ValueError("Result object format {} currently not supported by get_result().".format(result_format))
 
         return result_df
+
+    def list_results(self, jobId):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        job_details = self.get_job(jobId)
+        if job_details['status'] == 'running':
+            raise ValueError('SQL job with jobId {} still running. Come back later.')
+        elif job_details['status'] != 'completed':
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
+
+        result_location = job_details['resultset_location'].replace("cos", "https", 1)
+        provided_cos_endpoint = job_details['resultset_location'].split("/")[2]
+        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+
+        fourth_slash = result_location.replace('/', 'X', 3).find('/')
+
+        response = self.client.fetch(
+            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+
+        if response.code == 200 or response.code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.body)
+            print(responseBodyXMLroot)
+            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_objects = []
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    key = contents.find('s3:Key', ns)
+                    object_url = "cos://{}/{}/{}".format(result_cos_endpoint, bucket_name, key.text)
+                    size = contents.find('s3:Size', ns)
+                    bucket_objects.append({'Key': object_url, 'Size': size.text})
+            else:
+                print('There are no result objects for the jobid {}'.format(jobId))
+                return
+        else:
+            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
+                                                                                           response.code))
+            return
+
+        result_objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
+        for object in bucket_objects:
+            result_objects_df = result_objects_df.append([{'ObjectURL': object['Key'], 'Size': object['Size']}], ignore_index=True)
+
+        return result_objects_df
 
     def delete_result(self, jobId):
         if not self.logged_on:
@@ -205,6 +262,8 @@ class SQLQuery():
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
+        provided_cos_endpoint = job_details['resultset_location'].split("/")[2]
+        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
 
         fourth_slash = result_location.replace('/', 'X', 3).find('/')
 
@@ -235,7 +294,7 @@ class SQLQuery():
                                       ibm_api_key_id=self.api_key,
                                       ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
                                       config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + self.target_cos_endpoint)
+                                      endpoint_url='https://' + result_cos_endpoint)
 
         response = cos_client.delete_objects(Bucket=bucket_name, Delete={'Objects': bucket_objects})
 
@@ -252,7 +311,7 @@ class SQLQuery():
 
         try:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 method='GET',
                 headers=self.request_headers,
                 validate_cert=False)
@@ -270,7 +329,7 @@ class SQLQuery():
             return
 
         response = self.client.fetch(
-            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
+            "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
             method='GET',
             headers=self.request_headers,
             validate_cert=False)
@@ -280,7 +339,7 @@ class SQLQuery():
                                                 'submit_time', 'end_time', 'error', 'error_message'])
             for job in job_list['jobs']:
                 response = self.client.fetch(
-                    "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(job['job_id'],
+                    "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
                                                                                                 self.instance_crn),
                     method='GET',
                     headers=self.request_headers,
