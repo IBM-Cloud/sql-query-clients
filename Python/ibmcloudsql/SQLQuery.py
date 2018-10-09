@@ -106,7 +106,7 @@ class SQLQuery():
 
         try:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 method='POST',
                 headers=self.request_headers,
                 validate_cert=False,
@@ -123,7 +123,7 @@ class SQLQuery():
 
         while True:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 method='GET',
                 headers=self.request_headers,
                 validate_cert=False)
@@ -262,7 +262,7 @@ class SQLQuery():
 
         try:
             response = self.client.fetch(
-                "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 method='GET',
                 headers=self.request_headers,
                 validate_cert=False)
@@ -280,7 +280,7 @@ class SQLQuery():
             return
 
         response = self.client.fetch(
-            "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn={}".format(self.instance_crn),
+            "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
             method='GET',
             headers=self.request_headers,
             validate_cert=False)
@@ -290,7 +290,7 @@ class SQLQuery():
                                                 'submit_time', 'end_time', 'error', 'error_message'])
             for job in job_list['jobs']:
                 response = self.client.fetch(
-                    "https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/{}?instance_crn={}".format(job['job_id'],
+                    "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
                                                                                                 self.instance_crn),
                     method='GET',
                     headers=self.request_headers,
