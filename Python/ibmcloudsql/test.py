@@ -1,5 +1,10 @@
+import sys
+sys.path.append('ibmcloudsql')
 import ibmcloudsql
 import test_credentials
+import pandas as pd
+pd.set_option('display.max_colwidth', -1)
+
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
 sqlClient.logon()
 
@@ -56,5 +61,7 @@ sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.insta
 sqlClient.logon()
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10")
 sqlClient.wait_for_job(jobId)
+result_objects_df = sqlClient.list_results(jobId)
+print(result_objects_df.head(200))
 result_df = sqlClient.get_result(jobId)
-result_df.head(200)
+print(result_df.head(200))

@@ -201,6 +201,55 @@ class SQLQuery():
 
         return result_df
 
+    def list_results(self, jobId):
+        if not self.logged_on:
+            print("You are not logged on to IBM Cloud")
+            return
+
+        job_details = self.get_job(jobId)
+        if job_details['status'] == 'running':
+            raise ValueError('SQL job with jobId {} still running. Come back later.')
+        elif job_details['status'] != 'completed':
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
+
+        result_location = job_details['resultset_location'].replace("cos", "https", 1)
+        provided_cos_endpoint = job_details['resultset_location'].split("/")[2]
+        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+
+        fourth_slash = result_location.replace('/', 'X', 3).find('/')
+
+        response = self.client.fetch(
+            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
+            method='GET',
+            headers=self.request_headers,
+            validate_cert=False)
+
+        if response.code == 200 or response.code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.body)
+            print(responseBodyXMLroot)
+            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_objects = []
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    key = contents.find('s3:Key', ns)
+                    object_url = "cos://{}/{}/{}".format(result_cos_endpoint, bucket_name, key.text)
+                    size = contents.find('s3:Size', ns)
+                    bucket_objects.append({'Key': object_url, 'Size': size.text})
+            else:
+                print('There are no result objects for the jobid {}'.format(jobId))
+                return
+        else:
+            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
+                                                                                           response.code))
+            return
+
+        result_objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
+        for object in bucket_objects:
+            result_objects_df = result_objects_df.append([{'ObjectURL': object['Key'], 'Size': object['Size']}], ignore_index=True)
+
+        return result_objects_df
+
     def delete_result(self, jobId):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
