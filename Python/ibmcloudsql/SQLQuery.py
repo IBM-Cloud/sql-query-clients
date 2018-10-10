@@ -25,6 +25,7 @@ from tornado.httputil import HTTPHeaders
 import sys
 import types
 import pandas as pd
+import numpy as np
 from botocore.client import Config
 import ibm_boto3
 from datetime import datetime
@@ -167,6 +168,9 @@ class SQLQuery():
         result_location = "https://{}/{}?prefix={}".format(result_cos_endpoint, result_cos_bucket, result_cos_prefix)
         result_format = job_details['resultset_format']
 
+        if result_format != "csv":
+            raise ValueError("Result object format {} currently not supported by get_result().".format(result_format))
+
         response = self.client.fetch(
             result_location,
             method='GET',
@@ -176,9 +180,12 @@ class SQLQuery():
         if response.code == 200 or response.code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
+            bucket_objects = []
+            # Find result objects with data
             for contents in responseBodyXMLroot.findall('s3:Contents', ns):
                 key = contents.find('s3:Key', ns)
-                result_object = key.text
+                if int(contents.find('s3:Size', ns).text) > 0:
+                    bucket_objects.append(key.text)
                 #print("Job result for {} stored at: {}".format(jobId, result_object))
         else:
             raise ValueError("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
@@ -190,14 +197,30 @@ class SQLQuery():
                                       config=Config(signature_version='oauth'),
                                       endpoint_url='https://' + result_cos_endpoint)
 
-        body = cos_client.get_object(Bucket=result_cos_bucket, Key=result_object)['Body']
-        # add missing __iter__ method, so pandas accepts body as file-like object
-        if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
+        # Loop over result objects and read and concatenate them into result data frame
+        for bucket_object in bucket_objects:
+            body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+            # add missing __iter__ method, so pandas accepts body as file-like object
+            if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
-        if result_format == "csv":
-            result_df = pd.read_csv(body)
-        else:
-            raise ValueError("Result object format {} currently not supported by get_result().".format(result_format))
+            partition_df = pd.read_csv(body)
+
+            # Add columns from hive style partition naming schema
+            hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
+            for hive_partition_candidate in hive_partition_candidates:
+                if hive_partition_candidate.count('=') == 1: # Hive style folder names contain exactly one '='
+                    column = hive_partition_candidate.split('=')
+                    column_name = column[0]
+                    column_value = column[1]
+                    if column_value == '__HIVE_DEFAULT_PARTITION__': # Null value partition
+                        column_value = np.nan
+                    if len(column_name) > 0 and len(column_value) > 0:
+                        partition_df[column_name] = column_value
+
+            if 'result_df' not in locals():
+                result_df = partition_df
+            else:
+                result_df = result_df.append(partition_df)
 
         return result_df
 
@@ -227,7 +250,6 @@ class SQLQuery():
         if response.code == 200 or response.code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
-            print(responseBodyXMLroot)
             bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
             bucket_objects = []
             if responseBodyXMLroot.findall('s3:Contents', ns):
