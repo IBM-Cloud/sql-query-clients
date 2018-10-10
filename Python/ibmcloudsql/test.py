@@ -23,6 +23,15 @@ result_df = sqlClient.get_result(jobId)
 print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
 print(result_df.head(200))
 
+print("Running test with partitioned CSV target:")
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET INTO cos://us-south/sqltempregional/ STORED AS CSV PARTITIONED BY (city)")
+sqlClient.wait_for_job(jobId)
+result_objects_df = sqlClient.list_results(jobId)
+print(result_objects_df.head(200))
+result_df = sqlClient.get_result(jobId)
+print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
+print(result_df.head(200))
+
 print("Running test with compound method invocation:")
 result_df = sqlClient.run_sql(
 "WITH orders_shipped AS \
