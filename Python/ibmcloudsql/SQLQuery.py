@@ -222,6 +222,9 @@ class SQLQuery():
             else:
                 result_df = result_df.append(partition_df)
 
+        if 'result_df' not in locals():
+            return None
+
         return result_df
 
     def list_results(self, jobId):
