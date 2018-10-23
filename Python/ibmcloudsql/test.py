@@ -76,3 +76,6 @@ result_objects_df = sqlClient.list_results(jobId)
 print(result_objects_df.head(200))
 result_df = sqlClient.get_result(jobId)
 print(result_df.head(200))
+
+print("Test job history export to COS")
+sqlClient.export_job_history("cos://us-south/sqltempregional/my_job_history/")

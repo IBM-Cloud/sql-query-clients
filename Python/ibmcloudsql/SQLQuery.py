@@ -29,6 +29,8 @@ import numpy as np
 from botocore.client import Config
 import ibm_boto3
 from datetime import datetime
+import fastparquet
+import tempfile
 
 
 class SQLQuery():
@@ -62,6 +64,7 @@ class SQLQuery():
         self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
+        self.export_cos_url = target_cos_url
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
@@ -506,3 +509,52 @@ class SQLQuery():
                 'newest_object_timestamp': newest_modification,
                 'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
                 'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
+
+    def export_job_history(self, cos_url=None):
+        if cos_url:
+            # Default export location is target COS URL set at __init__
+            # But we'll overwrite that with the provided export URL
+            self.export_cos_url = cos_url
+        elif not self.export_cos_url:
+            raise ValueError('No configured export COS URL.')
+        if not self.export_cos_url.endswith('/'):
+            self.export_cos_url += "/"
+        provided_export_cos_endpoint = self.export_cos_url.split("/")[2]
+        export_cos_endpoint = self.endpoint_alias_mapping.get(provided_export_cos_endpoint, provided_export_cos_endpoint)
+        export_cos_bucket = self.export_cos_url.split("/")[3]
+        export_cos_prefix = self.export_cos_url[self.export_cos_url.replace('/', 'X', 3).find('/')+1:]
+        export_file_prefix = "job_export_"
+
+        job_history_df = self.get_jobs() # Retrieve current job history (most recent 30 jobs)
+        terminated_job_history_df = job_history_df[job_history_df['status'].isin(['completed', 'failed'])] # Only export terminated jobs
+        newest_job_end_time = terminated_job_history_df.loc[pd.to_datetime(terminated_job_history_df['end_time']).idxmax()].end_time
+
+        # List all existing objects in export location and identify latest exported job timestamp:
+        cos_client = ibm_boto3.client(service_name='s3',
+                                      ibm_api_key_id=self.api_key,
+                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                                      config=Config(signature_version='oauth'),
+                                      endpoint_url='https://' + export_cos_endpoint)
+        paginator = cos_client.get_paginator("list_objects")
+        page_iterator = paginator.paginate(Bucket=export_cos_bucket, Prefix=export_cos_prefix)
+        newest_exported_job_end_time = ""
+        for page in page_iterator:
+            if "Contents" in page:
+                for key in page['Contents']:
+                    object_name = key["Key"]
+                    suffix_index = object_name.find(".parquet")
+                    prefix_end_index = len(export_cos_prefix + export_file_prefix)
+                    if prefix_end_index < suffix_index:
+                        job_end_time = object_name[prefix_end_index:suffix_index]
+                        if job_end_time > newest_exported_job_end_time:
+                            newest_exported_job_end_time = job_end_time
+
+        # Export all new jobs if there are some:
+        if newest_exported_job_end_time < newest_job_end_time:
+            tempfilename = tempfile.NamedTemporaryFile().name
+            new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
+            new_jobs_df.to_parquet(engine="fastparquet", fname=tempfilename, compression="gzip")
+            cos_client.upload_file(Bucket=export_cos_bucket, Filename=tempfilename, Key=export_cos_prefix + export_file_prefix + newest_job_end_time + ".parquet")
+            print("Exported {} new jobs".format(new_jobs_df['job_id'].count()))
+        else:
+            print("No new jobs to export")
