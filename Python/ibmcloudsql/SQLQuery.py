@@ -361,7 +361,8 @@ class SQLQuery():
         if response.code == 200 or response.code == 201:
             job_list = json_decode(response.body)
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
-                                                'submit_time', 'end_time', 'error', 'error_message'])
+                                                'submit_time', 'end_time', 'rows_read', 'rows_returned', 'error',
+                                                'error_message'])
             for job in job_list['jobs']:
                 response = self.client.fetch(
                     "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
@@ -378,8 +379,14 @@ class SQLQuery():
                     else:
                         end_time = job_details['end_time']
                     error_message = None
+                    rows_read = None
+                    rows_returned = None
                     if 'error_message' in job_details:
                         error_message = job_details['error_message']
+                    if 'rows_read' in job_details:
+                        rows_read = job_details['rows_read']
+                    if 'rows_returned' in job_details:
+                        rows_returned = job_details['rows_returned']
                     job_list_df = job_list_df.append([{'job_id': job['job_id'],
                                                        'status': job_details['status'],
                                                        'user_id': job_details['user_id'],
@@ -387,6 +394,8 @@ class SQLQuery():
                                                        'resultset_location': job_details['resultset_location'],
                                                        'submit_time': job_details['submit_time'],
                                                        'end_time': end_time,
+                                                       'rows_read': rows_read,
+                                                       'rows_returned': rows_returned,
                                                        'error': error,
                                                        'error_message': error_message,
                                                        }], ignore_index=True)

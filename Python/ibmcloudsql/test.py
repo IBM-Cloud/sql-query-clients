@@ -60,7 +60,9 @@ print("SQL UI Link:")
 sqlClient.sql_ui_link()
 
 print("Job list:")
+pd.set_option('display.max_colwidth', 10)
 print(sqlClient.get_jobs().head(200))
+pd.set_option('display.max_colwidth', -1)
 
 print("COS Summary:")
 print(sqlClient.get_cos_summary("cos://us-south/cloudant-access-logs-us-south/cloudant-access-logs/dt=2018-02-02"))
