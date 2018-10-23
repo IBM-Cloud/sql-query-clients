@@ -44,16 +44,20 @@ class SQLQuery():
             "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
             "us-south": "s3.us-south.objectstorage.softlayer.net",
             "us-east": "s3.us-east.objectstorage.softlayer.net",
+            "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
             "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
             "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
             "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
             "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
             "eu-de": "s3.eu-de.objectstorage.softlayer.net",
             "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
-            "ams": "s3.ams03.objectstorage.softlayer.net",
-            "che": "s3.che01.objectstorage.softlayer.net",
-            "mel": "s3.mel01.objectstorage.softlayer.net",
-            "tor": "s3.tor01.objectstorage.softlayer.net"
+            "ams03": "s3.ams03.objectstorage.softlayer.net",
+            "che01": "s3.che01.objectstorage.softlayer.net",
+            "mel01": "s3.mel01.objectstorage.softlayer.net",
+            "tor01": "s3.tor01.objectstorage.softlayer.net",
+            "osl01": "s3.osl01.objectstorage.softlayer.net",
+            "sao01": "s3.sao01.objectstorage.softlayer.net",
+            "seo01": "s3.seo01.objectstorage.softlayer.net"
         }
         self.api_key = api_key
         self.instance_crn = instance_crn
@@ -361,8 +365,8 @@ class SQLQuery():
         if response.code == 200 or response.code == 201:
             job_list = json_decode(response.body)
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
-                                                'submit_time', 'end_time', 'rows_read', 'rows_returned', 'error',
-                                                'error_message'])
+                                                'submit_time', 'end_time', 'rows_read', 'rows_returned', 'bytes_read',
+                                                'error', 'error_message'])
             for job in job_list['jobs']:
                 response = self.client.fetch(
                     "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
@@ -373,20 +377,23 @@ class SQLQuery():
                 if response.code == 200 or response.code == 201:
                     job_details = json_decode(response.body)
                     error = None
-                    if 'error' in job_details:
-                        error = job_details['error']
-                        end_time = None
-                    else:
-                        end_time = job_details['end_time']
                     error_message = None
                     rows_read = None
                     rows_returned = None
+                    bytes_read = None
+                    end_time = None
+                    if 'error' in job_details:
+                        error = job_details['error']
+                    if 'end_time' in job_details:
+                        end_time = job_details['end_time']
                     if 'error_message' in job_details:
                         error_message = job_details['error_message']
                     if 'rows_read' in job_details:
                         rows_read = job_details['rows_read']
                     if 'rows_returned' in job_details:
                         rows_returned = job_details['rows_returned']
+                    if 'bytes_read' in job_details:
+                        bytes_read = job_details['bytes_read']
                     job_list_df = job_list_df.append([{'job_id': job['job_id'],
                                                        'status': job_details['status'],
                                                        'user_id': job_details['user_id'],
@@ -396,6 +403,7 @@ class SQLQuery():
                                                        'end_time': end_time,
                                                        'rows_read': rows_read,
                                                        'rows_returned': rows_returned,
+                                                       'bytes_read': bytes_read,
                                                        'error': error,
                                                        'error_message': error_message,
                                                        }], ignore_index=True)
