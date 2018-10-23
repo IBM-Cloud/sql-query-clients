@@ -29,6 +29,8 @@ import numpy as np
 from botocore.client import Config
 import ibm_boto3
 from datetime import datetime
+import fastparquet
+import tempfile
 
 
 class SQLQuery():
@@ -44,20 +46,25 @@ class SQLQuery():
             "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
             "us-south": "s3.us-south.objectstorage.softlayer.net",
             "us-east": "s3.us-east.objectstorage.softlayer.net",
+            "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
             "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
             "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
             "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
             "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
             "eu-de": "s3.eu-de.objectstorage.softlayer.net",
             "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
-            "ams": "s3.ams03.objectstorage.softlayer.net",
-            "che": "s3.che01.objectstorage.softlayer.net",
-            "mel": "s3.mel01.objectstorage.softlayer.net",
-            "tor": "s3.tor01.objectstorage.softlayer.net"
+            "ams03": "s3.ams03.objectstorage.softlayer.net",
+            "che01": "s3.che01.objectstorage.softlayer.net",
+            "mel01": "s3.mel01.objectstorage.softlayer.net",
+            "tor01": "s3.tor01.objectstorage.softlayer.net",
+            "osl01": "s3.osl01.objectstorage.softlayer.net",
+            "sao01": "s3.sao01.objectstorage.softlayer.net",
+            "seo01": "s3.seo01.objectstorage.softlayer.net"
         }
         self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
+        self.export_cos_url = target_cos_url
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
@@ -361,8 +368,8 @@ class SQLQuery():
         if response.code == 200 or response.code == 201:
             job_list = json_decode(response.body)
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
-                                                'submit_time', 'end_time', 'rows_read', 'rows_returned', 'error',
-                                                'error_message'])
+                                                'submit_time', 'end_time', 'rows_read', 'rows_returned', 'bytes_read',
+                                                'error', 'error_message'])
             for job in job_list['jobs']:
                 response = self.client.fetch(
                     "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
@@ -373,20 +380,23 @@ class SQLQuery():
                 if response.code == 200 or response.code == 201:
                     job_details = json_decode(response.body)
                     error = None
-                    if 'error' in job_details:
-                        error = job_details['error']
-                        end_time = None
-                    else:
-                        end_time = job_details['end_time']
                     error_message = None
                     rows_read = None
                     rows_returned = None
+                    bytes_read = None
+                    end_time = None
+                    if 'error' in job_details:
+                        error = job_details['error']
+                    if 'end_time' in job_details:
+                        end_time = job_details['end_time']
                     if 'error_message' in job_details:
                         error_message = job_details['error_message']
                     if 'rows_read' in job_details:
                         rows_read = job_details['rows_read']
                     if 'rows_returned' in job_details:
                         rows_returned = job_details['rows_returned']
+                    if 'bytes_read' in job_details:
+                        bytes_read = job_details['bytes_read']
                     job_list_df = job_list_df.append([{'job_id': job['job_id'],
                                                        'status': job_details['status'],
                                                        'user_id': job_details['user_id'],
@@ -396,6 +406,7 @@ class SQLQuery():
                                                        'end_time': end_time,
                                                        'rows_read': rows_read,
                                                        'rows_returned': rows_returned,
+                                                       'bytes_read': bytes_read,
                                                        'error': error,
                                                        'error_message': error_message,
                                                        }], ignore_index=True)
@@ -498,3 +509,52 @@ class SQLQuery():
                 'newest_object_timestamp': newest_modification,
                 'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
                 'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
+
+    def export_job_history(self, cos_url=None):
+        if cos_url:
+            # Default export location is target COS URL set at __init__
+            # But we'll overwrite that with the provided export URL
+            self.export_cos_url = cos_url
+        elif not self.export_cos_url:
+            raise ValueError('No configured export COS URL.')
+        if not self.export_cos_url.endswith('/'):
+            self.export_cos_url += "/"
+        provided_export_cos_endpoint = self.export_cos_url.split("/")[2]
+        export_cos_endpoint = self.endpoint_alias_mapping.get(provided_export_cos_endpoint, provided_export_cos_endpoint)
+        export_cos_bucket = self.export_cos_url.split("/")[3]
+        export_cos_prefix = self.export_cos_url[self.export_cos_url.replace('/', 'X', 3).find('/')+1:]
+        export_file_prefix = "job_export_"
+
+        job_history_df = self.get_jobs() # Retrieve current job history (most recent 30 jobs)
+        terminated_job_history_df = job_history_df[job_history_df['status'].isin(['completed', 'failed'])] # Only export terminated jobs
+        newest_job_end_time = terminated_job_history_df.loc[pd.to_datetime(terminated_job_history_df['end_time']).idxmax()].end_time
+
+        # List all existing objects in export location and identify latest exported job timestamp:
+        cos_client = ibm_boto3.client(service_name='s3',
+                                      ibm_api_key_id=self.api_key,
+                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                                      config=Config(signature_version='oauth'),
+                                      endpoint_url='https://' + export_cos_endpoint)
+        paginator = cos_client.get_paginator("list_objects")
+        page_iterator = paginator.paginate(Bucket=export_cos_bucket, Prefix=export_cos_prefix)
+        newest_exported_job_end_time = ""
+        for page in page_iterator:
+            if "Contents" in page:
+                for key in page['Contents']:
+                    object_name = key["Key"]
+                    suffix_index = object_name.find(".parquet")
+                    prefix_end_index = len(export_cos_prefix + export_file_prefix)
+                    if prefix_end_index < suffix_index:
+                        job_end_time = object_name[prefix_end_index:suffix_index]
+                        if job_end_time > newest_exported_job_end_time:
+                            newest_exported_job_end_time = job_end_time
+
+        # Export all new jobs if there are some:
+        if newest_exported_job_end_time < newest_job_end_time:
+            tempfilename = tempfile.NamedTemporaryFile().name
+            new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
+            new_jobs_df.to_parquet(engine="fastparquet", fname=tempfilename, compression="gzip")
+            cos_client.upload_file(Bucket=export_cos_bucket, Filename=tempfilename, Key=export_cos_prefix + export_file_prefix + newest_job_end_time + ".parquet")
+            print("Exported {} new jobs".format(new_jobs_df['job_id'].count()))
+        else:
+            print("No new jobs to export")

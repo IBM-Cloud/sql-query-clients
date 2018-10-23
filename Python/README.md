@@ -24,4 +24,11 @@ sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQU
  * `get_jobs()` returns the list of recent 30 submitted SQL jobs with all details as a data frame
  * `run_sql(sql_text)` Compound method that calls `submit_sql`, `wait_for_job` and `wait_for_job` in sequenceA
  * `sql_ui_link()` Returns browser link for SQL Query web console for currently configured instance
- * `get_cos_summary()` Returns summary for stored number of objects and volume for a given cos url as a  json 
+ * `get_cos_summary(cos_url)` Returns summary for stored number of objects and volume for a given cos url as a  json
+ * `export_job_history(cos_url)` Exports new jobs as parquet file to the given cos url
+
+## Constructor options
+ * `api_key`: IAM API key
+ * `instance_crn`: SQL Query instance CRN identifier
+ * `target_cos_url`: Optional default target URL. Don't use when you want to provide target URL in SQL statement text.
+ * `client_info`: Optional string to identify your client application in IBM Cloud for PD reasons.
