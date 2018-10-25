@@ -11,6 +11,13 @@ sqlClient.logon()
 print("Running test with individual method invocation and Parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
 sqlClient.wait_for_job(jobId)
+result_df = sqlClient.get_result(jobId)
+print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
+print(result_df.head(200))
+
+print("Running test with individual method invocation and ORC target:")
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS ORC".format(test_credentials.result_location))
+sqlClient.wait_for_job(jobId)
 try:
     result_df = sqlClient.get_result(jobId)
 except ValueError as e:

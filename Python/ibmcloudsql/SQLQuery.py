@@ -29,7 +29,8 @@ import numpy as np
 from botocore.client import Config
 import ibm_boto3
 from datetime import datetime
-import fastparquet
+import pyarrow
+import os
 import tempfile
 
 
@@ -175,7 +176,7 @@ class SQLQuery():
         result_location = "https://{}/{}?prefix={}".format(result_cos_endpoint, result_cos_bucket, result_cos_prefix)
         result_format = job_details['resultset_format']
 
-        if result_format != "csv":
+        if result_format not in ["csv", "parquet"]:
             raise ValueError("Result object format {} currently not supported by get_result().".format(result_format))
 
         response = self.client.fetch(
@@ -206,11 +207,21 @@ class SQLQuery():
 
         # Loop over result objects and read and concatenate them into result data frame
         for bucket_object in bucket_objects:
-            body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
-            # add missing __iter__ method, so pandas accepts body as file-like object
-            if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
-            partition_df = pd.read_csv(body)
+            if result_format == "csv":
+                body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+                # add missing __iter__ method, so pandas accepts body as file-like object
+                if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
+
+                partition_df = pd.read_csv(body)
+
+            elif result_format == "parquet":
+                tmpfile = tempfile.NamedTemporaryFile()
+                tempfilename = tmpfile.name
+                cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_object, Filename=tempfilename)
+
+                partition_df = pd.read_parquet(tempfilename)
+                tmpfile.close()
 
             # Add columns from hive style partition naming schema
             hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
@@ -551,10 +562,12 @@ class SQLQuery():
 
         # Export all new jobs if there are some:
         if newest_exported_job_end_time < newest_job_end_time:
-            tempfilename = tempfile.NamedTemporaryFile().name
+            tmpfile = tempfile.NamedTemporaryFile()
+            tempfilename = tmpfile.name
             new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
-            new_jobs_df.to_parquet(engine="fastparquet", fname=tempfilename, compression="gzip")
+            new_jobs_df.to_parquet(engine="pyarrow", fname=tempfilename, compression="snappy")
             cos_client.upload_file(Bucket=export_cos_bucket, Filename=tempfilename, Key=export_cos_prefix + export_file_prefix + newest_job_end_time + ".parquet")
             print("Exported {} new jobs".format(new_jobs_df['job_id'].count()))
+            tmpfile.close()
         else:
             print("No new jobs to export")
