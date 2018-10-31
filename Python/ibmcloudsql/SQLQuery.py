@@ -163,22 +163,21 @@ class SQLQuery():
         # First, remove the comments (NB: there will be errors if -- is in a string in the query, but I'm not writing a full parser here...)
         statement = re.sub(r'--[^\n]*', '', statement)
         # Find the number of rows we're partitioning by
-        m = re.match(r'.*PARTITIONED\s+EVERY\s+(\d+)\s+ROWS.*', statement, re.MULTILINE | re.DOTALL)
+        m = re.match(r'.*PARTITIONED\s+EVERY\s+(\d+)\s+ROWS.*', statement, re.MULTILINE | re.DOTALL | re.IGNORECASE)
         if m is not None:
             return int(m.groups()[0])
         # Second, the data could be partitioned into buckets
-        m = re.match(r'.*PARTITIONED\s+INTO\s+(\d+)\s+BUCKETS.*', statement, re.MULTILINE | re.DOTALL)
+        m = re.match(r'.*PARTITIONED\s+INTO\s+(\d+)\s+BUCKETS.*', statement, re.MULTILINE | re.DOTALL | re.IGNORECASE)
         if m is not None:
-            # print("Partitioned into {} buckets".format(m.groups()[0]))
             return None
         # Third, find the columns being partitioned
-        m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
+        m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL | re.IGNORECASE)
         partitioned_by = None
         if m is not None:
             partitioned_by = m.groups()[0]
         # Finally, find the number of records per partition
         if partitioned_by is not None:
-            m = re.match(r'.*int\(monotonically_increasing_id\(\) /\s(\d+)\) as %s.*' % partitioned_by, statement)
+            m = re.match(r'.*int\(monotonically_increasing_id\(\)\s+/\s+(\d+)\)\s+as\s+%s.*' % partitioned_by, statement, re.MULTILINE | re.DOTALL | re.IGNORECASE)
             if m is not None:
                 return int(m.groups()[0])
         return None
@@ -288,8 +287,6 @@ class SQLQuery():
         if 'start_rec' in kwargs or 'end_rec' in kwargs:
             cut_front = start_rec - start_partition * units
             cut_back = end_rec - min(end_partition * units, rows_returned) + 1
-            # print("End Rec: {} End Partition {} Rows Returned {} Units {}".format(end_rec, end_partition, rows_returned, units))
-            # print("Cut from front: %d and back %d" % (cut_front, cut_back))
             result_df.drop(result_df.index[range(cut_front)], inplace=True)
             result_df.drop(result_df.index[range(cut_back,0)], inplace=True)
         return result_df
