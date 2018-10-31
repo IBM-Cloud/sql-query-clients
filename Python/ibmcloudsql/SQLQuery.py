@@ -169,10 +169,8 @@ class SQLQuery():
         # Second, the data could be partitioned into buckets
         m = re.match(r'.*PARTITIONED\s+INTO\s+(\d+)\s+BUCKETS.*', statement, re.MULTILINE | re.DOTALL)
         if m is not None:
-            print("Partitioned into {} buckets".format(m.groups()[0]))
+            # print("Partitioned into {} buckets".format(m.groups()[0]))
             return None
-            # return int(m.groups()[0])
-
         # Third, find the columns being partitioned
         m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
         partitioned_by = None
@@ -290,9 +288,8 @@ class SQLQuery():
         if 'start_rec' in kwargs or 'end_rec' in kwargs:
             cut_front = start_rec - start_partition * units
             cut_back = end_rec - min(end_partition * units, rows_returned) + 1
-            print("End Rec: {} End Partition {} Rows Returned {} Units {}".format(end_rec, end_partition, rows_returned, units))
-            print("Cut from front: %d and back %d" % (cut_front, cut_back))
-            print(result_df)
+            # print("End Rec: {} End Partition {} Rows Returned {} Units {}".format(end_rec, end_partition, rows_returned, units))
+            # print("Cut from front: %d and back %d" % (cut_front, cut_back))
             result_df.drop(result_df.index[range(cut_front)], inplace=True)
             result_df.drop(result_df.index[range(cut_back,0)], inplace=True)
         return result_df
