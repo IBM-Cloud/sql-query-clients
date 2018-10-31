@@ -158,7 +158,14 @@ class SQLQuery():
         m = re.match(r'.*PARTITIONED\s+EVERY\s+(\d+)\s+ROWS.*', statement, re.MULTILINE | re.DOTALL)
         if m is not None:
             return int(m.groups()[0])
-        # Second, find the columns being partitioned
+        # Second, the data could be partitioned into buckets
+        m = re.match(r'.*PARTITIONED\s+INTO\s+(\d+)\s+BUCKETS.*', statement, re.MULTILINE | re.DOTALL)
+        if m is not None:
+            print("Partitioned into {} buckets".format(m.groups()[0]))
+            return None
+            # return int(m.groups()[0])
+
+        # Third, find the columns being partitioned
         m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
         partitioned_by = None
         if m is not None:
@@ -224,10 +231,13 @@ class SQLQuery():
             units = self.__get_rows_partition(statement)
             if units is None:
                 units = rows_returned
-            start_partition = math.floor(start_rec / units)
-            end_partition = math.floor(end_rec / units) + 1
-            # Note that we assume this list is correctly sorted
-            bucket_objects = bucket_objects[start_partition:end_partition]
+                start_partition = math.floor(start_rec / units)
+                end_partition = math.floor(end_rec / units) + 1
+            else:
+                start_partition = math.floor(start_rec / units)
+                end_partition = math.floor(end_rec / units) + 1
+                # Note that we assume this list is correctly sorted
+                bucket_objects = bucket_objects[start_partition:end_partition]
         cos_client = ibm_boto3.client(service_name='s3',
                                       ibm_api_key_id=self.api_key,
                                       ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
