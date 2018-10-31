@@ -155,11 +155,11 @@ class SQLQuery():
         # First, remove the comments (NB: there will be errors if -- is in a string in the query, but I'm not writing a full parser here...)
         statement = re.sub(r'--[^\n]*', '', statement)
         # Find the number of rows we're partitioning by
-        m = re.match(r'.*PARTITIONED BY (\d+) ROWS.*', statement, re.MULTILINE | re.DOTALL)
+        m = re.match(r'.*PARTITIONED\s+EVERY\s+(\d+)\s+ROWS.*', statement, re.MULTILINE | re.DOTALL)
         if m is not None:
             return int(m.groups()[0])
         # Second, find the columns being partitioned
-        m = re.match(r'.*PARTITIONED BY \(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
+        m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
         partitioned_by = None
         if m is not None:
             partitioned_by = m.groups()[0]
@@ -262,7 +262,9 @@ class SQLQuery():
         if 'start_rec' in kwargs or 'end_rec' in kwargs:
             cut_front = start_rec - start_partition * units
             cut_back = end_rec - min(end_partition * units, rows_returned) + 1
-            # print("Cut from front: %d and back %d" % (cut_front, cut_back))
+            print("End Rec: {} End Partition {} Rows Returned {} Units {}".format(end_rec, end_partition, rows_returned, units))
+            print("Cut from front: %d and back %d" % (cut_front, cut_back))
+            print(result_df)
             result_df.drop(result_df.index[range(cut_front)], inplace=True)
             result_df.drop(result_df.index[range(cut_back,0)], inplace=True)
         return result_df
