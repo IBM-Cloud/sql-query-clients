@@ -24,6 +24,8 @@ from tornado.httpclient import HTTPClient, HTTPError
 from tornado.httputil import HTTPHeaders
 import sys
 import types
+import re
+import math
 import pandas as pd
 import numpy as np
 from botocore.client import Config
@@ -156,7 +158,34 @@ class SQLQuery():
     def __iter__(self):
         return 0
 
-    def get_result(self, jobId):
+    @staticmethod
+    def __get_rows_partition(statement):
+        # First, remove the comments (NB: there will be errors if -- is in a string in the query, but I'm not writing a full parser here...)
+        statement = re.sub(r'--[^\n]*', '', statement)
+        # Find the number of rows we're partitioning by
+        m = re.match(r'.*PARTITIONED\s+EVERY\s+(\d+)\s+ROWS.*', statement, re.MULTILINE | re.DOTALL)
+        if m is not None:
+            return int(m.groups()[0])
+        # Second, the data could be partitioned into buckets
+        m = re.match(r'.*PARTITIONED\s+INTO\s+(\d+)\s+BUCKETS.*', statement, re.MULTILINE | re.DOTALL)
+        if m is not None:
+            print("Partitioned into {} buckets".format(m.groups()[0]))
+            return None
+            # return int(m.groups()[0])
+
+        # Third, find the columns being partitioned
+        m = re.match(r'.*PARTITIONED\s+BY\s+\(([a-z,]+)\).*', statement, re.MULTILINE | re.DOTALL)
+        partitioned_by = None
+        if m is not None:
+            partitioned_by = m.groups()[0]
+        # Finally, find the number of records per partition
+        if partitioned_by is not None:
+            m = re.match(r'.*int\(monotonically_increasing_id\(\) /\s(\d+)\) as %s.*' % partitioned_by, statement)
+            if m is not None:
+                return int(m.groups()[0])
+        return None
+
+    def get_result(self, jobId, **kwargs):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
@@ -199,6 +228,24 @@ class SQLQuery():
             raise ValueError("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
                                                                                            response.code))
 
+        # We're attempting to paginate
+        if 'start_rec' in kwargs or 'end_rec' in kwargs:
+            statement = job_details['statement']
+            rows_returned = job_details['rows_returned']
+            start_rec = min(max(0, kwargs.get('start_rec', 0)), rows_returned-1)
+            end_rec = max(min(kwargs.get('end_rec', rows_returned), rows_returned), 0)
+            start_partition = 0
+            end_partition = 1
+            units = self.__get_rows_partition(statement)
+            if units is None:
+                units = rows_returned
+                start_partition = math.floor(start_rec / units)
+                end_partition = math.floor(end_rec / units) + 1
+            else:
+                start_partition = math.floor(start_rec / units)
+                end_partition = math.floor(end_rec / units) + 1
+                # Note that we assume this list is correctly sorted
+                bucket_objects = bucket_objects[start_partition:end_partition]
         cos_client = ibm_boto3.client(service_name='s3',
                                       ibm_api_key_id=self.api_key,
                                       ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
@@ -238,11 +285,16 @@ class SQLQuery():
             if 'result_df' not in locals():
                 result_df = partition_df
             else:
-                result_df = result_df.append(partition_df)
-
-        if 'result_df' not in locals():
-            return None
-
+                result_df = pd.concat([result_df, partition_df], ignore_index=True)
+        # And now cut off records
+        if 'start_rec' in kwargs or 'end_rec' in kwargs:
+            cut_front = start_rec - start_partition * units
+            cut_back = end_rec - min(end_partition * units, rows_returned) + 1
+            print("End Rec: {} End Partition {} Rows Returned {} Units {}".format(end_rec, end_partition, rows_returned, units))
+            print("Cut from front: %d and back %d" % (cut_front, cut_back))
+            print(result_df)
+            result_df.drop(result_df.index[range(cut_front)], inplace=True)
+            result_df.drop(result_df.index[range(cut_back,0)], inplace=True)
         return result_df
 
     def list_results(self, jobId):
