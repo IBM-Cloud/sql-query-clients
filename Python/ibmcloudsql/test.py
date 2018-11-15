@@ -31,13 +31,49 @@ print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClie
 print(result_df.head(200))
 
 print("Running test with partitioned CSV target:")
-jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET INTO cos://us-south/sqltempregional/ STORED AS CSV PARTITIONED BY (city)")
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET INTO {} STORED AS CSV PARTITIONED BY (city)".format(test_credentials.result_location))
 sqlClient.wait_for_job(jobId)
 result_objects_df = sqlClient.list_results(jobId)
 print(result_objects_df.head(200))
 result_df = sqlClient.get_result(jobId)
-print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
+print("jobId {} results are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
 print(result_df.head(200))
+
+print("Running test with paginated parquet target:")
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location), 2)
+sqlClient.wait_for_job(jobId)
+result_df = sqlClient.get_result(jobId, 1)
+print("jobId {} result page 1 is:".format(jobId))
+print(result_df.head(200))
+result_df = sqlClient.get_result(jobId, 5)
+print("jobId {} result page 5 is:".format(jobId))
+print(result_df.head(200))
+print("Trying to retrieve non existing page number:")
+try:
+    result_df = sqlClient.get_result(jobId, 6)
+except ValueError as e:
+    print(e)
+print("Trying to retrieve invalid page number:")
+try:
+    result_df = sqlClient.get_result(jobId, 0)
+except ValueError as e:
+    print(e)
+print("Trying to use wrong data type for page number:")
+try:
+    result_df = sqlClient.get_result(jobId, 'abc')
+except ValueError as e:
+    print(e)
+print("Trying to run SQL with invalid pagesize:")
+try:
+    jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location), 0)
+except ValueError as e:
+    print(e)
+print("Trying to run SQL with PARTITIONED clause plus pagesize:")
+try:
+    jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET PARTITIONED BY (city)".format(test_credentials.result_location), 2)
+except SyntaxError as e:
+    print(e)
+
 
 print("Running test with compound method invocation:")
 result_df = sqlClient.run_sql(

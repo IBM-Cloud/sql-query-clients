@@ -15,9 +15,9 @@ sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQU
 ## SQLQuery method list
  * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
  * `logon()` Needs to be called before any other method below. Logon is valid for one hour.
- * `submit_sql(sql_text)` returns `jobId`as string
+ * `submit_sql(sql_text, pagesize=None)` returns `jobId`as string. Optional pagesize parameter (in rows) for paginated result objects.
  * `wait_for_job(jobId)` Waits for job to end and returns job completion state (either `completed` or `failed`)
- * `get_result(jobId)` returns SQL result data frame
+ * `get_result(jobId, pagenumber=None)` returns SQL result data frame for entire result or for specified page of results.
  * `list_results(jobId)` returns a data frame with the list of result objects written
  * `delete_result(jobId)` deletes all result set objects in cloud object storage for the given jobId
  * `get_job(jobId)` returns details for the given SQL job as a json object

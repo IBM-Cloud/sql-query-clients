@@ -109,12 +109,24 @@ class SQLQuery():
         else:
             print("Authentication failed with http code {}".format(response.code))
 
-    def submit_sql(self, sql_text):
+    def submit_sql(self, sql_text, pagesize=None):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
         sqlData = {'statement': sql_text}
-        if self.target_cos:
+        # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
+        if pagesize or pagesize==0:
+            if type(pagesize) == int and pagesize>0:
+                if self.target_cos:
+                    sqlData["statement"] += " INTO {}".format(self.target_cos)
+                elif " INTO "  not in sql_text.upper():
+                    raise SyntaxError("Neither resultset_target parameter nor \"INTO\" clause specified.")
+                elif " PARTITIONED " in sql_text.upper():
+                    raise SyntaxError("Must not use PARTITIONED clause when specifying pagesize parameter.")
+                sqlData["statement"] += " PARTITIONED EVERY {} ROWS".format(pagesize)
+            else:
+                raise ValueError('pagesize parameter ({}) is not valid.'.format(pagesize))
+        elif self.target_cos:
             sqlData.update({'resultset_target': self.target_cos})
 
         try:
@@ -160,7 +172,7 @@ class SQLQuery():
     def __iter__(self):
         return 0
 
-    def get_result(self, jobId):
+    def get_result(self, jobId, pagenumber=None):
         if not self.logged_on:
             print("You are not logged on to IBM Cloud")
             return
@@ -209,43 +221,61 @@ class SQLQuery():
                                       config=Config(signature_version='oauth'),
                                       endpoint_url='https://' + result_cos_endpoint)
 
-        # Loop over result objects and read and concatenate them into result data frame
-        for bucket_object in bucket_objects:
+        # When pagenumber is specified we only retrieve that page. Otherwise we concatenate all pages to one DF:
+        if pagenumber or pagenumber==0:
+            if " PARTITIONED EVERY " not in job_details['statement'].upper():
+                raise ValueError("pagenumber ({}) specified, but the job was not submitted with pagination option.".format(pagenumber))
+            if type(pagenumber) == int and 0 < pagenumber <= len(bucket_objects):
+                if result_format == "csv":
+                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1])['Body']
+                    if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
+                    result_df = pd.read_csv(body)
+                elif result_format == "parquet":
+                    tmpfile = tempfile.NamedTemporaryFile()
+                    tempfilename = tmpfile.name
+                    cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1], Filename=tempfilename)
+                    result_df = pd.read_parquet(tempfilename)
+                    tmpfile.close()
+            else:
+                raise ValueError("Invalid pagenumner ({}) specified".format(pagenumber))
+        else:
+            # Loop over result objects and read and concatenate them into result data frame
+            for bucket_object in bucket_objects:
 
-            if result_format == "csv":
-                body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
-                # add missing __iter__ method, so pandas accepts body as file-like object
-                if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
+                if result_format == "csv":
+                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+                    # add missing __iter__ method, so pandas accepts body as file-like object
+                    if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
-                partition_df = pd.read_csv(body)
+                    partition_df = pd.read_csv(body)
 
-            elif result_format == "parquet":
-                tmpfile = tempfile.NamedTemporaryFile()
-                tempfilename = tmpfile.name
-                cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_object, Filename=tempfilename)
+                elif result_format == "parquet":
+                    tmpfile = tempfile.NamedTemporaryFile()
+                    tempfilename = tmpfile.name
+                    cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_object, Filename=tempfilename)
 
-                partition_df = pd.read_parquet(tempfilename)
-                tmpfile.close()
+                    partition_df = pd.read_parquet(tempfilename)
+                    tmpfile.close()
 
-            # Add columns from hive style partition naming schema
-            hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
-            for hive_partition_candidate in hive_partition_candidates:
-                if hive_partition_candidate.count('=') == 1: # Hive style folder names contain exactly one '='
-                    column = hive_partition_candidate.split('=')
-                    column_name = column[0]
-                    column_value = column[1]
-                    if column_value == '__HIVE_DEFAULT_PARTITION__': # Null value partition
-                        column_value = np.nan
-                    if len(column_name) > 0 and len(column_value) > 0:
-                        partition_df[column_name] = column_value
+                # Add columns from hive style partition naming schema
+                hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
+                for hive_partition_candidate in hive_partition_candidates:
+                    if hive_partition_candidate.count('=') == 1: # Hive style folder names contain exactly one '='
+                        column = hive_partition_candidate.split('=')
+                        column_name = column[0]
+                        column_value = column[1]
+                        if column_value == '__HIVE_DEFAULT_PARTITION__': # Null value partition
+                            column_value = np.nan
+                        if len(column_name) > 0 and len(column_value) > 0:
+                            partition_df[column_name] = column_value
+
+                if 'result_df' not in locals():
+                    result_df = partition_df
+                else:
+                    result_df = result_df.append(partition_df)
 
             if 'result_df' not in locals():
-                result_df = partition_df
-            else:
-                result_df = result_df.append(partition_df)
-
-        if 'result_df' not in locals():
-            return None
+                return None
 
         return result_df
 
@@ -433,10 +463,10 @@ class SQLQuery():
             print("Job list retrieval failed with http code {}".format(response.code))
         return job_list_df
 
-    def run_sql(self, sql_text):
+    def run_sql(self, sql_text, pagesize=None):
         self.logon()
         try:
-            jobId = self.submit_sql(sql_text)
+            jobId = self.submit_sql(sql_text, pagesize)
         except SyntaxError as e:
             return "SQL job submission failed. {}".format(str(e))
         if self.wait_for_job(jobId) == 'failed':
