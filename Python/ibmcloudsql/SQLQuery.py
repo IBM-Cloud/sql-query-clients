@@ -38,10 +38,12 @@ class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
         self.endpoint_alias_mapping = {
             "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
+            "us": "s3-api.us-geo.objectstorage.softlayer.net",
             "dal-us-geo": "s3-api.dal-us-geo.objectstorage.softlayer.net",
             "wdc-us-geo": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
             "sjc-us-geo": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
             "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
+            "eu": "s3.eu-geo.objectstorage.softlayer.net",
             "ams-eu-geo": "s3.ams-eu-geo.objectstorage.softlayer.net",
             "fra-eu-geo": "s3.fra-eu-geo.objectstorage.softlayer.net",
             "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
@@ -49,6 +51,7 @@ class SQLQuery():
             "us-east": "s3.us-east.objectstorage.softlayer.net",
             "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
             "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
+            "ap": "s3.ap-geo.objectstorage.softlayer.net",
             "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
             "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
             "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
@@ -58,6 +61,7 @@ class SQLQuery():
             "che01": "s3.che01.objectstorage.softlayer.net",
             "mel01": "s3.mel01.objectstorage.softlayer.net",
             "tor01": "s3.tor01.objectstorage.softlayer.net",
+            "mon01": "s3.mon01.objectstorage.softlayer.net",
             "osl01": "s3.osl01.objectstorage.softlayer.net",
             "sao01": "s3.sao01.objectstorage.softlayer.net",
             "seo01": "s3.seo01.objectstorage.softlayer.net"
