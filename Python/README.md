@@ -12,6 +12,9 @@ sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn)
 sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5 INTO {} STORED AS CSV'.format(my_target_cos_url)).head()
 ```
 
+## Demo notebook
+You can use IBM Watson Studio with the following [demo notebook](https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d) that shows some elaborate examples of using various aspects of ibmcloudsql.
+
 ## SQLQuery method list
  * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
  * `logon()` Needs to be called before any other method below. Logon is valid for one hour.
