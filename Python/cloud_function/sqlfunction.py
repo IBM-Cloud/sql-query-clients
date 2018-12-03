@@ -46,10 +46,6 @@ if sql_statement_text == "":
         quit()
     if sql_index == "":
         print({'info': 'No starting index specified. Will return starting with first row'})
-else:
-    if target_url == "":
-        print({'error': 'No Cloud Object Storage target URL specified'})
-        quit()
 if sql_max_results == "":
     print({'info': 'No max results specified. Will return all results'})
 

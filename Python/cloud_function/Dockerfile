@@ -1,6 +1,6 @@
 FROM ibmfunctions/action-python-v3
 
-RUN pip install ibmcloudsql
+RUN pip install  --force-reinstall ibmcloudsql
 
 ADD sqlfunction.py /action/sqlfunction.py
 RUN echo '#!/bin/bash\n\

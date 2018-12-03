@@ -6,4 +6,4 @@
 bx wsk action update sqlcloudfunction \
  --param apikey <your API key here> \
  --param sqlquery_instance_crn <your SQL Query instance CRN here> \
- --param target_url <your ibm cloud object storage URL (cos://<endpoint>/<bucket>/[prefix]) here>
+ --param target_url <your optional ibm cloud object storage URL (cos://<endpoint>/<bucket>/[prefix]) here>
