@@ -13,6 +13,7 @@ ibmcloudsql/pip-selfcheck.json
 ibmcloudsql/test_credentials.py
 cloud_function/my_bind_as_python_function.sh
 cloud_function/my_bind.sh
+cloud_function/build_and_test.sh
 cloud_function/virtualenv
 cloud_function/recreate_docker.sh
 

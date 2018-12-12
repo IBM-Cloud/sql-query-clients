@@ -22,17 +22,19 @@
 import sys
 import ibmcloudsql
 import json
+import os
 
 
 args = json.loads(sys.argv[1])
 ibmcloud_apikey = args.get("apikey", "")
 sql_instance_crn = args.get("sqlquery_instance_crn", "")
 target_url  = args.get("target_url", "")
-client_information = args.get("client_info", "ibmcloudsql cloud function")
+client_information = args.get("client_info", "ibmcloudsql cloud function: " + os.environ['__OW_ACTION_NAME'])
 sql_job_id = args.get("jobid", "")
 sql_statement_text = args.get("sql", "")
 sql_index = args.get("index", "")
 sql_max_results = args.get("maxresults", "")
+sql_async_execution = args.get("async", False)
 
 if ibmcloud_apikey == "":
     print({'error': 'No API key specified'})
@@ -54,26 +56,31 @@ sqlClient.logon()
 next_index = ""
 if sql_job_id == "":  
     jobId = sqlClient.submit_sql(sql_statement_text)
-    sqlClient.wait_for_job(jobId)
-    if sql_max_results == "":
-        result = sqlClient.get_result(jobId)
-    else:
-        result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
-        if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
+    if not sql_async_execution:
+        sqlClient.wait_for_job(jobId)
+        if sql_max_results == "":
+            result = sqlClient.get_result(jobId)
+        else:
+            result = sqlClient.get_result(jobId).iloc[0:sql_max_results]
+            if  len(sqlClient.get_result(jobId).index) > sql_max_results:  next_index = sql_max_results
 else:     
     first_index = sql_index
     last_index = first_index+sql_max_results   
     result = sqlClient.get_result(sql_job_id).iloc[first_index:last_index]
     jobId = sql_job_id
     if  len(sqlClient.get_result(sql_job_id).index) > last_index: next_index = last_index
-result_location = sqlClient.get_job(jobId)['resultset_location'] 
+jobDetails = sqlClient.get_job(jobId)
 access_code = 'import ibmcloudsql\n'
 access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
 access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn + ', ' + target_url + ')\n'
 access_code += 'sqlClient.logon()\n'
 access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
-result_json={'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.to_json(orient='table'), 'result_next_index': next_index}
+result_json={'action_name': os.environ['__OW_ACTION_NAME'], 'jobId': jobId, 'result_location': jobDetails['resultset_location'],
+             'async_execution': sql_async_execution, 'job_status':  jobDetails['status'], 'result_access_pandas': access_code}
+if not sql_async_execution:
+    result_json['result_set_sample'] = result.to_json(orient='table')
+    result_json['result_next_index'] = next_index
 print(json.dumps(result_json))
 
 

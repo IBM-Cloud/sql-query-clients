@@ -8,6 +8,7 @@ This directory contains a simple IBM Cloud Function in Python that calls a custo
  * `instance_crn` - The instance CRN of your SQL Query instance. Find it in IBM Cloud console dashboard for your instance. Press the `Instance CRN` button there to copy it toyour clipboard
  * `target_url` - Cloud Object Storage URL for the SQL result target. Format: `cos://<endpoint>/<bucket>/[<prefix>]`
  * `client_info` (optional) - Tracking information to identify your client application inside IBM cloud
+ * `async (optional) - When set to true: only submit the SQL statement and don't wait for it to finish. When not provided the default is false.
 
 ## 1. Optional: Build and publish SQL cloud function docker image using `build.sh`
 This creates a new docker image with all required dependencies and packages and the according client code to invoke the SQL Query API. You only need to do this if you made changes to things in this repository. You will then also need to adapt the `register.sh` script to reference your own pushed docker image. You can use the `invoke.py`script to test your docker image as an action locally before pushing to docker hub and creating a real IBM Cloud Function with it. Here is an [article](https://medium.com/openwhisk/advanced-debugging-of-openwhisk-actions-518414636932) describing the usage of this test script.

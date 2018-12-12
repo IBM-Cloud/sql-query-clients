@@ -33,23 +33,25 @@ def main(args):
     if sql_instance_crn == "":
         return {'error': 'No SQL Query instance CRN specified'}
     target_url  = args.get("target_url", "")
-    if target_url == "":
-        return {'error': 'No Cloud Object Storage target URL specified'}
-        client_information = args.get("client_info", "ibmcloudsql cloud function")
+    client_information = args.get("client_info", "ibmcloudsql cloud function")
     sql_statement_text = args.get("sql", "")
     if sql_statement_text == "":
         return {'error': 'No SQL statement specified'}
     sqlClient = ibmcloudsql.SQLQuery(ibmcloud_apikey, sql_instance_crn, target_url, client_info=client_information)
     sqlClient.logon()
-    jobId = sqlClient.submit_sql(sql_statement_text)
-    sqlClient.wait_for_job(jobId)
-    result = sqlClient.get_result(jobId)
-    result_location = sqlClient.get_job(jobId)['resultset_location']
+    try:
+        jobId = sqlClient.submit_sql(sql_statement_text)
+    except Error as e:
+        return {'Error': e}
+
+    jobDetails = sqlClient.get_job(jobId)
 
     access_code = 'import ibmcloudsql\n'
-    access_code += 'sqlClient = ibmcloudsql.SQLQuery(' + ibmcloud_apikey + ', ' + sql_instance_crn + ', ' + target_url + ')\n'
+    access_code += 'api_key="" # ADD YOUR API KEY HERE\n'
+    access_code += 'sqlClient = ibmcloudsql.SQLQuery(api_key, ' + sql_instance_crn + ', ' + target_url + ')\n'
     access_code += 'sqlClient.logon()\n'
     access_code += 'result_df = sqlClient.get_result(' + jobId + ')\n'
 
-    return {'jobId': jobId, 'result_location': result_location, 'result_access_pandas': access_code, 'result_set_sample': result.head(10).to_json(orient='table')}
+    return {'jobId': jobId, 'result_location': jobDetails['resultset_location'], 'job_status':  jobDetails['status'],
+            'result_access_pandas': access_code}
 
