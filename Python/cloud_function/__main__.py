@@ -41,7 +41,7 @@ def main(args):
     sqlClient.logon()
     try:
         jobId = sqlClient.submit_sql(sql_statement_text)
-    except Error as e:
+    except Exception as e:
         return {'Error': e}
 
     jobDetails = sqlClient.get_job(jobId)
