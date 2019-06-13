@@ -11,7 +11,8 @@ env:
 before_install: cd Python
 
 install:
-- pipenv sync
+- pipenv sync --dev
+- pipenv check
 
 script:
-- pipenv run python ibmcloudsql/test.py
+- PYTHONPATH=. pipenv run ci

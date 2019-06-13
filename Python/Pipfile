@@ -4,6 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
 
 [packages]
 ibm-cos-sdk = ">=2.4.4"
@@ -12,3 +14,8 @@ pandas = ">=0.24.2"
 pyarrow = "*"
 simplejson = {version = "*", markers = "python_version <= '3.4'"}
 tornado = "<=4.5.2"
+botocore = "*"
+
+[scripts]
+ci = "pytest"
+coverage = "pytest --cov=ibmcloudsql tests/"
