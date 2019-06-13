@@ -9,6 +9,7 @@ pytest-cov = "*"
 
 [packages]
 botocore = "*"
+urllib3 = "*"
 ibm-cos-sdk = ">=2.4.4"
 numpy = "*"
 pandas = "*"
