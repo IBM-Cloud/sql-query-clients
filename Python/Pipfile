@@ -1,0 +1,14 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+ibm-cos-sdk = ">=2.4.4"
+numpy = "*"
+pandas = ">=0.24.2"
+pyarrow = "*"
+simplejson = {version = "*", markers = "python_version <= '3.4'"}
+tornado = "<=4.5.2"
