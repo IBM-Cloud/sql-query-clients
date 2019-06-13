@@ -1,0 +1,25 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = ">=2.8.0,<=3.10.1"
+pytest-cov = "*"
+
+[packages]
+botocore = "*"
+urllib3 = "*"
+ibm-cos-sdk = ">=2.4.4"
+numpy = "*"
+pandas = "*"
+pyarrow = "*"
+simplejson = {version = "*", markers = "python_version <= '3.4'"}
+tornado = "<=4.5.2"
+# Pipenv can not pick them up from tornado so add them explicitly
+singledispatch = {version = "*", markers = "python_version < '3.4'"}
+backports-abc = {version = ">=0.4", markers = "python_version < '3.5'"}
+
+[scripts]
+ci = "pytest"
+coverage = "pytest --cov=ibmcloudsql tests/"
