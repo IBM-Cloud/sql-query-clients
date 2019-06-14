@@ -1,18 +1,24 @@
-language: python
-
-python:
-- '3.7'
-- '2.7'
-
-env:
-  global:
-  - PIPENV_IGNORE_VIRTUALENVS=1
-
-before_install: cd Python
-
-install:
-- pipenv sync --dev
-- pipenv check
-
-script:
-- PYTHONPATH=. pipenv run ci
+matrix:
+  include:
+  - language: node_js
+    node_js:
+    - '8'
+    before_install: cd Node
+  - language: python
+    python: '2.7'
+    env: PIPENV_IGNORE_VIRTUALENVS=1
+    before_install: cd Python
+    install:
+    - pipenv sync --dev
+    - pipenv check
+    script:
+    - PYTHONPATH=. pipenv run ci
+  - language: python
+    python: '3.7'
+    env: PIPENV_IGNORE_VIRTUALENVS=1
+    before_install: cd Python
+    install:
+    - pipenv sync --dev
+    - pipenv check
+    script:
+    - PYTHONPATH=. pipenv run ci
