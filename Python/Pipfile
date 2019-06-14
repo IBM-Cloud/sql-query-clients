@@ -8,8 +8,7 @@ pytest = ">=2.8.0,<=3.10.1"
 pytest-cov = "*"
 
 [packages]
-botocore = "*"
-urllib3 = "*"
+ibm-cos-sdk-core = ">=2.0.0"
 ibm-cos-sdk = ">=2.4.4"
 numpy = "*"
 pandas = "*"
