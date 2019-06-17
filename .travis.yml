@@ -4,7 +4,8 @@ matrix:
     node_js:
     - '8'
     before_install: cd Node
-  - language: python
+  - &py-ci
+    language: python
     python: '2.7'
     env: PIPENV_IGNORE_VIRTUALENVS=1
     before_install: cd Python
@@ -13,12 +14,5 @@ matrix:
     - pipenv check
     script:
     - PYTHONPATH=. pipenv run ci
-  - language: python
+  - <<: *py-ci
     python: '3.7'
-    env: PIPENV_IGNORE_VIRTUALENVS=1
-    before_install: cd Python
-    install:
-    - pipenv sync --dev
-    - pipenv check
-    script:
-    - PYTHONPATH=. pipenv run ci
