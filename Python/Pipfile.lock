@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "729f4e9a3c634f8a53a66acded5cff6687dc896598d2ce4b3d0bfc14b3cf9756"
+            "sha256": "fcac3c50b9f48587c4f1be13611d49f124dde8928b4a3d5befe2415d02eb9a11"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -29,14 +29,6 @@
                 "sha256:f0b0e4eba956de51238e17573b7087e852dfe9854afd2e9c873f73fc0ca0a6dd"
             ],
             "version": "==1.5"
-        },
-        "botocore": {
-            "hashes": [
-                "sha256:bba0548c3638877aebe3356819b5235b9d39cd4d2ebac9946979a93e412bb777",
-                "sha256:d3424b05a13ac38efe225a2f75a72d3f949513980f737001ae9279edd81b1b31"
-            ],
-            "index": "pypi",
-            "version": "==1.12.167"
         },
         "docutils": {
             "hashes": [
@@ -75,6 +67,7 @@
             "hashes": [
                 "sha256:94d6dded335f3c7951921f2391c258851d50ea21d0f9859bf46239a9a53f9553"
             ],
+            "index": "pypi",
             "version": "==2.4.4"
         },
         "ibm-cos-sdk-s3transfer": {
@@ -169,7 +162,6 @@
                 "sha256:7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb",
                 "sha256:c89805f6f4d64db21ed966fda138f8a5ed7a4fdbc1a8ee329ce1b74e3c74da9e"
             ],
-            "markers": "python_version >= '2.7'",
             "version": "==2.8.0"
         },
         "pytz": {
@@ -230,7 +222,6 @@
                 "sha256:2393a695cd12afedd0dcb26fe5d50d0cf248e5a66f75dbd89a3d4eb333a61af4",
                 "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"
             ],
-            "index": "pypi",
             "version": "==1.24.3"
         }
     },
@@ -329,7 +320,7 @@
                 "sha256:25199318e8cc3c25dcb45cbe084cc061051336d5a9ea2a12448d3d8cb748f742",
                 "sha256:5887121d7f7df3603bca2f710e7219f3eca0eb69e0b7cc6e0a022e155ac931a7"
             ],
-            "markers": "python_version == '3.4.*' or python_version < '3'",
+            "markers": "python_version < '3.6'",
             "version": "==2.3.3"
         },
         "pluggy": {

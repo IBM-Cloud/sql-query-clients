@@ -26,7 +26,7 @@ import sys
 import types
 import pandas as pd
 import numpy as np
-from botocore.client import Config
+from ibm_botocore.client import Config
 import ibm_boto3
 from datetime import datetime
 import pyarrow
