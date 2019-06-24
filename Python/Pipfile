@@ -13,7 +13,6 @@ ibm-cos-sdk = ">=2.4.4"
 numpy = "*"
 pandas = "*"
 pyarrow = "*"
-simplejson = {version = "*", markers = "python_version <= '3.4'"}
 tornado = "<=4.5.2"
 # Pipenv can not pick them up from tornado so add them explicitly
 singledispatch = {version = "*", markers = "python_version < '3.4'"}
