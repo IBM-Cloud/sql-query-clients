@@ -13,10 +13,7 @@ ibm-cos-sdk = ">=2.4.4"
 numpy = "*"
 pandas = "*"
 pyarrow = "*"
-tornado = "<=4.5.2"
-# Pipenv can not pick them up from tornado so add them explicitly
-singledispatch = {version = "*", markers = "python_version < '3.4'"}
-backports-abc = {version = ">=0.4", markers = "python_version < '3.5'"}
+requests = ">= 2.2.0"
 
 [scripts]
 ci = "pytest"
