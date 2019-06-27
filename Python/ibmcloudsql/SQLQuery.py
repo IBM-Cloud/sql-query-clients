@@ -135,7 +135,7 @@ class SQLQuery():
             resp = response.json()
             return resp['job_id']
         except HTTPError as e:
-            raise SyntaxError("SQL submission failed: {}".format(json.loads(e.response.body)['errors'][0]['message']))
+            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
 
     def wait_for_job(self, jobId):
         if not self.logged_on:
@@ -339,7 +339,7 @@ class SQLQuery():
 
         response = requests.get(
             result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
-            params=self.request_headers,
+            headers=self.request_headers,
             )
 
         if response.status_code == 200 or response.status_code == 201:
@@ -398,10 +398,10 @@ class SQLQuery():
 
         response = requests.get(
             "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
-            params=self.request_headers,
+            headers=self.request_headers,
             )
         if response.status_code == 200 or response.status_code == 201:
-            job_list = json.loads(response.body)
+            job_list = response.json()
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
                                                 'submit_time', 'end_time', 'rows_read', 'rows_returned', 'bytes_read',
                                                 'error', 'error_message'])
@@ -409,10 +409,10 @@ class SQLQuery():
                 response = requests.get(
                     "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
                                                                                                 self.instance_crn),
-                    params=self.request_headers,
+                    headers=self.request_headers,
                     )
                 if response.status_code == 200 or response.status_code == 201:
-                    job_details = json.loads(response.body)
+                    job_details = response.json()
                     error = None
                     error_message = None
                     rows_read = None
