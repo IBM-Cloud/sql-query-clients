@@ -89,14 +89,14 @@ class SQLQuery():
         else:
             data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
 
-        response = requests.put(
+        response = requests.post(
             'https://iam.bluemix.net/identity/token',
-            params=self.request_headers_xml_content,
+            headers=self.request_headers_xml_content,
             data=data)
 
         if response.status_code == 200:
             # print("Authentication successful")
-            bearer_response = json.loads(response.body)
+            bearer_response = response.json()
             self.bearer_token = 'Bearer ' + bearer_response['access_token']
             self.request_headers = {'Content-Type': 'application/json'}
             self.request_headers.update({'Accept':'application/json'})
