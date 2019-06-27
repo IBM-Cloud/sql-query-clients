@@ -130,12 +130,12 @@ class SQLQuery():
         try:
             response = requests.post(
                 "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
-                params=self.request_headers,
-                data=json.dumps(sqlData))
+                headers=self.request_headers,
+                json=sqlData)
+            resp = response.json()
+            return resp['job_id']
         except HTTPError as e:
             raise SyntaxError("SQL submission failed: {}".format(json.loads(e.response.body)['errors'][0]['message']))
-
-        return json.loads(response.body)['job_id']
 
     def wait_for_job(self, jobId):
         if not self.logged_on:
@@ -145,11 +145,11 @@ class SQLQuery():
         while True:
             response = requests.get(
                 "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
-                params=self.request_headers,
-                )
+                headers=self.request_headers,
+            )
 
             if response.status_code == 200 or response.status_code == 201:
-                status_response = json.loads(response.body)
+                status_response = response.json()
                 jobStatus = status_response['status']
                 if jobStatus == 'completed':
                     # print("Job {} has completed successfully".format(jobId))
@@ -173,7 +173,7 @@ class SQLQuery():
             return
 
         job_details = self.get_job(jobId)
-        job_status = job_details['status']
+        job_status = job_details.get('status')
         if job_status == 'running':
             raise ValueError('SQL job with jobId {} still running. Come back later.')
         elif job_status != 'completed':
@@ -192,12 +192,12 @@ class SQLQuery():
 
         response = requests.get(
             result_location,
-            params=self.request_headers,
-            )
+            headers=self.request_headers,
+        )
 
         if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.body)
+            responseBodyXMLroot = ET.fromstring(response.text)
             bucket_objects = []
             # Find result objects with data
             for contents in responseBodyXMLroot.findall('s3:Contents', ns):
@@ -381,15 +381,15 @@ class SQLQuery():
         try:
             response = requests.get(
                 "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
-                params=self.request_headers,
-                )
+                headers=self.request_headers,
+            )
         except HTTPError as e:
             if e.response.status_code == 400:
                 raise ValueError("SQL jobId {} unknown".format(jobId))
             else:
                 raise e
 
-        return json.loads(response.body)
+        return response.json()
 
     def get_jobs(self):
         if not self.logged_on:
