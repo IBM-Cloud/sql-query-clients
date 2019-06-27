@@ -292,8 +292,8 @@ class SQLQuery():
 
         response = requests.get(
             result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
-            params=self.request_headers,
-            )
+            headers=self.request_headers,
+        )
 
         if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
