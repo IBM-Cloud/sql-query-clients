@@ -94,7 +94,7 @@ class SQLQuery():
             params=self.request_headers_xml_content,
             data=data)
 
-        if response.code == 200:
+        if response.status_code == 200:
             # print("Authentication successful")
             bearer_response = json.loads(response.body)
             self.bearer_token = 'Bearer ' + bearer_response['access_token']
@@ -105,7 +105,7 @@ class SQLQuery():
             self.logged_on = True
 
         else:
-            print("Authentication failed with http code {}".format(response.code))
+            print("Authentication failed with http code {}".format(response.status_code))
 
     def submit_sql(self, sql_text, pagesize=None):
         if not self.logged_on:
@@ -148,7 +148,7 @@ class SQLQuery():
                 params=self.request_headers,
                 )
 
-            if response.code == 200 or response.code == 201:
+            if response.status_code == 200 or response.status_code == 201:
                 status_response = json.loads(response.body)
                 jobStatus = status_response['status']
                 if jobStatus == 'completed':
@@ -159,7 +159,7 @@ class SQLQuery():
                     print("Job {} has failed".format(jobId))
                     break
             else:
-                print("Job status check failed with http code {}".format(response.code))
+                print("Job status check failed with http code {}".format(response.status_code))
                 break
             time.sleep(2)
         return jobStatus
@@ -195,7 +195,7 @@ class SQLQuery():
             params=self.request_headers,
             )
 
-        if response.code == 200 or response.code == 201:
+        if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
             bucket_objects = []
@@ -207,7 +207,7 @@ class SQLQuery():
                 #print("Job result for {} stored at: {}".format(jobId, result_object))
         else:
             raise ValueError("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
-                                                                                           response.code))
+                                                                                           response.status_code))
 
         cos_client = ibm_boto3.client(service_name='s3',
                                       ibm_api_key_id=self.api_key,
@@ -295,7 +295,7 @@ class SQLQuery():
             params=self.request_headers,
             )
 
-        if response.code == 200 or response.code == 201:
+        if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
             bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
@@ -311,7 +311,7 @@ class SQLQuery():
                 return
         else:
             print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
-                                                                                           response.code))
+                                                                                           response.status_code))
             return
 
         result_objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
@@ -342,7 +342,7 @@ class SQLQuery():
             params=self.request_headers,
             )
 
-        if response.code == 200 or response.code == 201:
+        if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
             responseBodyXMLroot = ET.fromstring(response.body)
             bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
@@ -356,7 +356,7 @@ class SQLQuery():
                 return
         else:
             print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
-                                                                                           response.code))
+                                                                                           response.status_code))
             return
 
         cos_client = ibm_boto3.client(service_name='s3',
@@ -384,7 +384,7 @@ class SQLQuery():
                 params=self.request_headers,
                 )
         except HTTPError as e:
-            if e.response.code == 400:
+            if e.response.status_code == 400:
                 raise ValueError("SQL jobId {} unknown".format(jobId))
             else:
                 raise e
@@ -400,7 +400,7 @@ class SQLQuery():
             "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
             params=self.request_headers,
             )
-        if response.code == 200 or response.code == 201:
+        if response.status_code == 200 or response.status_code == 201:
             job_list = json.loads(response.body)
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
                                                 'submit_time', 'end_time', 'rows_read', 'rows_returned', 'bytes_read',
@@ -411,7 +411,7 @@ class SQLQuery():
                                                                                                 self.instance_crn),
                     params=self.request_headers,
                     )
-                if response.code == 200 or response.code == 201:
+                if response.status_code == 200 or response.status_code == 201:
                     job_details = json.loads(response.body)
                     error = None
                     error_message = None
@@ -446,10 +446,10 @@ class SQLQuery():
                                                        }], ignore_index=True)
                 else:
                     print("Job details retrieval for jobId {} failed with http code {}".format(job['job_id'],
-                                                                                               response.code))
+                                                                                               response.status_code))
                     break
         else:
-            print("Job list retrieval failed with http code {}".format(response.code))
+            print("Job list retrieval failed with http code {}".format(response.status_code))
         return job_list_df
 
     def run_sql(self, sql_text, pagesize=None):
