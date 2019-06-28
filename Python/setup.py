@@ -21,9 +21,9 @@ def readme():
         return f.read()
 
 setup(name='ibmcloudsql',
-      version='0.2.23',
+      version='0.3.0',
       python_requires='>=2.7, <4',
-      install_requires=['pandas','tornado<=4.5.2','ibm-cos-sdk-core','ibm-cos-sdk','numpy',
+      install_requires=['pandas','requests','ibm-cos-sdk-core','ibm-cos-sdk','numpy',
                         'pyarrow'],
       description='Python client for interacting with IBM Cloud SQL Query service',
       url='https://github.com/IBM-Cloud/sql-query-clients',
