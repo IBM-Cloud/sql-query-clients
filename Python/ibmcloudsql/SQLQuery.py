@@ -16,7 +16,6 @@
 
 import sys
 import urllib
-import json
 import time
 import xml.etree.ElementTree as ET
 import sys
@@ -29,7 +28,6 @@ import ibm_boto3
 from datetime import datetime
 import pyarrow
 import os
-import json
 import tempfile
 
 
