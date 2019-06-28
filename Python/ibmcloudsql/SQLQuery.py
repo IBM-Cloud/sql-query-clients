@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 import sys
 import types
 import requests
+from requests.exceptions import HTTPError
 import pandas as pd
 import numpy as np
 from ibm_botocore.client import Config
