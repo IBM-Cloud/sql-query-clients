@@ -226,9 +226,9 @@ class SQLQuery():
                 elif result_format == "parquet":
                     tmpfile = tempfile.NamedTemporaryFile()
                     tempfilename = tmpfile.name
+                    tmpfile.close()
                     cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1], Filename=tempfilename)
                     result_df = pd.read_parquet(tempfilename)
-                    tmpfile.close()
             else:
                 raise ValueError("Invalid pagenumner ({}) specified".format(pagenumber))
         else:
@@ -245,10 +245,10 @@ class SQLQuery():
                 elif result_format == "parquet":
                     tmpfile = tempfile.NamedTemporaryFile()
                     tempfilename = tmpfile.name
+                    tmpfile.close()
                     cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_object, Filename=tempfilename)
 
                     partition_df = pd.read_parquet(tempfilename)
-                    tmpfile.close()
 
                 # Add columns from hive style partition naming schema
                 hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
