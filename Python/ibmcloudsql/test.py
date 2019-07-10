@@ -108,7 +108,7 @@ print(sqlClient.get_jobs().head(200))
 pd.set_option('display.max_colwidth', -1)
 
 print("COS Summary:")
-print(sqlClient.get_cos_summary("cos://us-south/cloudant-access-logs-us-south/cloudant-access-logs/dt=2018-02-02"))
+print(sqlClient.get_cos_summary(test_credentials.result_location))
 
 print("Test with target URL as separate parameter")
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, test_credentials.result_location, client_info='ibmcloudsql test')
@@ -121,4 +121,4 @@ result_df = sqlClient.get_result(jobId)
 print(result_df.head(200))
 
 print("Test job history export to COS")
-sqlClient.export_job_history("cos://us-south/sqltempregional/my_job_history/")
+sqlClient.export_job_history(test_credentials.result_location + "/my_job_history/")
