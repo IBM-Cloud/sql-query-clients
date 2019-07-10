@@ -2,6 +2,23 @@
 
 Allows you to run SQL statements in the IBM Cloud on data stored on object storage::
 
+## Building and testing the library locally
+### Set up Python environment
+Run `source ./setup_env.sh` which creates and activates a clean virtual Python environment. It uses Python 2.7 by default. Adapt line 2 inside the script if you want a different version.
+### Install the local code in your Python environment
+Run `./_install`.
+### Test the library locally
+1. Create a file `ibmcloudsql/test_credentials.py` with the following three lines and your according properties:
+```
+apikey='<your IBM Cloud API key>'
+instance_crn='<your SQL Query instance CRN>'
+result_location='<COS URI of default result location for your SQL result sets>'
+```
+2. Run `python ibmcloudsql/test.py`.
+### Packaging and publishing distribution
+1. Make sure to increase `version=...` in `setup.py` before creating a new package.
+2. Run `package.sh`. It will prompt for user and password that must be authorized for package `ibmcloudsql` on pypi.org.
+
 ## Example usage
 ```
 import ibmcloudsql
