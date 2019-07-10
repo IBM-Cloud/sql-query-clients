@@ -133,6 +133,9 @@ class SQLQuery():
                 json=sqlData)
             resp = response.json()
             return resp['job_id']
+        except KeyError as e:
+            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
         except HTTPError as e:
             raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
 
@@ -296,7 +299,7 @@ class SQLQuery():
 
         if response.status_code == 200 or response.status_code == 201:
             ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.body)
+            responseBodyXMLroot = ET.fromstring(response.content)
             bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
             bucket_objects = []
             if responseBodyXMLroot.findall('s3:Contents', ns):
