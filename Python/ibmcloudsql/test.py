@@ -122,3 +122,17 @@ print(result_df.head(200))
 
 print("Test job history export to COS")
 sqlClient.export_job_history(test_credentials.result_location + "/my_job_history/")
+
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
+sqlClient.logon()
+
+print("Running EU test with individual method invocation and Parquet target:")
+sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
+sqlClient_eu.logon()
+jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
+sqlClient_eu.wait_for_job(jobId)
+result_df = sqlClient_eu.get_result(jobId)
+print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
+print(result_df.head(200))
+print("EU SQL UI Link:")
+sqlClient_eu.sql_ui_link()

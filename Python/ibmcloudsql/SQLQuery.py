@@ -128,7 +128,7 @@ class SQLQuery():
 
         try:
             response = requests.post(
-                "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 headers=self.request_headers,
                 json=sqlData)
             resp = response.json()
@@ -146,7 +146,7 @@ class SQLQuery():
 
         while True:
             response = requests.get(
-                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 headers=self.request_headers,
             )
 
@@ -382,7 +382,7 @@ class SQLQuery():
 
         try:
             response = requests.get(
-                "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 headers=self.request_headers,
             )
         except HTTPError as e:
@@ -399,7 +399,7 @@ class SQLQuery():
             return
 
         response = requests.get(
-            "https://sql-api.ng.bluemix.net/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+            "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
             headers=self.request_headers,
             )
         if response.status_code == 200 or response.status_code == 201:
@@ -409,7 +409,7 @@ class SQLQuery():
                                                 'error', 'error_message'])
             for job in job_list['jobs']:
                 response = requests.get(
-                    "https://sql-api.ng.bluemix.net/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
+                    "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
                                                                                                 self.instance_crn),
                     headers=self.request_headers,
                     )
@@ -473,10 +473,10 @@ class SQLQuery():
             return
 
         if sys.version_info >= (3, 0):
-            print ("https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
+            print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
                 urllib.parse.unquote(self.instance_crn)))
         else:
-            print ("https://sql.ng.bluemix.net/sqlquery/?instance_crn={}".format(
+            print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
                 urllib.unquote(self.instance_crn).decode('utf8')))
 
     def get_cos_summary(self, url):
