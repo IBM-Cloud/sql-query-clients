@@ -30,6 +30,25 @@ result_df = sqlClient.get_result(jobId)
 print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
 print(result_df.head(200))
 
+print("Running test with individual method invocation and JSON target:")
+jobId = sqlClient.submit_sql(
+        "WITH orders as (SELECT customerid, named_struct('count', count(orderid), 'orderids', collect_list(orderid)) orders \
+                FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET  \
+                GROUP BY customerid)    \
+        SELECT c.customerid,    \
+               named_struct('name', companyname, 'contact', contactname, 'tile', contacttitle, 'phone', PHONE) company, \
+        	   named_struct('street', address, 'city', city, 'zip', postalcode, 'country', country) address,   \
+        	   orders  \
+        FROM cos://us-geo/sql/customers.parquet STORED AS PARQUET c,    \
+             orders o   \
+        WHERE o.customerid=c.customerid \
+        INTO {} STORED AS JSON".format(test_credentials.result_location))
+sqlClient.wait_for_job(jobId)
+result_df = sqlClient.get_result(jobId)
+print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
+print(result_df.head(10))
+
+
 print("Running test with partitioned CSV target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET INTO {} STORED AS CSV PARTITIONED BY (city)".format(test_credentials.result_location))
 sqlClient.wait_for_job(jobId)
@@ -74,7 +93,29 @@ try:
 except SyntaxError as e:
     print(e)
 
-
+    
+print("Running test with paginated JSON target:")
+jobId = sqlClient.submit_sql(
+        "WITH orders as (SELECT customerid, named_struct('count', count(orderid), 'orderids', collect_list(orderid)) orders \
+                FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET  \
+                GROUP BY customerid)    \
+        SELECT c.customerid,    \
+               named_struct('name', companyname, 'contact', contactname, 'tile', contacttitle, 'phone', PHONE) company, \
+        	   named_struct('street', address, 'city', city, 'zip', postalcode, 'country', country) address,   \
+        	   orders  \
+        FROM cos://us-geo/sql/customers.parquet STORED AS PARQUET c,    \
+             orders o   \
+        WHERE o.customerid=c.customerid \
+        INTO {} STORED AS JSON".format(test_credentials.result_location), pagesize=10)
+sqlClient.wait_for_job(jobId)
+result_df_list = sqlClient.list_results(jobId)
+print("jobId {} result pages:".format(jobId))
+print(result_df_list.head(200))
+result_df = sqlClient.get_result(jobId, pagenumber=2)
+print("jobId {} result page 2 is:".format(jobId))
+print(result_df.head(10))
+    
+    
 print("Running test with compound method invocation:")
 result_df = sqlClient.run_sql(
 "WITH orders_shipped AS \

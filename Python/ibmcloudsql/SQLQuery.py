@@ -189,7 +189,7 @@ class SQLQuery():
         result_location = "https://{}/{}?prefix={}".format(result_cos_endpoint, result_cos_bucket, result_cos_prefix)
         result_format = job_details['resultset_format']
 
-        if result_format not in ["csv", "parquet"]:
+        if result_format not in ["csv", "parquet", "json"]:
             raise ValueError("Result object format {} currently not supported by get_result().".format(result_format))
 
         response = requests.get(
@@ -232,6 +232,11 @@ class SQLQuery():
                     tmpfile.close()
                     cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1], Filename=tempfilename)
                     result_df = pd.read_parquet(tempfilename)
+                elif result_format == "json":
+                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1])['Body']
+                    body = body.read().decode('utf-8')
+                    result_df = pd.read_json(body,lines=True)
+                    
             else:
                 raise ValueError("Invalid pagenumner ({}) specified".format(pagenumber))
         else:
@@ -253,6 +258,12 @@ class SQLQuery():
 
                     partition_df = pd.read_parquet(tempfilename)
 
+                elif result_format == "json":
+                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+                    body = body.read().decode('utf-8')
+
+                    partition_df = pd.read_json(body, lines=True)
+                    
                 # Add columns from hive style partition naming schema
                 hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
                 for hive_partition_candidate in hive_partition_candidates:
