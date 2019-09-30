@@ -154,8 +154,6 @@ class SQLQuery():
                 status_response = response.json()
                 jobStatus = status_response['status']
                 if jobStatus == 'completed':
-                    # print("Job {} has completed successfully".format(jobId))
-                    resultset_location = status_response['resultset_location']
                     break
                 if jobStatus == 'failed':
                     print("Job {} has failed".format(jobId))
