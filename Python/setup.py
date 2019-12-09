@@ -21,7 +21,7 @@ def readme():
         return f.read()
 
 setup(name='ibmcloudsql',
-      version='0.3.7',
+      version='0.3.8',
       python_requires='>=2.7, <4',
       install_requires=['pandas','requests','ibm-cos-sdk-core','ibm-cos-sdk','numpy',
                         'pyarrow'],

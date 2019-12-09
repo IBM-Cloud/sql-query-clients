@@ -490,6 +490,8 @@ class SQLQuery():
         endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
         bucket = url.split("/")[3]
         prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
+        if len(prefix) > 0 and prefix[-1] == '*':
+            prefix = prefix[:-1]
 
         cos_client = ibm_boto3.client(service_name='s3',
                                       ibm_api_key_id=self.api_key,
@@ -549,6 +551,8 @@ class SQLQuery():
         bucket = url.split("/")[3]
         prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
         object_url = "https://{}/{}/{}".format(endpoint, bucket, prefix)
+        if object_url[-1] == '*':
+            object_url = object_url[:-1]
         fourth_slash = object_url.replace('/', 'X', 3).find('/')
 
         response = requests.get(
