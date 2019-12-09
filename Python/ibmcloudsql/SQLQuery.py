@@ -82,11 +82,14 @@ class SQLQuery():
 
         self.logged_on = False
 
-    def logon(self):
+    def logon(self, force=False):
         if sys.version_info >= (3, 0):
             data = urllib.parse.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
         else:
             data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
+
+        if self.logged_on and not force and (datetime.now() - self.last_logon).seconds < 300:
+            return
 
         response = requests.post(
             'https://iam.bluemix.net/identity/token',
@@ -102,14 +105,13 @@ class SQLQuery():
             self.request_headers.update({'User-Agent': self.user_agent})
             self.request_headers.update({'authorization': self.bearer_token})
             self.logged_on = True
+            self.last_logon = datetime.now()
 
         else:
             print("Authentication failed with http code {}".format(response.status_code))
 
     def submit_sql(self, sql_text, pagesize=None):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
         sqlData = {'statement': sql_text}
         # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
         if pagesize or pagesize==0:
@@ -140,9 +142,7 @@ class SQLQuery():
             raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
 
     def wait_for_job(self, jobId):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return "Not logged on"
+        self.logon()
 
         while True:
             response = requests.get(
@@ -168,9 +168,7 @@ class SQLQuery():
         return 0
 
     def get_result(self, jobId, pagenumber=None):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         job_details = self.get_job(jobId)
         job_status = job_details.get('status')
@@ -285,9 +283,7 @@ class SQLQuery():
         return result_df
 
     def list_results(self, jobId):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         job_details = self.get_job(jobId)
         if job_details['status'] == 'running':
@@ -332,9 +328,7 @@ class SQLQuery():
         return result_objects_df
 
     def delete_result(self, jobId):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         job_details = self.get_job(jobId)
         if job_details['status'] == 'running':
@@ -385,9 +379,7 @@ class SQLQuery():
         return deleted_list_df
 
     def get_job(self, jobId):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         try:
             response = requests.get(
@@ -403,9 +395,7 @@ class SQLQuery():
         return response.json()
 
     def get_jobs(self):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         response = requests.get(
             "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
@@ -477,9 +467,7 @@ class SQLQuery():
             return self.get_result(jobId)
 
     def sql_ui_link(self):
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         if sys.version_info >= (3, 0):
             print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
@@ -496,9 +484,7 @@ class SQLQuery():
                 num /= 1024.0
             return "%.1f %s%s" % (num, 'Y', suffix)
 
-        if not self.logged_on:
-            print("You are not logged on to IBM Cloud")
-            return
+        self.logon()
 
         endpoint = url.split("/")[2]
         endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
@@ -554,6 +540,46 @@ class SQLQuery():
                 'newest_object_timestamp': newest_modification,
                 'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
                 'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
+
+    def list_cos_objects(self, url):
+        self.logon()
+
+        endpoint = url.split("/")[2]
+        endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
+        bucket = url.split("/")[3]
+        prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
+        object_url = "https://{}/{}/{}".format(endpoint, bucket, prefix)
+        fourth_slash = object_url.replace('/', 'X', 3).find('/')
+
+        response = requests.get(
+            object_url[:fourth_slash] + '?prefix=' + object_url[fourth_slash + 1:],
+            headers=self.request_headers,
+        )
+
+        if response.status_code == 200 or response.status_code == 201:
+            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            responseBodyXMLroot = ET.fromstring(response.content)
+            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_objects = []
+            if responseBodyXMLroot.findall('s3:Contents', ns):
+                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
+                    key = contents.find('s3:Key', ns)
+                    object_url = "cos://{}/{}/{}".format(endpoint, bucket_name, key.text)
+                    size = contents.find('s3:Size', ns)
+                    bucket_objects.append({'Key': object_url, 'Size': size.text})
+            else:
+                print('There are no objects in location {}'.format(url))
+                return
+        else:
+            print("Object listing for location {} failed with http code {}".format(url, response.status_code))
+            return
+
+        objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
+        for object in bucket_objects:
+            objects_df = objects_df.append([{'ObjectURL': object['Key'], 'Size': object['Size']}], ignore_index=True)
+
+        return objects_df
+
 
     def export_job_history(self, cos_url=None):
         if cos_url:

@@ -151,6 +151,10 @@ pd.set_option('display.max_colwidth', -1)
 print("COS Summary:")
 print(sqlClient.get_cos_summary(test_credentials.result_location))
 
+print("COS Object Listing:")
+objects_df = sqlClient.list_cos_objects(test_credentials.result_location)
+print(objects_df.head(100))
+
 print("Test with target URL as separate parameter")
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()

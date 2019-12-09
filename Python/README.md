@@ -34,17 +34,18 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
 
 ## SQLQuery method list
  * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
- * `logon()` Needs to be called before any other method below. Logon is valid for one hour.
- * `submit_sql(sql_text, pagesize=None)` returns `jobId`as string. Optional pagesize parameter (in rows) for paginated result objects.
+ * `logon(Force=False)` Needs to be called before any other method below. Logon is valid for one hour. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater `Force=True`.
+ * `submit_sql(sql_text, pagesize=None)` Returns `jobId`as string. Optional pagesize parameter (in rows) for paginated result objects.
  * `wait_for_job(jobId)` Waits for job to end and returns job completion state (either `completed` or `failed`)
  * `get_result(jobId, pagenumber=None)` returns SQL result data frame for entire result or for specified page of results.
- * `list_results(jobId)` returns a data frame with the list of result objects written
- * `delete_result(jobId)` deletes all result set objects in cloud object storage for the given jobId
- * `get_job(jobId)` returns details for the given SQL job as a json object
- * `get_jobs()` returns the list of recent 30 submitted SQL jobs with all details as a data frame
+ * `list_results(jobId)` Returns a data frame with the list of result objects written
+ * `delete_result(jobId)` Deletes all result set objects in cloud object storage for the given jobId
+ * `get_job(jobId)` Returns details for the given SQL job as a json object
+ * `get_jobs()` Returns the list of recent 30 submitted SQL jobs with all details as a data frame
  * `run_sql(sql_text)` Compound method that calls `submit_sql`, `wait_for_job` and `wait_for_job` in sequenceA
  * `sql_ui_link()` Returns browser link for SQL Query web console for currently configured instance
- * `get_cos_summary(cos_url)` Returns summary for stored number of objects and volume for a given cos url as a  json
+ * `get_cos_summary(cos_url)` Returns summary for stored number of objects and volume for a given cos url as a json
+ * `list_cos_objects(cos_url)` Returns a data frame with the list of objects found in the given cos url
  * `export_job_history(cos_url)` Exports new jobs as parquet file to the given cos url
 
 ## Constructor options
