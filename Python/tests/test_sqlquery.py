@@ -26,3 +26,4 @@ def test_list_objects(mock_cos):
     mock_cos.return_value.Bucket.return_value.objects.filter.assert_called_once_with(Prefix='prefix-2/')
 
     assert result.shape == (1, 2)
+    assert list(result) == ['bucket_name', 'key']
