@@ -572,7 +572,7 @@ class SQLQuery():
         obj_summary_columns = ['bucket_name', 'key']
 
         return pd.DataFrame(
-            [[obj['bucket_name'], obj['key']] for obj in objects],
+            [[obj.bucket_name, obj.key] for obj in objects],
             columns=obj_summary_columns
         )
 
