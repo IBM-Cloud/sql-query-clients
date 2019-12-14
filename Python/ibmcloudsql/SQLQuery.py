@@ -82,6 +82,17 @@ class SQLQuery():
 
         self.logged_on = False
 
+    def _get_cos_resource(self, endpoint=''):
+        '''
+        Create a resource service client of COS.
+        '''
+        return ibm_boto3.resource('s3',
+                   ibm_api_key_id=self.api_key,
+                   ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                   config=Config(signature_version='oauth'),
+                   endpoint_url='https://{}'.format(endpoint)
+               )
+
     def logon(self, force=False):
         if sys.version_info >= (3, 0):
             data = urllib.parse.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
@@ -555,34 +566,15 @@ class SQLQuery():
             object_url = object_url[:-1]
         fourth_slash = object_url.replace('/', 'X', 3).find('/')
 
-        response = requests.get(
-            object_url[:fourth_slash] + '?prefix=' + object_url[fourth_slash + 1:],
-            headers=self.request_headers,
+        cos = self._get_cos_resource(endpoint)
+
+        objects = cos.Bucket(bucket).objects.filter(Prefix=prefix)
+        obj_summary_columns = ['bucket_name', 'key']
+
+        return pd.DataFrame(
+            [[obj['bucket_name'], obj['key']] for obj in objects],
+            columns=obj_summary_columns
         )
-
-        if response.status_code == 200 or response.status_code == 201:
-            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.content)
-            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
-            bucket_objects = []
-            if responseBodyXMLroot.findall('s3:Contents', ns):
-                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                    key = contents.find('s3:Key', ns)
-                    object_url = "cos://{}/{}/{}".format(endpoint, bucket_name, key.text)
-                    size = contents.find('s3:Size', ns)
-                    bucket_objects.append({'Key': object_url, 'Size': size.text})
-            else:
-                print('There are no objects in location {}'.format(url))
-                return
-        else:
-            print("Object listing for location {} failed with http code {}".format(url, response.status_code))
-            return
-
-        objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
-        for object in bucket_objects:
-            objects_df = objects_df.append([{'ObjectURL': object['Key'], 'Size': object['Size']}], ignore_index=True)
-
-        return objects_df
 
 
     def export_job_history(self, cos_url=None):
