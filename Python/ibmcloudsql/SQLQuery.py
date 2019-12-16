@@ -34,36 +34,6 @@ import tempfile
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
-        self.endpoint_alias_mapping = {
-            "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
-            "us": "s3-api.us-geo.objectstorage.softlayer.net",
-            "dal-us-geo": "s3-api.dal-us-geo.objectstorage.softlayer.net",
-            "wdc-us-geo": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
-            "sjc-us-geo": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
-            "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
-            "eu": "s3.eu-geo.objectstorage.softlayer.net",
-            "ams-eu-geo": "s3.ams-eu-geo.objectstorage.softlayer.net",
-            "fra-eu-geo": "s3.fra-eu-geo.objectstorage.softlayer.net",
-            "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
-            "us-south": "s3.us-south.objectstorage.softlayer.net",
-            "us-east": "s3.us-east.objectstorage.softlayer.net",
-            "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
-            "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
-            "ap": "s3.ap-geo.objectstorage.softlayer.net",
-            "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
-            "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
-            "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
-            "eu-de": "s3.eu-de.objectstorage.softlayer.net",
-            "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
-            "ams03": "s3.ams03.objectstorage.softlayer.net",
-            "che01": "s3.che01.objectstorage.softlayer.net",
-            "mel01": "s3.mel01.objectstorage.softlayer.net",
-            "tor01": "s3.tor01.objectstorage.softlayer.net",
-            "mon01": "s3.mon01.objectstorage.softlayer.net",
-            "osl01": "s3.osl01.objectstorage.softlayer.net",
-            "sao01": "s3.sao01.objectstorage.softlayer.net",
-            "seo01": "s3.seo01.objectstorage.softlayer.net"
-        }
         self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
@@ -82,16 +52,56 @@ class SQLQuery():
 
         self.logged_on = False
 
-    def _get_cos_resource(self, endpoint=''):
+    def _get_cos_client(self, endpoint=''):
         '''
-        Create a resource service client of COS.
+        Create a service client of COS.
         '''
-        return ibm_boto3.resource('s3',
+        return ibm_boto3.client('s3',
                    ibm_api_key_id=self.api_key,
                    ibm_auth_endpoint='https://iam.cloud.ibm.com/identity/token',
                    config=Config(signature_version='oauth'),
                    endpoint_url='https://{}'.format(endpoint)
                )
+
+    class ParsedUrl:
+        def __init__(self, url):
+            self.endpoint_alias_mapping = {
+                "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
+                "us": "s3-api.us-geo.objectstorage.softlayer.net",
+                "dal-us-geo": "s3-api.dal-us-geo.objectstorage.softlayer.net",
+                "wdc-us-geo": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
+                "sjc-us-geo": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
+                "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
+                "eu": "s3.eu-geo.objectstorage.softlayer.net",
+                "ams-eu-geo": "s3.ams-eu-geo.objectstorage.softlayer.net",
+                "fra-eu-geo": "s3.fra-eu-geo.objectstorage.softlayer.net",
+                "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
+                "us-south": "s3.us-south.objectstorage.softlayer.net",
+                "us-east": "s3.us-east.objectstorage.softlayer.net",
+                "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
+                "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
+                "ap": "s3.ap-geo.objectstorage.softlayer.net",
+                "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
+                "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
+                "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
+                "eu-de": "s3.eu-de.objectstorage.softlayer.net",
+                "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
+                "ams03": "s3.ams03.objectstorage.softlayer.net",
+                "che01": "s3.che01.objectstorage.softlayer.net",
+                "mel01": "s3.mel01.objectstorage.softlayer.net",
+                "tor01": "s3.tor01.objectstorage.softlayer.net",
+                "mon01": "s3.mon01.objectstorage.softlayer.net",
+                "osl01": "s3.osl01.objectstorage.softlayer.net",
+                "sao01": "s3.sao01.objectstorage.softlayer.net",
+                "seo01": "s3.seo01.objectstorage.softlayer.net"
+            }
+            self.endpoint = url.split("/")[2]
+            self.endpoint = self.endpoint_alias_mapping.get(self.endpoint, self.endpoint)
+            self.bucket = url.split("/")[3]
+            self.prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
+            if len(self.prefix) > 0 and self.prefix[-1] == '*':
+                self.prefix = self.prefix[:-1]
+                self.fourth_slash = url.replace('/', 'X', 3).find('/')
 
     def logon(self, force=False):
         if sys.version_info >= (3, 0):
@@ -188,12 +198,8 @@ class SQLQuery():
         elif job_status != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
-        result_cos_url = job_details['resultset_location']
-        provided_cos_endpoint = result_cos_url.split("/")[2]
-        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
-        result_cos_bucket = result_cos_url.split("/")[3]
-        result_cos_prefix = result_cos_url[result_cos_url.replace('/', 'X', 3).find('/')+1:]
-        result_location = "https://{}/{}?prefix={}".format(result_cos_endpoint, result_cos_bucket, result_cos_prefix)
+        url_parsed = self.ParsedUrl(job_details['resultset_location'])
+        result_location = "https://{}/{}?prefix={}".format(url_parsed.endpoint, url_parsed.bucket, url_parsed.prefix)
         result_format = job_details['resultset_format']
 
         if result_format not in ["csv", "parquet", "json"]:
@@ -218,11 +224,7 @@ class SQLQuery():
             raise ValueError("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
                                                                                            response.status_code))
 
-        cos_client = ibm_boto3.client(service_name='s3',
-                                      ibm_api_key_id=self.api_key,
-                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
-                                      config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + result_cos_endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
 
         # When pagenumber is specified we only retrieve that page. Otherwise we concatenate all pages to one DF:
         if pagenumber or pagenumber==0:
@@ -230,17 +232,17 @@ class SQLQuery():
                 raise ValueError("pagenumber ({}) specified, but the job was not submitted with pagination option.".format(pagenumber))
             if type(pagenumber) == int and 0 < pagenumber <= len(bucket_objects):
                 if result_format == "csv":
-                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1])['Body']
+                    body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_objects[pagenumber-1])['Body']
                     if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
                     result_df = pd.read_csv(body)
                 elif result_format == "parquet":
                     tmpfile = tempfile.NamedTemporaryFile()
                     tempfilename = tmpfile.name
                     tmpfile.close()
-                    cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1], Filename=tempfilename)
+                    cos_client.download_file(Bucket=url_parsed.bucket, Key=bucket_objects[pagenumber-1], Filename=tempfilename)
                     result_df = pd.read_parquet(tempfilename)
                 elif result_format == "json":
-                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_objects[pagenumber-1])['Body']
+                    body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_objects[pagenumber-1])['Body']
                     body = body.read().decode('utf-8')
                     result_df = pd.read_json(body,lines=True)
                     
@@ -251,7 +253,7 @@ class SQLQuery():
             for bucket_object in bucket_objects:
 
                 if result_format == "csv":
-                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+                    body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_object)['Body']
                     # add missing __iter__ method, so pandas accepts body as file-like object
                     if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
@@ -261,18 +263,18 @@ class SQLQuery():
                     tmpfile = tempfile.NamedTemporaryFile()
                     tempfilename = tmpfile.name
                     tmpfile.close()
-                    cos_client.download_file(Bucket=result_cos_bucket, Key=bucket_object, Filename=tempfilename)
+                    cos_client.download_file(Bucket=url_parsed.bucket, Key=bucket_object, Filename=tempfilename)
 
                     partition_df = pd.read_parquet(tempfilename)
 
                 elif result_format == "json":
-                    body = cos_client.get_object(Bucket=result_cos_bucket, Key=bucket_object)['Body']
+                    body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_object)['Body']
                     body = body.read().decode('utf-8')
 
                     partition_df = pd.read_json(body, lines=True)
                     
                 # Add columns from hive style partition naming schema
-                hive_partition_candidates = bucket_object.replace(result_cos_prefix + '/', '').split('/')
+                hive_partition_candidates = bucket_object.replace(url_parsed.prefix + '/', '').split('/')
                 for hive_partition_candidate in hive_partition_candidates:
                     if hive_partition_candidate.count('=') == 1: # Hive style folder names contain exactly one '='
                         column = hive_partition_candidate.split('=')
@@ -303,8 +305,7 @@ class SQLQuery():
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
-        provided_cos_endpoint = job_details['resultset_location'].split("/")[2]
-        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+        url_parsed = self.ParsedUrl(result_location)
 
         fourth_slash = result_location.replace('/', 'X', 3).find('/')
 
@@ -321,7 +322,7 @@ class SQLQuery():
             if responseBodyXMLroot.findall('s3:Contents', ns):
                 for contents in responseBodyXMLroot.findall('s3:Contents', ns):
                     key = contents.find('s3:Key', ns)
-                    object_url = "cos://{}/{}/{}".format(result_cos_endpoint, bucket_name, key.text)
+                    object_url = "cos://{}/{}/{}".format(url_parsed.endpoint, bucket_name, key.text)
                     size = contents.find('s3:Size', ns)
                     bucket_objects.append({'Key': object_url, 'Size': size.text})
             else:
@@ -348,8 +349,7 @@ class SQLQuery():
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
-        provided_cos_endpoint = job_details['resultset_location'].split("/")[2]
-        result_cos_endpoint = self.endpoint_alias_mapping.get(provided_cos_endpoint, provided_cos_endpoint)
+        url_parsed = self.ParsedUrl(result_location)
 
         fourth_slash = result_location.replace('/', 'X', 3).find('/')
 
@@ -375,11 +375,7 @@ class SQLQuery():
                                                                                            response.status_code))
             return
 
-        cos_client = ibm_boto3.client(service_name='s3',
-                                      ibm_api_key_id=self.api_key,
-                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
-                                      config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + result_cos_endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
 
         response = cos_client.delete_objects(Bucket=bucket_name, Delete={'Objects': bucket_objects})
 
@@ -497,21 +493,11 @@ class SQLQuery():
 
         self.logon()
 
-        endpoint = url.split("/")[2]
-        endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
-        bucket = url.split("/")[3]
-        prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
-        if len(prefix) > 0 and prefix[-1] == '*':
-            prefix = prefix[:-1]
-
-        cos_client = ibm_boto3.client(service_name='s3',
-                                      ibm_api_key_id=self.api_key,
-                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
-                                      config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + endpoint)
+        url_parsed = self.ParsedUrl(url)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
 
         paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=bucket, Prefix=prefix)
+        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
 
         total_size = 0
         smallest_size = 9999999999999999
@@ -557,25 +543,21 @@ class SQLQuery():
     def list_cos_objects(self, url):
         self.logon()
 
-        endpoint = url.split("/")[2]
-        endpoint = self.endpoint_alias_mapping.get(endpoint, endpoint)
-        bucket = url.split("/")[3]
-        prefix = url[url.replace('/', 'X', 3).find('/') + 1:]
-        object_url = "https://{}/{}/{}".format(endpoint, bucket, prefix)
-        if object_url[-1] == '*':
-            object_url = object_url[:-1]
-        fourth_slash = object_url.replace('/', 'X', 3).find('/')
+        url_parsed = self.ParsedUrl(url)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
+        paginator = cos_client.get_paginator("list_objects")
+        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
 
-        cos = self._get_cos_resource(endpoint)
-
-        objects = cos.Bucket(bucket).objects.filter(Prefix=prefix)
-        obj_summary_columns = ['bucket_name', 'key']
-
-        return pd.DataFrame(
-            [[obj.bucket_name, obj.key] for obj in objects],
-            columns=obj_summary_columns
-        )
-
+        for page in page_iterator:
+            if "Contents" in page:
+                #print(page['Contents'])
+                page_df = pd.DataFrame.from_dict(page['Contents'], orient='columns')
+                if 'result' in locals():
+                    result = result.append(page_df)
+                else:
+                    result = page_df
+        result = result.drop(columns=['ETag', 'Owner']).rename(columns={"Key": "Object"})
+        return result
 
     def export_job_history(self, cos_url=None):
         if cos_url:
@@ -586,10 +568,7 @@ class SQLQuery():
             raise ValueError('No configured export COS URL.')
         if not self.export_cos_url.endswith('/'):
             self.export_cos_url += "/"
-        provided_export_cos_endpoint = self.export_cos_url.split("/")[2]
-        export_cos_endpoint = self.endpoint_alias_mapping.get(provided_export_cos_endpoint, provided_export_cos_endpoint)
-        export_cos_bucket = self.export_cos_url.split("/")[3]
-        export_cos_prefix = self.export_cos_url[self.export_cos_url.replace('/', 'X', 3).find('/')+1:]
+        url_parsed = self.ParsedUrl(self.export_cos_url)
         export_file_prefix = "job_export_"
 
         job_history_df = self.get_jobs() # Retrieve current job history (most recent 30 jobs)
@@ -597,20 +576,16 @@ class SQLQuery():
         newest_job_end_time = terminated_job_history_df.loc[pd.to_datetime(terminated_job_history_df['end_time']).idxmax()].end_time
 
         # List all existing objects in export location and identify latest exported job timestamp:
-        cos_client = ibm_boto3.client(service_name='s3',
-                                      ibm_api_key_id=self.api_key,
-                                      ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
-                                      config=Config(signature_version='oauth'),
-                                      endpoint_url='https://' + export_cos_endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
         paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=export_cos_bucket, Prefix=export_cos_prefix)
+        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
         newest_exported_job_end_time = ""
         for page in page_iterator:
             if "Contents" in page:
                 for key in page['Contents']:
                     object_name = key["Key"]
                     suffix_index = object_name.find(".parquet")
-                    prefix_end_index = len(export_cos_prefix + export_file_prefix)
+                    prefix_end_index = len(url_parsed.prefix + export_file_prefix)
                     if prefix_end_index < suffix_index:
                         job_end_time = object_name[prefix_end_index:suffix_index]
                         if job_end_time > newest_exported_job_end_time:
@@ -622,7 +597,7 @@ class SQLQuery():
             tempfilename = tmpfile.name
             new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
             new_jobs_df.to_parquet(engine="pyarrow", fname=tempfilename, compression="snappy")
-            cos_client.upload_file(Bucket=export_cos_bucket, Filename=tempfilename, Key=export_cos_prefix + export_file_prefix + newest_job_end_time + ".parquet")
+            cos_client.upload_file(Bucket=url_parsed.bucket, Filename=tempfilename, Key=url_parsed.prefix + export_file_prefix + newest_job_end_time + ".parquet")
             print("Exported {} new jobs".format(new_jobs_df['job_id'].count()))
             tmpfile.close()
         else:

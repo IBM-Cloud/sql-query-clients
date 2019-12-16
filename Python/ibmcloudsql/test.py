@@ -4,6 +4,7 @@ import ibmcloudsql
 import test_credentials
 import pandas as pd
 pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_columns', 20)
 
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
 sqlClient.logon()
