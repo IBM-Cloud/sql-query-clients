@@ -88,7 +88,7 @@ class SQLQuery():
         '''
         return ibm_boto3.resource('s3',
                    ibm_api_key_id=self.api_key,
-                   ibm_auth_endpoint="https://iam.ng.bluemix.net/oidc/token",
+                   ibm_auth_endpoint='https://iam.cloud.ibm.com/identity/token',
                    config=Config(signature_version='oauth'),
                    endpoint_url='https://{}'.format(endpoint)
                )
