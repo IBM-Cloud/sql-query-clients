@@ -34,7 +34,6 @@ import tempfile
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
-        self.api_key = api_key
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
         self.export_cos_url = target_cos_url
@@ -52,16 +51,19 @@ class SQLQuery():
 
         self.logged_on = False
 
+        # setup boto3 session in constructor to avoid leaking api key
+        ibm_boto3.setup_default_session(
+            ibm_api_key_id=api_key,
+        )
+
     def _get_cos_client(self, endpoint=''):
         '''
         Create a service client of COS.
         '''
         return ibm_boto3.client('s3',
-                   ibm_api_key_id=self.api_key,
-                   ibm_auth_endpoint='https://iam.cloud.ibm.com/identity/token',
-                   config=Config(signature_version='oauth'),
-                   endpoint_url='https://{}'.format(endpoint)
-               )
+            config=Config(signature_version='oauth'),
+            endpoint_url='https://{}'.format(endpoint)
+        )
 
     class ParsedUrl:
         def __init__(self, url):
@@ -104,32 +106,19 @@ class SQLQuery():
                 self.fourth_slash = url.replace('/', 'X', 3).find('/')
 
     def logon(self, force=False):
-        if sys.version_info >= (3, 0):
-            data = urllib.parse.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
-        else:
-            data = urllib.urlencode({'grant_type': 'urn:ibm:params:oauth:grant-type:apikey', 'apikey': self.api_key})
-
         if self.logged_on and not force and (datetime.now() - self.last_logon).seconds < 300:
             return
 
-        response = requests.post(
-            'https://iam.bluemix.net/identity/token',
-            headers=self.request_headers_xml_content,
-            data=data)
+        ## TODO refactor construction to avoid calling private method
+        boto3_session = ibm_boto3._get_default_session()
+        ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
 
-        if response.status_code == 200:
-            # print("Authentication successful")
-            bearer_response = response.json()
-            self.bearer_token = 'Bearer ' + bearer_response['access_token']
-            self.request_headers = {'Content-Type': 'application/json'}
-            self.request_headers.update({'Accept':'application/json'})
-            self.request_headers.update({'User-Agent': self.user_agent})
-            self.request_headers.update({'authorization': self.bearer_token})
-            self.logged_on = True
-            self.last_logon = datetime.now()
-
-        else:
-            print("Authentication failed with http code {}".format(response.status_code))
+        self.request_headers = {'Content-Type': 'application/json'}
+        self.request_headers.update({'Accept':'application/json'})
+        self.request_headers.update({'User-Agent': self.user_agent})
+        self.request_headers.update({'authorization': 'Bearer {}'.format(ro_credentials.token)})
+        self.logged_on = True
+        self.last_logon = datetime.now()
 
     def submit_sql(self, sql_text, pagesize=None):
         self.logon()
