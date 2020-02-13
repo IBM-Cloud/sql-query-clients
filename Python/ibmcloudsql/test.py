@@ -59,6 +59,24 @@ result_df = sqlClient.get_result(jobId)
 print("jobId {} results are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
 print(result_df.head(200))
 
+print("Expecting failure when trying to rename partitioned results to exact target:")
+try:
+    sqlClient.rename_exact_result(jobId)
+except ValueError as e:
+    print(e)
+print("Running test with exact target object name creation:")
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location))
+sqlClient.wait_for_job(jobId)
+result_df = sqlClient.get_result(jobId)
+sqlClient.rename_exact_result(jobId)
+result_objects_df = sqlClient.list_results(jobId)
+print(result_objects_df.head(200))
+print("Expecting failure when trying to rename already renamed exact target:")
+try:
+    sqlClient.rename_exact_result(jobId)
+except ValueError as e:
+    print(e)
+
 print("Running test with paginated parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location), 2)
 sqlClient.wait_for_job(jobId)

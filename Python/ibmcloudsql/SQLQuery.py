@@ -183,9 +183,9 @@ class SQLQuery():
         job_details = self.get_job(jobId)
         job_status = job_details.get('status')
         if job_status == 'running':
-            raise ValueError('SQL job with jobId {} still running. Come back later.')
+            raise ValueError('SQL job with jobId {} still running. Come back later.'.format(jobId))
         elif job_status != 'completed':
-            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.'.format(jobId))
 
         url_parsed = self.ParsedUrl(job_details['resultset_location'])
         result_location = "https://{}/{}?prefix={}".format(url_parsed.endpoint, url_parsed.bucket, url_parsed.prefix)
@@ -277,7 +277,7 @@ class SQLQuery():
                 if 'result_df' not in locals():
                     result_df = partition_df
                 else:
-                    result_df = result_df.append(partition_df)
+                    result_df = result_df.append(partition_df, sort=False)
 
             if 'result_df' not in locals():
                 return None
@@ -313,7 +313,7 @@ class SQLQuery():
                     key = contents.find('s3:Key', ns)
                     object_url = "cos://{}/{}/{}".format(url_parsed.endpoint, bucket_name, key.text)
                     size = contents.find('s3:Size', ns)
-                    bucket_objects.append({'Key': object_url, 'Size': size.text})
+                    bucket_objects.append({'Key': object_url, 'Size': size.text, 'Bucket': bucket_name, 'Object': key.text})
             else:
                 print('There are no result objects for the jobid {}'.format(jobId))
                 return
@@ -324,9 +324,39 @@ class SQLQuery():
 
         result_objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
         for object in bucket_objects:
-            result_objects_df = result_objects_df.append([{'ObjectURL': object['Key'], 'Size': object['Size']}], ignore_index=True)
+            result_objects_df = result_objects_df.append([{'ObjectURL': object['Key'],
+                                                           'Size': object['Size'],
+                                                           'Bucket': object['Bucket'],
+                                                           'Object': object['Object']}], ignore_index=True, sort=False)
 
         return result_objects_df
+
+    def rename_exact_result(self, jobId):
+        self.logon()
+
+        job_details = self.get_job(jobId)
+        job_status = job_details.get('status')
+        if job_status == 'running':
+            raise ValueError('SQL job with jobId {} still running. Come back later.'.format(jobId))
+        elif job_status != 'completed':
+            raise ValueError('SQL job with jobId {} did not finish successfully. No result available.'.format(jobId))
+
+        url_parsed = self.ParsedUrl(job_details['resultset_location'])
+        cos_client = self._get_cos_client(url_parsed.endpoint)
+
+        result_objects = self.list_results(jobId)
+
+        if len(result_objects) > 3:
+            raise ValueError('Renaming partitioned results of jobId {} to single exact result object name not supported.'.format(jobId))
+        if len(result_objects) < 3 or int(result_objects.Size[0]) != 0 or int(result_objects.Size[1]) != 0:
+            raise ValueError('Results of jobId {} don\'t seem to be regular SQL query output.'.format(jobId))
+
+        copy_source = result_objects.Bucket[2] + "/" + result_objects.Object[2]
+        cos_client.copy_object(Bucket=result_objects.Bucket[0], CopySource=copy_source, Key=result_objects.Object[0])
+        cos_client.delete_object(Bucket=result_objects.Bucket[2], Key=result_objects.Object[2])
+        cos_client.delete_object(Bucket=result_objects.Bucket[1], Key=result_objects.Object[1])
+
+        return
 
     def delete_result(self, jobId):
         self.logon()
@@ -370,7 +400,7 @@ class SQLQuery():
 
         deleted_list_df = pd.DataFrame(columns=['Deleted Object'])
         for deleted_object in response['Deleted']:
-            deleted_list_df = deleted_list_df.append([{'Deleted Object': deleted_object['Key']}], ignore_index=True)
+            deleted_list_df = deleted_list_df.append([{'Deleted Object': deleted_object['Key']}], ignore_index=True, sort=False)
 
         return deleted_list_df
 
@@ -440,7 +470,7 @@ class SQLQuery():
                                                        'bytes_read': bytes_read,
                                                        'error': error,
                                                        'error_message': error_message,
-                                                       }], ignore_index=True)
+                                                       }], ignore_index=True, sort=False)
                 else:
                     print("Job details retrieval for jobId {} failed with http code {}".format(job['job_id'],
                                                                                                response.status_code))
@@ -542,7 +572,7 @@ class SQLQuery():
                 #print(page['Contents'])
                 page_df = pd.DataFrame.from_dict(page['Contents'], orient='columns')
                 if 'result' in locals():
-                    result = result.append(page_df)
+                    result = result.append(page_df, sort=False)
                 else:
                     result = page_df
         result = result.drop(columns=['ETag', 'Owner']).rename(columns={"Key": "Object"})
