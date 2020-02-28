@@ -187,6 +187,9 @@ class SQLQuery():
         elif job_status != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.'.format(jobId))
 
+        if "resultset_location" not in job_details:
+            return None
+
         url_parsed = self.ParsedUrl(job_details['resultset_location'])
         result_location = "https://{}/{}?prefix={}".format(url_parsed.endpoint, url_parsed.bucket, url_parsed.prefix)
         result_format = job_details['resultset_format']
