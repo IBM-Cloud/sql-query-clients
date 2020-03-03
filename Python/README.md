@@ -40,6 +40,7 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `get_result(jobId, pagenumber=None)` returns SQL result data frame for entire result or for specified page of results.
  * `list_results(jobId)` Returns a data frame with the list of result objects written
  * `delete_result(jobId)` Deletes all result set objects in cloud object storage for the given jobId
+ * `rename_exact_result(jobId)` Renames single partitioned query result to exact single object name without folder hierarchy.
  * `get_job(jobId)` Returns details for the given SQL job as a json object
  * `get_jobs()` Returns the list of recent 30 submitted SQL jobs with all details as a data frame
  * `run_sql(sql_text)` Compound method that calls `submit_sql`, `wait_for_job` and `wait_for_job` in sequenceA
