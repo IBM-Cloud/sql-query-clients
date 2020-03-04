@@ -13,7 +13,7 @@ ibm-cos-sdk-core = ">=2.0.0"
 ibm-cos-sdk = ">=2.4.4"
 numpy = "*"
 pandas = "*"
-pyarrow = "*"
+pyarrow = "==0.15.1"
 requests = ">= 2.2.0"
 
 [scripts]
