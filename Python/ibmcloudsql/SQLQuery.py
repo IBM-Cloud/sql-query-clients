@@ -296,6 +296,9 @@ class SQLQuery():
         elif job_details['status'] != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
+        if "resultset_location" not in job_details:
+            return None
+
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
         url_parsed = self.ParsedUrl(result_location)
 
@@ -344,6 +347,8 @@ class SQLQuery():
         elif job_status != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.'.format(jobId))
 
+        if "resultset_location" not in job_details:
+            return None
         url_parsed = self.ParsedUrl(job_details['resultset_location'])
         cos_client = self._get_cos_client(url_parsed.endpoint)
 
@@ -370,6 +375,8 @@ class SQLQuery():
         elif job_details['status'] != 'completed':
             raise ValueError('SQL job with jobId {} did not finish successfully. No result available.')
 
+        if "resultset_location" not in job_details:
+            return None
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
         url_parsed = self.ParsedUrl(result_location)
 
@@ -461,11 +468,15 @@ class SQLQuery():
                         rows_returned = job_details['rows_returned']
                     if 'bytes_read' in job_details:
                         bytes_read = job_details['bytes_read']
+                    
+                    resultset_loc = None
+                    if 'resultset_location' in job_details:
+                        resultset_loc = job_details['resultset_location'],
                     job_list_df = job_list_df.append([{'job_id': job['job_id'],
                                                        'status': job_details['status'],
                                                        'user_id': job_details['user_id'],
                                                        'statement': job_details['statement'],
-                                                       'resultset_location': job_details['resultset_location'],
+                                                       'resultset_location': resultset_loc,
                                                        'submit_time': job_details['submit_time'],
                                                        'end_time': end_time,
                                                        'rows_read': rows_read,
