@@ -34,7 +34,7 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
 
 ## SQLQuery method list
  * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
- * `logon(Force=False)` Needs to be called before any other method below. Logon is valid for one hour. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater `Force=True`.
+ * `logon(force=False)` Needs to be called before any other method below. Logon is valid for one hour. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater `Force=True`.
  * `submit_sql(sql_text, pagesize=None)` Returns `jobId`as string. Optional pagesize parameter (in rows) for paginated result objects.
  * `wait_for_job(jobId)` Waits for job to end and returns job completion state (either `completed` or `failed`)
  * `get_result(jobId, pagenumber=None)` returns SQL result data frame for entire result or for specified page of results.
