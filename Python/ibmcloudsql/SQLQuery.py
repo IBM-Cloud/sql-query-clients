@@ -31,6 +31,8 @@ import pyarrow
 import os
 import tempfile
 
+class RateLimitedException(Exception):
+   pass
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
@@ -143,6 +145,14 @@ class SQLQuery():
                 "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 headers=self.request_headers,
                 json=sqlData)
+
+            # Throw in case we hit the rate limit
+            if (response.status_code == 429):
+                raise RateLimitedException("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
+            # any other error but 429 will be raised here, like 403 etc
+            response.raise_for_status()
+
             resp = response.json()
             return resp['job_id']
         except KeyError as e:
@@ -237,7 +247,7 @@ class SQLQuery():
                     body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_objects[pagenumber-1])['Body']
                     body = body.read().decode('utf-8')
                     result_df = pd.read_json(body,lines=True)
-                    
+
             else:
                 raise ValueError("Invalid pagenumner ({}) specified".format(pagenumber))
         else:
@@ -264,7 +274,7 @@ class SQLQuery():
                     body = body.read().decode('utf-8')
 
                     partition_df = pd.read_json(body, lines=True)
-                    
+
                 # Add columns from hive style partition naming schema
                 hive_partition_candidates = bucket_object.replace(url_parsed.prefix + '/', '').split('/')
                 for hive_partition_candidate in hive_partition_candidates:
@@ -468,7 +478,7 @@ class SQLQuery():
                         rows_returned = job_details['rows_returned']
                     if 'bytes_read' in job_details:
                         bytes_read = job_details['bytes_read']
-                    
+
                     resultset_loc = None
                     if 'resultset_location' in job_details:
                         resultset_loc = job_details['resultset_location'],
