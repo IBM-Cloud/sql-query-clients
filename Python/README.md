@@ -49,6 +49,8 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `list_cos_objects(cos_url)` Returns a data frame with the list of objects found in the given cos url
  * `export_job_history(cos_url)` Exports new jobs as parquet file to the given cos url
 
+## Exceptions
+ * `RateLimitedException(message)` raised when jobs can't be submitted due to 429 / Plan limit for concurrent queries has been reached
 ## Constructor options
  * `api_key`: IAM API key
  * `instance_crn`: SQL Query instance CRN identifier

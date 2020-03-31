@@ -112,7 +112,7 @@ try:
 except SyntaxError as e:
     print(e)
 
-    
+
 print("Running test with paginated JSON target:")
 jobId = sqlClient.submit_sql(
         "WITH orders as (SELECT customerid, named_struct('count', count(orderid), 'orderids', collect_list(orderid)) orders \
@@ -133,8 +133,8 @@ print(result_df_list.head(200))
 result_df = sqlClient.get_result(jobId, pagenumber=2)
 print("jobId {} result page 2 is:".format(jobId))
 print(result_df.head(10))
-    
-    
+
+
 print("Running test with compound method invocation:")
 result_df = sqlClient.run_sql(
 "WITH orders_shipped AS \
@@ -200,3 +200,10 @@ print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClie
 print(result_df.head(200))
 print("EU SQL UI Link:")
 sqlClient_eu.sql_ui_link()
+
+print("Force rate limiting:")
+try:
+    for n in range(6):
+        sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
+except ibmcloudsql.RateLimitedException as e:
+    print("Got rate limited as expected")

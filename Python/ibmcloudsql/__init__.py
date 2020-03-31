@@ -15,3 +15,4 @@
 # ------------------------------------------------------------------------------
 
 from .SQLQuery import SQLQuery
+from .SQLQuery import RateLimitedException
