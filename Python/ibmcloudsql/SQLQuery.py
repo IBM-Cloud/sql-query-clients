@@ -31,6 +31,8 @@ import pyarrow
 import os
 import tempfile
 
+class RateLimitedException(Exception):
+   pass
 
 class SQLQuery():
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
@@ -143,6 +145,14 @@ class SQLQuery():
                 "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 headers=self.request_headers,
                 json=sqlData)
+
+            # Throw in case we hit the rate limit
+            if (response.status_code == 429):
+                raise RateLimitedException("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
+            # any other error but 429 will be raised here, like 403 etc
+            response.raise_for_status()
+
             resp = response.json()
             return resp['job_id']
         except KeyError as e:
@@ -237,7 +247,7 @@ class SQLQuery():
                     body = cos_client.get_object(Bucket=url_parsed.bucket, Key=bucket_objects[pagenumber-1])['Body']
                     body = body.read().decode('utf-8')
                     result_df = pd.read_json(body,lines=True)
-                    
+
             else:
                 raise ValueError("Invalid pagenumner ({}) specified".format(pagenumber))
         else:
@@ -264,7 +274,7 @@ class SQLQuery():
                     body = body.read().decode('utf-8')
 
                     partition_df = pd.read_json(body, lines=True)
-                    
+
                 # Add columns from hive style partition naming schema
                 hive_partition_candidates = bucket_object.replace(url_parsed.prefix + '/', '').split('/')
                 for hive_partition_candidate in hive_partition_candidates:
@@ -299,42 +309,13 @@ class SQLQuery():
         if "resultset_location" not in job_details:
             return None
 
-        result_location = job_details['resultset_location'].replace("cos", "https", 1)
+        result_location = job_details['resultset_location']
         url_parsed = self.ParsedUrl(result_location)
-
-        fourth_slash = result_location.replace('/', 'X', 3).find('/')
-
-        response = requests.get(
-            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
-            headers=self.request_headers,
-        )
-
-        if response.status_code == 200 or response.status_code == 201:
-            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.content)
-            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
-            bucket_objects = []
-            if responseBodyXMLroot.findall('s3:Contents', ns):
-                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                    key = contents.find('s3:Key', ns)
-                    object_url = "cos://{}/{}/{}".format(url_parsed.endpoint, bucket_name, key.text)
-                    size = contents.find('s3:Size', ns)
-                    bucket_objects.append({'Key': object_url, 'Size': size.text, 'Bucket': bucket_name, 'Object': key.text})
-            else:
-                print('There are no result objects for the jobid {}'.format(jobId))
-                return
-        else:
-            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
-                                                                                           response.status_code))
-            return
-
-        result_objects_df = pd.DataFrame(columns=['ObjectURL', 'Size'])
-        for object in bucket_objects:
-            result_objects_df = result_objects_df.append([{'ObjectURL': object['Key'],
-                                                           'Size': object['Size'],
-                                                           'Bucket': object['Bucket'],
-                                                           'Object': object['Object']}], ignore_index=True, sort=False)
-
+        result_bucket = url_parsed.bucket
+        result_endpoint = url_parsed.endpoint
+        result_objects_df =  self.list_cos_objects(job_details['resultset_location'])
+        result_objects_df['Bucket'] = result_bucket
+        result_objects_df['ObjectURL'] = result_objects_df.apply(lambda x: 'cos://%s/%s/%s' % (result_endpoint, result_bucket, x['Object']), axis=1)
         return result_objects_df
 
     def rename_exact_result(self, jobId):
@@ -379,30 +360,13 @@ class SQLQuery():
             return None
         result_location = job_details['resultset_location'].replace("cos", "https", 1)
         url_parsed = self.ParsedUrl(result_location)
-
-        fourth_slash = result_location.replace('/', 'X', 3).find('/')
-
-        response = requests.get(
-            result_location[:fourth_slash] + '?prefix=' + result_location[fourth_slash + 1:],
-            headers=self.request_headers,
-            )
-
-        if response.status_code == 200 or response.status_code == 201:
-            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
-            responseBodyXMLroot = ET.fromstring(response.content)
-            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
-            bucket_objects = []
-            if responseBodyXMLroot.findall('s3:Contents', ns):
-                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                    key = contents.find('s3:Key', ns)
-                    bucket_objects.append({'Key': key.text})
-            else:
-                print('There are no result objects for the jobid {}'.format(jobId))
-                return
-        else:
-            print("Result object listing for job {} at {} failed with http code {}".format(jobId, result_location,
-                                                                                           response.status_code))
+        bucket_name = url_parsed.bucket
+        bucket_objects_df = self.list_cos_objects(result_location)[['Object']]
+        if bucket_objects_df.empty:
+            print('There are no result objects for the jobid {}'.format(jobId))
             return
+        bucket_objects_df = bucket_objects_df.rename(columns={"Object": "Key"})
+        bucket_objects = bucket_objects_df.to_dict('records')
 
         cos_client = self._get_cos_client(url_parsed.endpoint)
 
@@ -467,8 +431,7 @@ class SQLQuery():
                     if 'rows_returned' in job_details:
                         rows_returned = job_details['rows_returned']
                     if 'bytes_read' in job_details:
-                        bytes_read = job_details['bytes_read']
-                    
+                        bytes_read = job_details['bytes_read']                    
                     resultset_loc = np.NaN
                     if 'resultset_location' in job_details:
                         resultset_loc = job_details['resultset_location'],
@@ -589,6 +552,8 @@ class SQLQuery():
                     result = result.append(page_df, sort=False)
                 else:
                     result = page_df
+        if 'result' not in locals():
+            return pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
         result = result.drop(columns=['ETag', 'Owner']).rename(columns={"Key": "Object"})
         return result
 
