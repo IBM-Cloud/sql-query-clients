@@ -431,9 +431,8 @@ class SQLQuery():
                     if 'rows_returned' in job_details:
                         rows_returned = job_details['rows_returned']
                     if 'bytes_read' in job_details:
-                        bytes_read = job_details['bytes_read']
-
-                    resultset_loc = None
+                        bytes_read = job_details['bytes_read']                    
+                    resultset_loc = np.NaN
                     if 'resultset_location' in job_details:
                         resultset_loc = job_details['resultset_location'],
                     job_list_df = job_list_df.append([{'job_id': job['job_id'],
