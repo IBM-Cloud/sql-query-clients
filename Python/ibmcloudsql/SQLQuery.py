@@ -20,6 +20,7 @@ import time
 import xml.etree.ElementTree as ET
 import sys
 import types
+import backoff
 import requests
 from requests.exceptions import HTTPError
 import pandas as pd
@@ -35,7 +36,7 @@ class RateLimitedException(Exception):
    pass
 
 class SQLQuery():
-    def __init__(self, api_key, instance_crn, target_cos_url=None, client_info=''):
+    def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='', max_tries=1):
         self.instance_crn = instance_crn
         self.target_cos = target_cos_url
         self.export_cos_url = target_cos_url
@@ -43,6 +44,8 @@ class SQLQuery():
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
         else:
             self.user_agent = client_info
+
+        self.max_tries = max_tries
 
         self.request_headers = {'Content-Type': 'application/json'}
         self.request_headers.update({'Accept': 'application/json'})
@@ -122,6 +125,30 @@ class SQLQuery():
         self.logged_on = True
         self.last_logon = datetime.now()
 
+    def _send_req(self, json_data):
+        '''send SQL data to API. return job id'''
+
+        try:
+            response = requests.post(
+                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+                headers=self.request_headers,
+                json=json_data)
+
+            # Throw in case we hit the rate limit
+            if (response.status_code == 429):
+                raise RateLimitedException("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
+            # any other error but 429 will be raised here, like 403 etc
+            response.raise_for_status()
+
+            resp = response.json()
+            return resp['job_id']
+        except KeyError as e:
+            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
+        except HTTPError as e:
+            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+
     def submit_sql(self, sql_text, pagesize=None):
         self.logon()
         sqlData = {'statement': sql_text}
@@ -140,26 +167,13 @@ class SQLQuery():
         elif self.target_cos:
             sqlData.update({'resultset_target': self.target_cos})
 
-        try:
-            response = requests.post(
-                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
-                headers=self.request_headers,
-                json=sqlData)
+        intrumented_send = backoff.on_exception(
+            backoff.expo,
+            RateLimitedException,
+            max_tries=self.max_tries
+        )(self._send_req)
 
-            # Throw in case we hit the rate limit
-            if (response.status_code == 429):
-                raise RateLimitedException("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
-
-            # any other error but 429 will be raised here, like 403 etc
-            response.raise_for_status()
-
-            resp = response.json()
-            return resp['job_id']
-        except KeyError as e:
-            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
-
-        except HTTPError as e:
-            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+        return intrumented_send(sqlData)
 
     def wait_for_job(self, jobId):
         self.logon()

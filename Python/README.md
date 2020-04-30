@@ -56,3 +56,4 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `instance_crn`: SQL Query instance CRN identifier
  * `target_cos_url`: Optional default target URL. Don't use when you want to provide target URL in SQL statement text.
  * `client_info`: Optional string to identify your client application in IBM Cloud for PD reasons.
+ * `max_tries`: Optional integer to specify maximum attempts when dealing with request rate limit. Default value is `1`, which means it will through exception `RateLimitedException` when response status code is `429`. It will enable _exponential backoff_ when specifying any positive number greater than `1`. For instance, given `max_tries=5`, assuming it will get response status code `429` for 4 times until the 5th attempt will get response status code `201`, the wait time will be `2s`, `4s`, `8s` and `16s` for each attempts.
