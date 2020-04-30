@@ -122,7 +122,7 @@ class SQLQuery():
         self.logged_on = True
         self.last_logon = datetime.now()
 
-    def submit_sql(self, sql_text, pagesize=None):
+    def submit_sql(self, sql_text, retry=False, pagesize=None):
         self.logon()
         sqlData = {'statement': sql_text}
         # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
