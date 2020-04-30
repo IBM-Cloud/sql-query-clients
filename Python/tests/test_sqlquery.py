@@ -39,9 +39,13 @@ def test_submit_sql_w_retry(sqlquery_client):
     mock_error_message = 'too many requests'
     mock_job_id = 'fake-digest'
 
+    sqlquery_client.max_tries = 3
+
+    responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
+                  json={'errors': [{'message': mock_error_message}]}, status=429)
     responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
                   json={'errors': [{'message': mock_error_message}]}, status=429)
     responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
                   json={'job_id': mock_job_id}, status=201)
 
-    assert sqlquery_client.submit_sql('VALUES (1)', retry=True) == mock_job_id
+    assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
