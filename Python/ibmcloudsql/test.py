@@ -49,6 +49,35 @@ result_df = sqlClient.get_result(jobId)
 print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient.get_job(jobId)['resultset_location']))
 print(result_df.head(10))
 
+print("Running test rate limiting without retry. Expecting RateLimitedException:")
+sql = "WITH prefiltered_hospitals AS ( \
+        SELECT c.name county, c.shape_WKT county_location, h.name hospital, MAX(h.location) hospital_location \
+        FROM cos://us-geo/sql/counties.parquet STORED AS PARQUET c, \
+             cos://us-geo/sql/hospitals.parquet STORED AS PARQUET h \
+        WHERE c.state_name='Washington' AND h.x between c.xmin and c.xmax AND h.y between c.ymin and c.ymax \
+        GROUP BY c.name, c.shape_WKT, h.name) \
+     SELECT county, hospital FROM prefiltered_hospitals \
+     WHERE ST_Intersects(ST_WKTToSQL(hospital_location), ST_WKTToSQL(county_location)) \
+     INTO {} STORED AS CSV".format(test_credentials.result_location)
+jobidArray = []
+try:
+    for x in range(test_credentials.instance_rate_limit + 1):
+        jobidArray.append(sqlClient.submit_sql(sql))
+except ibmcloudsql.RateLimitedException as e:
+    print(e)
+
+for jobId in jobidArray:
+    sqlClient.wait_for_job(jobId)
+
+print("Running test rate limiting with retry:")
+sqlClientRetry = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test', max_tries = 5)
+sqlClientRetry.logon()
+jobidArray = []
+for x in range(test_credentials.instance_rate_limit + 1):
+    jobidArray.append(sqlClientRetry.submit_sql(sql))
+
+for jobId in jobidArray:
+    sqlClientRetry.wait_for_job(jobId)
 
 print("Running test with partitioned CSV target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET INTO {} STORED AS CSV PARTITIONED BY (city)".format(test_credentials.result_location))
