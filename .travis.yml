@@ -7,7 +7,9 @@ matrix:
   - &py-ci
     language: python
     python: '2.7'
-    env: PIPENV_IGNORE_VIRTUALENVS=1
+    env:
+    - PIPENV_IGNORE_VIRTUALENVS=1
+    - PIPENV_PYUP_API_KEY=""
     before_install: cd Python
     install:
     - pipenv sync --dev
