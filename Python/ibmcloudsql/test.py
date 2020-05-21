@@ -214,7 +214,16 @@ result_df = sqlClient.get_result(jobId)
 print(result_df.head(200))
 
 print("Test job history export to COS")
-sqlClient.export_job_history(test_credentials.result_location + "/my_job_history/")
+jobhist_location = test_credentials.result_location + "/my_job_history/"
+sqlClient.export_job_history(jobhist_location,
+    export_file_prefix = "job_export=", export_file_suffix = "/data.parquet")
+
+print("Running query on exported history")
+jobhist_df = sqlClient.run_sql("SELECT * FROM {} STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(
+    jobhist_location,
+    test_credentials.result_location)
+)
+print(jobhist_df[['job_id','status']])
 
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
 sqlClient.logon()
