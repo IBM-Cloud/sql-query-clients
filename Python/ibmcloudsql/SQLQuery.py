@@ -583,6 +583,8 @@ class SQLQuery():
         url_parsed = self.ParsedUrl(self.export_cos_url)
 
         job_history_df = self.get_jobs() # Retrieve current job history (most recent 30 jobs)
+        job_history_df['error'] = job_history_df['error'].astype(unicode)
+        job_history_df['error_message'] = job_history_df['error_message'].astype(unicode)
         terminated_job_history_df = job_history_df[job_history_df['status'].isin(['completed', 'failed'])] # Only export terminated jobs
         newest_job_end_time = terminated_job_history_df.loc[pd.to_datetime(terminated_job_history_df['end_time']).idxmax()].end_time
 
@@ -611,7 +613,10 @@ class SQLQuery():
             tmpfile = tempfile.NamedTemporaryFile()
             tempfilename = tmpfile.name
             new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
-            new_jobs_df.to_parquet(engine="pyarrow", path=tempfilename, compression="snappy", index=False)
+            if sys.version_info >= (3, 0):
+                new_jobs_df.to_parquet(engine="pyarrow", path=tempfilename, compression="snappy", index=False)
+            else:
+                new_jobs_df.to_parquet(engine="pyarrow", fname=tempfilename, compression="snappy", index=False)
             export_object = url_parsed.prefix + export_file_prefix + newest_job_end_time + export_file_suffix
             cos_client.upload_file(Bucket=url_parsed.bucket, Filename=tempfilename, Key=export_object)
             print("Exported {} new jobs".format(new_jobs_df['job_id'].count()))
