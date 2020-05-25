@@ -552,25 +552,24 @@ class SQLQuery():
                 'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
 
     def list_cos_objects(self, url):
+        """Returns a dataframe with object meta info from given URI prefix.
+
+        Args:
+            url: A URI prefix. e.g., cos://us-south/<bucket-name>/object_path/
+        """
         self.logon()
 
         url_parsed = self.ParsedUrl(url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
         paginator = cos_client.get_paginator("list_objects")
         page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
+        page_dfs = [pd.DataFrame.from_dict(page["Contents"], orient="columns") for page in page_iterator]
 
-        for page in page_iterator:
-            if "Contents" in page:
-                #print(page['Contents'])
-                page_df = pd.DataFrame.from_dict(page['Contents'], orient='columns')
-                if 'result' in locals():
-                    result = result.append(page_df, sort=False)
-                else:
-                    result = page_df
-        if 'result' not in locals():
+        if len(page_dfs) > 0:
+            result = pd.concat(page_dfs, ignore_index=True).drop(columns=["ETag", "Owner"]).rename(columns={"Key": "Object"})
+            return result
+        else:
             return pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
-        result = result.drop(columns=['ETag', 'Owner']).rename(columns={"Key": "Object"})
-        return result
 
     def export_job_history(self, cos_url=None, export_file_prefix = "job_export_", export_file_suffix = ".parquet"):
         if cos_url:
