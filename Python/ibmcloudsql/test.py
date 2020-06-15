@@ -3,7 +3,7 @@ sys.path.append('ibmcloudsql')
 import ibmcloudsql
 import test_credentials
 import pandas as pd
-pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', 20)
 
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
@@ -63,7 +63,7 @@ jobidArray = []
 try:
     for x in range(test_credentials.instance_rate_limit + 1):
         jobidArray.append(sqlClient.submit_sql(sql))
-except ibmcloudsql.RateLimitedException as e:
+except ibmcloudsql.exceptions.RateLimitedException as e:
     print(e)
 
 for jobId in jobidArray:
@@ -243,5 +243,5 @@ print("Force rate limiting:")
 try:
     for n in range(6):
         sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
-except ibmcloudsql.RateLimitedException as e:
+except ibmcloudsql.exceptions.RateLimitedException as e:
     print("Got rate limited as expected")
