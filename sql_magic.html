@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>ibmcloudsql.sql_magic &#8212; SQLClient alpha documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/custom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ibmcloudsql.sql_query" href="sql_query.html" />
+    <link rel="prev" title="ibmcloudsql.cos" href="cos.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SQLClient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ibmcloudsql.sql_magic</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#timeseriestransforminput">TimeSeriesTransformInput</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#timeseriesschema">TimeSeriesSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sqlmagic">SQLMagic</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.sql_query</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="cos.html" title="previous chapter">ibmcloudsql.cos</a></li>
+      <li>Next: <a href="sql_query.html" title="next chapter">ibmcloudsql.sql_query</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="ibmcloudsql-sql-magic">
+<span id="sql-magic-label"></span><h1>ibmcloudsql.sql_magic<a class="headerlink" href="#ibmcloudsql-sql-magic" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_magic" title="ibmcloudsql.sql_magic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.sql_magic</span></code></a> provides 2 classes</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesTransformInput</span></code></a> class which provides utilities for mapping user-friendly APIs to library-friendly APIs</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema" title="ibmcloudsql.sql_magic.TimeSeriesSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesSchema</span></code></a> class which provides hints about the schema of the data to support <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_ts_datasource()</span></code></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class which provides APIs to help constructing a complete SQL Query without knowing the details about IBM Cloud SQL-specific syntax</p></li>
+</ul>
+<div class="section" id="timeseriestransforminput">
+<h2>TimeSeriesTransformInput<a class="headerlink" href="#timeseriestransforminput" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesTransformInput</span></code></a> class that provides utilities for mapping from user-friendly time-series query into library-friendly time-series query</p>
+<p>Example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sql_stmt = &quot;&quot;&quot;</span>
+<span class="go">ts_segment_by_time(ts, week, week)</span>
+<span class="go">&quot;&quot;&quot;</span>
+<span class="go">sql_stmt = &quot;&quot;&quot;</span>
+<span class="go">ts_segment_by_time(ts, 604800000, 604800000)</span>
+<span class="go">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">transform_sql()</span></code></a>: the decorator that is applied on the <code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLMagic.print_sql()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLMagic.format_()</span></code> methods</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.ts_segment_by_time" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput.ts_segment_by_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ts_segment_by_time()</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="timeseriesschema">
+<h2>TimeSeriesSchema<a class="headerlink" href="#timeseriesschema" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">unixtime_columns</span></code> tells which columns contain time-stamp data and in unix time format</p></li>
+</ul>
+</div>
+<div class="section" id="sqlmagic">
+<h2>SQLMagic<a class="headerlink" href="#sqlmagic" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class is also a <code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesSchema</span></code> class</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.reset_" title="ibmcloudsql.sql_magic.SQLMagic.reset_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset_()</span></code></a> : to reset the internal storage of SQL statement (use this before constructing a new one)</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql" title="ibmcloudsql.sql_magic.SQLMagic.print_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">print_sql()</span></code></a>: to print and check the current content of SQL statement</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.with_" title="ibmcloudsql.sql_magic.SQLMagic.with_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_()</span></code></a> : provide table-name and the SQL query for that table</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.select_" title="ibmcloudsql.sql_magic.SQLMagic.select_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_()</span></code></a>: provide column names</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_table_" title="ibmcloudsql.sql_magic.SQLMagic.from_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_table_()</span></code></a>: the table name</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_cos_" title="ibmcloudsql.sql_magic.SQLMagic.from_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_cos_()</span></code></a>: provide COS URL and format of data via <cite>format_type</cite> option</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_view_" title="ibmcloudsql.sql_magic.SQLMagic.from_view_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_view_()</span></code></a>: provide SQL statement that return a view</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.where_" title="ibmcloudsql.sql_magic.SQLMagic.where_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">where_()</span></code></a>: where condition</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.order_by_" title="ibmcloudsql.sql_magic.SQLMagic.order_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">order_by_()</span></code></a>: list of columns</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.group_by_" title="ibmcloudsql.sql_magic.SQLMagic.group_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">group_by_()</span></code></a>: list of columns</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.store_at_" title="ibmcloudsql.sql_magic.SQLMagic.store_at_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">store_at_()</span></code></a>: provide COS URL and format of data</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">partiton_objects_()</span></code>: provide number of objects</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_rows_" title="ibmcloudsql.sql_magic.SQLMagic.partition_rows_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_rows_()</span></code></a>: provide number of rows per object</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_" title="ibmcloudsql.sql_magic.SQLMagic.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">format_()</span></code></a>: to apply transformation needed to map user-friendly Time-Series Queries into library-friendly Time-Series Queries</p></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, IBM Research.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/sql_magic.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

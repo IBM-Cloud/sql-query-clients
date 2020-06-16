@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Introduction &#8212; SQLClient alpha documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/custom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="ibmcloudsql.utilities" href="utilities.html" />
+    <link rel="prev" title="README" href="includeme.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SQLClient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sql-query-client">sql-query-client</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.sql_query</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="includeme.html" title="previous chapter">README</a></li>
+      <li>Next: <a href="utilities.html" title="next chapter">ibmcloudsql.utilities</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sql-query-client">
+<h2>sql-query-client<a class="headerlink" href="#sql-query-client" title="Permalink to this headline">¶</a></h2>
+<p>Working with data on the cloud, in the form of a SQL Query, involves multiple parts.</p>
+<ol class="arabic simple">
+<li><ol class="upperalpha simple">
+<li><p><a class="reference external" href="https://cloud.ibm.com/docs/iam?topic=iam-manapikey">IBM Cloud access</a> which control access to all IBM catalogs/resources</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="2">
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/object-storage">IBM COS instance</a> where data is stored. This includes access to data asset as part of a IBM Watson Studio project.</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="3">
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/sql-query">IBM Cloud SQL Query instance</a> where the SQL-based query service is provided</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="4">
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/watson-studio">IBM Watson Studio</a>: which provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project’s IBM COS instance.</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="5">
+<li><p>Visualization: can be done with Python code via IBM Watson Studio’s notebook</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="6">
+<li><p>Visualization: can be done via  …</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="7">
+<li><p>The back-end server may be running on <a class="reference external" href="https://cloud.ibm.com/functions/">IBM Cloud Function</a></p></li>
+</ol>
+</li>
+</ol>
+<p>This <strong>sql-query-client</strong> library makes the interacting across these multiple parts possible.</p>
+<p>The <strong>sql-query-client</strong> library  comes with multiple submodules, each one links to another via subclass mechanism.</p>
+<p>The submodules</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="utilities.html#utilities-label"><span class="std std-ref">utilities</span></a> provides (A) - the IBM Cloud service connectivity-related functionality</p></li>
+<li><p><a class="reference internal" href="cos.html#cos-label"><span class="std std-ref">cos</span></a> provides (A, B) - the COS-related functionality</p></li>
+<li><p><a class="reference internal" href="sql_query.html#sql-query-label"><span class="std std-ref">sql_query</span></a> provides (A, B, C)</p></li>
+<li><p>(D, E) is done via notebook-based examples of user-specific code  which also utilizes above submodules</p></li>
+</ul>
+<p>To install your package in “editable” mode</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd sql-query-client</span>
+<span class="go">pip install -e .</span>
+</pre></div>
+</div>
+<p>To run the test on the package, run either</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">python -m pytest</span>
+
+<span class="go">pytest</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, IBM Research.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/intro.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

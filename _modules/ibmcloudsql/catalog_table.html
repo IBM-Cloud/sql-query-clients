@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>ibmcloudsql.catalog_table &#8212; SQLClient alpha documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/js/custom.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SQLClient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../includeme.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utilities.html">ibmcloudsql.utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cos.html">ibmcloudsql.cos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">ibmcloudsql.sql_magic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">ibmcloudsql.SQLQuery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">ibmcloudsql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ibmcloudsql.catalog_table</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HiveMetastore"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore">[docs]</a><span class="k">class</span> <span class="nc">HiveMetastore</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># keep tracks of what catalog tables are availables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        SHOW TABLES</span>
+<span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="c1"># The default URL where data should be queried</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url_partitioned</span> <span class="o">=</span> <span class="s2">&quot;cos://us-geo/sql/customers_partitioned.csv&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url</span> <span class="o">=</span> <span class="s2">&quot;cos://us-geo/sql/customers.csv&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"></span>
+<span class="s2">        USING CSV</span>
+<span class="s2">        LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        SHOW TABLES</span>
+<span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> 
+    <span class="nd">@target_url</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
+
+    <span class="c1"># Extended functionality</span>
+<div class="viewcode-block" id="HiveMetastore.show_catalog_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables">[docs]</a>    <span class="k">def</span> <span class="nf">show_catalog_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tartget_cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List the available Hive Metastore&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tartget_cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cos_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_url</span> 
+        <span class="n">sql_stmt_show</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">cos_out</span><span class="o">=</span><span class="n">cos_out</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql2</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
+            <span class="n">sql_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sql_status</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">sql_status</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fail at SHOW TABLE&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.drop_all_catalog_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_catalog_tables">[docs]</a>    <span class="k">def</span> <span class="nf">drop_all_catalog_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete all created catalog tables in the project</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True [if success]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_catalog_tables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">table_name</span><span class="p">)</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;tableName&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">drop_catalog_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.drop_catalog_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_catalog_tables">[docs]</a>    <span class="k">def</span> <span class="nf">drop_catalog_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_names</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drop a list of catalog tables</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">            table_names: list</span>
+<span class="sd">                A list of catalog tables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">table_names</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop_catalog_table</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.drop_catalog_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_catalog_table">[docs]</a>    <span class="k">def</span> <span class="nf">drop_catalog_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drop a given catalog table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name: str, optional</span>
+<span class="sd">            The name of the catalog table</span>
+<span class="sd">            If skipped, the being tracked catalog-table is used</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            none</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: please provide table_name&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">table_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">sql_stmt_drop</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        DROP TABLE </span><span class="si">{table_name}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql2</span><span class="p">(</span><span class="n">sql_stmt_drop</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Job_id (</span><span class="si">{stmt}</span><span class="s2">): </span><span class="si">{job_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stmt</span><span class="o">=</span><span class="n">sql_stmt_drop</span><span class="p">,</span>
+                                                            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># There is a bug - the DROP TABLE statement does not need a returned COS URI - but it seems the Python API looks for that</span>
+            <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.get_catalog_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.get_catalog_table">[docs]</a>    <span class="k">def</span> <span class="nf">get_catalog_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;synchronous version</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name: str</span>
+<span class="sd">            The name of the catalog table</span>
+
+<span class="sd">        cos_url : str, optional</span>
+<span class="sd">            The COS URL from which the catalog table should reference to</span>
+<span class="sd">            If not provided, it uses the internal `self.cos_in_url`</span>
+
+<span class="sd">        force_recreate: bool, optional</span>
+<span class="sd">            (True) force to recreate an existing catalog table</span>
+<span class="sd">        blocking: bool, optional</span>
+<span class="sd">            (True) wait until it returns the resut</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            none if job &quot;failed&quot;</span>
+<span class="sd">            otherwise returns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">get_catalog_table_async</span><span class="p">(</span>
+                                    <span class="n">table_name</span><span class="p">,</span>
+                                    <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                    <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            the async version of `get_catalog_table`</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            table_name: str</span>
+<span class="sd">                The name of the catalog table</span>
+
+<span class="sd">            cos_url : str, optional</span>
+<span class="sd">                The COS URL from which the catalog table should reference to</span>
+<span class="sd">                If not provided, it uses the internal `self.cos_in_url`</span>
+
+<span class="sd">            force_recreate: bool, optional</span>
+<span class="sd">                (True) force to recreate an existing catalog table</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            ------</span>
+<span class="sd">                job_id [if the table is being created]</span>
+<span class="sd">                None   [if the table already created]</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="o">=</span> <span class="n">table_name</span>
+
+            <span class="k">if</span> <span class="n">cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url</span>
+
+            <span class="c1"># from IPython.display import display</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_catalog_tables</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;tableName&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># not found</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># if logger.getEffectiveLevel() == logging.DEBUG:</span>
+            <span class="c1">#     display(df)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">force_recreate</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">drop_catalog_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">force_recreate</span><span class="p">:</span>
+                <span class="n">sql_stmt_create</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create</span><span class="p">)</span>
+                <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_stmt_create</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">job_id</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">get_catalog_table_async</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span>
+                                              <span class="n">cos_url</span><span class="p">,</span>
+                                              <span class="n">force_recreate</span><span class="o">=</span><span class="n">force_recreate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">job_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">blocking</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.get_catalog_table_partitioned"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.get_catalog_table_partitioned">[docs]</a>    <span class="k">def</span> <span class="nf">get_catalog_table_partitioned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a partitioned catalog table. We need to call `refresh_cache_table_partitioned`</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        --------------</span>
+<span class="sd">        table_name: str</span>
+<span class="sd">            the name of the catalog table to be created</span>
+
+<span class="sd">        cos_url : str, optional</span>
+<span class="sd">            The COS URL from which the catalog table should reference to</span>
+<span class="sd">            If not provided, it uses the internal `self.cos_in_url`</span>
+
+<span class="sd">        force_recreate: bool</span>
+<span class="sd">            (True) force to recreate an existing catalog table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="k">if</span> <span class="n">cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url_partitioned</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_catalog_tables</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;tableName&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1"># not found</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">force_recreate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop_catalog_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">force_recreate</span><span class="p">:</span>
+            <span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="c1"># auto-detection of scheme</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_partitioned_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"></span>
+<span class="s2">                USING CSV</span>
+<span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
+<span class="s2">                &quot;&quot;&quot;</span>
+                <span class="n">sql_stmt_create_partitioned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_partitioned_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># explit selection of scheme -&gt; need to tell &quot;PARTITIONED BY&quot;</span>
+                <span class="n">sql_stmt_create_partitioned</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"> (</span>
+<span class="s2">                customerID string,</span>
+<span class="s2">                companyName string,</span>
+<span class="s2">                contactName string,</span>
+<span class="s2">                contactTitle string,</span>
+<span class="s2">                address string,</span>
+<span class="s2">                region string,</span>
+<span class="s2">                postalCode string,</span>
+<span class="s2">                country string,</span>
+<span class="s2">                phone string,</span>
+<span class="s2">                fax string</span>
+<span class="s2">                )</span>
+<span class="s2">                USING CSV</span>
+<span class="s2">                PARTITIONED BY (country)</span>
+<span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sqlClient</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">refresh_cache_table_partitioned</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.refresh_cache_table_partitioned"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.refresh_cache_table_partitioned">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_cache_table_partitioned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This step is required after creating a new partitioned catalog table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">            table_name: str</span>
+<span class="sd">                The partitioned table name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_catalog_table_name</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="c1"># if table_name not in self.partitioned_tables:</span>
+        <span class="c1">#     logger.error(&quot;Table %s is not a partitioned table&quot; % (table_name))</span>
+        <span class="c1">#     logger.error(&quot;.... [ %s ]&quot; %</span>
+        <span class="c1">#                  &quot; &quot;.join(list({k: 1</span>
+        <span class="c1">#                                 for k in self.partitioned_tables})))</span>
+        <span class="c1">#     assert (0)</span>
+
+        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;ALTER TABLE </span><span class="si">{table_name}</span><span class="s2"> RECOVER PARTITIONS</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HiveMetastore.describe_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table">[docs]</a>    <span class="k">def</span> <span class="nf">describe_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        DESCRIBE TABLE </span><span class="si">{table_name}</span><span class="s2"> INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cos_out_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, IBM Research.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

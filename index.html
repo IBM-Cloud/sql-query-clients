@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to TimeSeries-SQLClient’s documentation! &#8212; SQLClient alpha documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/custom.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="README" href="includeme.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">SQLClient</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.SQLQuery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="includeme.html" title="next chapter">README</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-timeseries-sqlclient-s-documentation">
+<h1>Welcome to TimeSeries-SQLClient’s documentation!<a class="headerlink" href="#welcome-to-timeseries-sqlclient-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="includeme.html#list-of-clients">List of clients</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#sql-query-client">sql-query-client</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#parsedurl">ParsedUrl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#projectlib">ProjectLib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#cosclient">COSClient</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#timeseriestransforminput">TimeSeriesTransformInput</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#timeseriesschema">TimeSeriesSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#sqlmagic">SQLMagic</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.SQLQuery</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#a-help">A. Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#b-sql-query">B. SQL Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#c-query-result">C. Query result</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#d-jobs">D. Jobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#e-cos-url-handling">E. COS URL handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#f-hive-catalog-table">F. HIVE catalog table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#g-data-skipping">G. Data skipping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#h-prepare-data-for-time-series">H. Prepare data for time-series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#known-limitations-to-ibm-sql-query">Known limitations to IBM SQL Query:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#tips">Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_query.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ibmcloudsql.html">ibmcloudsql package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.SQLQuery">ibmcloudsql.SQLQuery module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.catalog_table">ibmcloudsql.catalog_table module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.cos">ibmcloudsql.cos module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.exceptions">ibmcloudsql.exceptions module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_magic">ibmcloudsql.sql_magic module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.utilities">ibmcloudsql.utilities module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2020, IBM Research.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
