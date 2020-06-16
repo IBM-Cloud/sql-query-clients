@@ -320,6 +320,11 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
         List all objects in the current COS URL.
 
+        Parameters
+        ------------
+        url: str
+            A URI prefix. e.g., cos://us-south/<bucket-name>/object_path/
+
         Returns
         ----------
         pd.DataFrame
@@ -339,6 +344,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
         self.logon()
 
+        if cos_url[-1] != '/': 
+            cos_url = cos_url + '/'
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
         cos_client = self._get_default_cos_client(url_parsed.endpoint)
@@ -361,6 +368,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                 columns={"Key": "Object"})
         else:
             result = pd.DataFrame()
+            # result = pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
         return result
 
     def delete_zero_size_objects(self, cos_url):

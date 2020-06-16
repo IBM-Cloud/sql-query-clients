@@ -94,7 +94,7 @@ try:
 except ValueError as e:
     print(e)
 print("Running test with exact target object name creation:")
-jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location))
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location if  test_credentials.result_location[-1] == '/' else test_credentials.result_location+'/'))
 sqlClient.wait_for_job(jobId)
 result_df = sqlClient.get_result(jobId)
 sqlClient.rename_exact_result(jobId)
@@ -194,7 +194,7 @@ sqlClient.sql_ui_link()
 print("Job list:")
 pd.set_option('display.max_colwidth', 10)
 print(sqlClient.get_jobs().head(200))
-pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_colwidth', None)
 
 print("COS Summary:")
 print(sqlClient.get_cos_summary(test_credentials.result_location))
@@ -229,15 +229,19 @@ jobhist_df = sqlClient.run_sql("SELECT * FROM {} STORED AS PARQUET LIMIT 10 INTO
 print(jobhist_df[['job_id','status']])
 
 print("Running EU test with individual method invocation and Parquet target:")
-sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
-sqlClient_eu.logon()
-jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
-sqlClient_eu.wait_for_job(jobId)
-result_df = sqlClient_eu.get_result(jobId)
-print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
-print(result_df.head(200))
-print("EU SQL UI Link:")
-sqlClient_eu.sql_ui_link()
+try:
+    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
+    sqlClient_eu.logon()
+    jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
+    sqlClient_eu.wait_for_job(jobId)
+    result_df = sqlClient_eu.get_result(jobId)
+    print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
+    print(result_df.head(200))
+    print("EU SQL UI Link:")
+    sqlClient_eu.sql_ui_link()
+except AttributeError as _:
+    print(".. no configuration available")
+    pass
 
 print("Force rate limiting:")
 try:

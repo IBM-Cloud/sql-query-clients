@@ -207,46 +207,34 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 headers=self.request_headers,
                 json=json_data)
 
-            # Throw in case we hit the rate limit
-            if (response.status_code == 429):
-                raise RateLimitedException("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
+            resp = response.json()
+            if 'status_code' in resp:
+                status_code = resp["status_code"]
+                # Throw in case we hit the rate limit
+                if (status_code == 429):
+                    while True:
+                        if (self.get_number_running_jobs() <
+                                self.max_concurrent_jobs):
+                            break
+                        time.sleep(3)  # seconds
+                    raise RateLimitedException(
+                        "SQL submission failed ({code}): {msg}".format(
+                            code=status_code,
+                            msg=response.json()['errors'][0]['message']))
 
             # any other error but 429 will be raised here, like 403 etc
             response.raise_for_status()
 
-            resp = response.json()
-            return resp['job_id']
-        except KeyError as e:
-            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
-
-        except HTTPError as e:
-            raise SyntaxError("SQL submission failed: {}".format(response.json()['errors'][0]['message']))
-
-    def submit_sql(self, sql_text, pagesize=None):
-        self.logon()
-        sqlData = {'statement': sql_text}
-        # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
-        if pagesize or pagesize==0:
-            if type(pagesize) == int and pagesize>0:
-                if self.target_cos_url:
-                    sqlData["statement"] += " INTO {}".format(self.target_cos_url)
-                elif " INTO "  not in sql_text.upper():
-                    raise SyntaxError("Neither resultset_target parameter nor \"INTO\" clause specified.")
-                elif " PARTITIONED " in sql_text.upper():
-                    raise SyntaxError("Must not use PARTITIONED clause when specifying pagesize parameter.")
-                sqlData["statement"] += " PARTITIONED EVERY {} ROWS".format(pagesize)
+            if 'job_id' in resp:
+                return resp['job_id']
             else:
-                raise ValueError('pagesize parameter ({}) is not valid.'.format(pagesize))
-        elif self.target_cos_url:
-            sqlData.update({'resultset_target': self.target_cos_url})
-
-        intrumented_send = backoff.on_exception(
-            backoff.expo,
-            RateLimitedException,
-            max_tries=self.max_tries
-        )(self._send_req)
-
-        return intrumented_send(sqlData)
+                raise HTTPError()
+        except (KeyError, HTTPError) as _:
+            raise SyntaxError(
+                "SQL submission failed ({code}): {msg} - {query}".format(
+                    code=status_code,
+                    msg=response.json()['errors'][0]['message'],
+                    query=pformat(sqlData)))
 
     def submit(self,
                    pagesize=None,
@@ -258,10 +246,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             pagesize=pagesize,
             blocking=blocking)
 
-    def submit_sql2(self,
-                   sql_stmt,
-                   pagesize=None,
-                   blocking=True):
+    def submit_sql(self, sql_stmt, pagesize=None, blocking=True):
         """
         Asynchronous call - submit and quickly return the job_id.
 
@@ -351,13 +336,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
 
         """
-        self.sqlClient.logon()
-        self.request_headers["authorization"] = self.sqlClient.request_headers[
+        self.logon()
+        self.request_headers["authorization"] = self.request_headers[
             "authorization"]
         sql_text = sql_stmt
         sqlData = {'statement': sql_text}
 
-        def INTO_present(sql_text):
+        def INTO_is_present(sql_text):
             """ check if INTO keyword is present in the SQL query"""
             return (" INTO " in sql_text.upper()) or (
                 "\nINTO " in sql_text.upper())
@@ -365,9 +350,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
         if pagesize or pagesize == 0:
             if type(pagesize) == int and pagesize > 0:
-                if self.cos_out_url and not INTO_present(sql_text):
-                    sqlData["statement"] += " INTO {}".format(self.cos_out_url)
-                elif not INTO_present(sql_text):
+                if self.target_cos_url and not INTO_is_present(sql_text):
+                    sqlData["statement"] += " INTO {}".format(self.target_cos_url)
+                elif not INTO_is_present(sql_text):
                     raise SyntaxError(
                         "Neither resultset_target parameter nor \"INTO\" clause specified."
                     )
@@ -380,55 +365,19 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             else:
                 raise ValueError(
                     'pagesize parameter ({}) is not valid.'.format(pagesize))
-        elif self.cos_out_url and not INTO_present(sql_text):
-            sqlData.update({'resultset_target': self.cos_out_url})
+        elif self.target_cos_url and not INTO_is_present(sql_text):
+            sqlData.update({'resultset_target': self.target_cos_url})
 
-        def issue_request():
-            response = requests.post(
-                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}"
-                .format(self.sqlquery_instance_crn),
-                headers=self.request_headers,
-                json=sqlData)
-            return response
-
-        is_done = False
-        while is_done is False:
-            try:
-                response = issue_request()
-                resp = response.json()
-                status_code = 0
-                is_done = True
-                if "status_code" in resp:
-                    status_code = resp["status_code"]
-                    if resp["status_code"] == 429:
-                        if blocking is True:
-                            is_done = False
-                            while True:
-                                if (self.get_number_running_jobs() <
-                                        self.max_concurrent_jobs):
-                                    break
-                                time.sleep(10)  # seconds
-                        else:
-                            raise RateLimitedException(
-                                "SQL submission failed ({code}): {msg}".format(
-                                    code=status_code,
-                                    msg=response.json()['errors'][0]
-                                    ['message']))
-                if (blocking is False) or ('job_id' in resp):
-                    logger.debug(pformat(resp))
-                    return resp['job_id']
-            except (KeyError, HTTPError) as _:
-                raise SyntaxError(
-                    "SQL submission failed ({code}): {msg} - {query}".format(
-                        code=status_code,
-                        msg=response.json()['errors'][0]['message'],
-                        query=pformat(sqlData)))
-        if "job_id" not in resp:
-            raise SyntaxError(
-                "SQL submission failed ({code}): {msg} - {query}".format(
-                    code=status_code,
-                    msg=response.json()['errors'][0]['message'],
-                    query=pformat(sqlData)))
+        if blocking is True:
+            max_tries = 1000
+        else:
+            max_tries = self.max_tries
+        intrumented_send = backoff.on_exception(
+            backoff.expo,
+            RateLimitedException,
+            max_tries=max_tries
+        )(self._send_req)
+        return intrumented_send(sqlData)
 
     @check_saved_jobs_decorator
     def submit_sql_with_checking_saved_jobs(self,
@@ -629,7 +578,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     # add missing __iter__ method, so pandas accepts body as file-like object
                     if not hasattr(body, "__iter__"): body.__iter__ = types.MethodType(self.__iter__, body)
 
-                    partition_df = pd.read_csv(body)
+                    partition_df = pd.read_csv(body, error_bad_lines=False)
 
                 elif result_format == "parquet":
                     tmpfile = tempfile.NamedTemporaryFile()
@@ -721,6 +670,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             result_objects_df['ObjectURL'] = result_objects_df.apply(lambda x: 'cos://%s/%s/%s' % (result_endpoint, result_bucket, x['Object']), axis=1)
             return result_objects_df
 
+        job_id = jobId
         if blocking:
             job_running = True
             while job_running:
@@ -736,7 +686,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             x = list_results(job_id)
         return x
 
-    def rename_exact_result(self, job_id, blocking=True):
+    def rename_exact_result(self, jobId, blocking=True):
         """
         A SQL Query can store data into partitioned/paginated multiple objects, or single object.
 
@@ -770,7 +720,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         while job_status == "running" and blocking is True:
             time.sleep(6)
-            job_details = self.get_job(job_id)
+            job_details = self.get_job(jobId)
             job_status = job_details.get('status')
 
         if job_status == 'running':
@@ -792,7 +742,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                                          or int(result_objects.Size[1]) != 0):
             raise ValueError(
                 'Results of job_id {} don\'t seem to be regular SQL query output.'
-                .format(job_id))
+                .format(jobId))
 
         if len(result_objects) == 1:
             return 
@@ -807,7 +757,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         if pre_row_zeros is False:
             raise ValueError(
                 'Results of job_id {} don\'t seem to be regular SQL query output.'
-                .format(job_id))
+                .format(jobId))
 
         if len(result_objects) == 3:
             # basically copy the object[2] to object[0]
@@ -1244,6 +1194,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         self.logon()
 
+        if url[-1] != '/': 
+            url = url + '/'
         url_parsed = self.analyze_cos_url(url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
 
@@ -1291,26 +1243,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
                 'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
 
-    def list_cos_objects(self, url):
-        """Returns a dataframe with object meta info from given URI prefix.
-
-        Args:
-            url: A URI prefix. e.g., cos://us-south/<bucket-name>/object_path/
-        """
-        self.logon()
-
-        url_parsed = self.analyze_cos_url(url)
-        cos_client = self._get_cos_client(url_parsed.endpoint)
-        paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
-        page_dfs = [pd.DataFrame.from_dict(page["Contents"], orient="columns") for page in page_iterator]
-
-        if len(page_dfs) > 0:
-            result = pd.concat(page_dfs, ignore_index=True).drop(columns=["ETag", "Owner"]).rename(columns={"Key": "Object"})
-            return result
-        else:
-            return pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
-
     def export_job_history(self, cos_url=None, export_file_prefix = "job_export_", export_file_suffix = ".parquet"):
         """
         Export the most recent jobs to COS URL
@@ -1332,8 +1264,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         url_parsed = self.analyze_cos_url(self.export_cos_url)
 
         job_history_df = self.get_jobs() # Retrieve current job history (most recent 30 jobs)
-        job_history_df['error'] = job_history_df['error'].astype(unicode)
-        job_history_df['error_message'] = job_history_df['error_message'].astype(unicode)
+        if (sys.version_info < (3, 0)):
+            job_history_df['error'] = job_history_df['error'].astype(unicode)
+            job_history_df['error_message'] = job_history_df['error_message'].astype(unicode)
         terminated_job_history_df = job_history_df[job_history_df['status'].isin(['completed', 'failed'])] # Only export terminated jobs
         newest_job_end_time = terminated_job_history_df.loc[pd.to_datetime(terminated_job_history_df['end_time']).idxmax()].end_time
 
@@ -1396,7 +1329,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         sql_stmt = """
         SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
         INTO {cos_out} STORED AS JSON
-        """.format(cos_in=cos_url, type=type.upper(), cos_out=self.cos_out_url)
+        """.format(cos_in=cos_url, type=type.upper(), cos_out=self.target_cos_url)
         return self.run_sql(sql_stmt)
 
     def analyze(self, job_id):
@@ -1594,7 +1527,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             The COS_URL where the data with 3 fields (key, time_stamp, observation)
             and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
         """
-        tmp_cos = self.cos_out_url
+        tmp_cos = self.target_cos_url
         if num_objects is None and num_rows is None:
             print("provide at least `num_objects` or `num_rows`")
             assert(0)
