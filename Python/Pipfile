@@ -16,6 +16,7 @@ pandas = "*"
 pyarrow = "==0.15.1"
 requests = ">= 2.2.0"
 backoff = "==1.10.0"
+sqlparse = "*"
 
 [scripts]
 ci = "pytest"
