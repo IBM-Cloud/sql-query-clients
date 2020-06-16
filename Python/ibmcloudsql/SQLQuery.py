@@ -212,7 +212,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 time.sleep(3)  # seconds
                 raise RateLimitedException(
                     "SQL submission failed ({code}): {msg}".format(
-                        code=status_code,
+                        code=response.status_code,
                         msg=response.json()['errors'][0]['message']))
 
             # any other error but 429 will be raised here, like 403 etc
@@ -1508,8 +1508,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         cos_out: str
             The COS URL where the data is copied to - later as data source
         granularity: str
-            a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec", "per_hour", "per_<x>hour"]
+            There are 2 options:
+            
+            * a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec", "per_hour", "per_<x>hour"]
             with <x> is a number divided by 60, e.g. 10, 15
+            
+            * a value that follows ISO 8601 'duration', e.g. PT1M, PT1S, PT2H
         ops: str
             The aggregation method: "avg", "sum", "max", "min", "count"
 
@@ -1592,7 +1596,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     num_min = list(map(int, temp))[0]
                     assert(60 % num_min == 0)
             else:
-                return None
+                if granularity[0:2].upper() == 'PT' and granularity[-1].upper() == 'M':
+                    level = "minute"
+                    try:
+                        import isodate
+                        x = isodate.parse_duration(granularity.strip())
+                        num_min = int(x.total_seconds()/60)  # (minute)
+                        assert(60 % num_min == 0)
+                    except ISO8601Error:
+                        print("%s unsupported" % granularity)
+                        assert(0)
+                else:
+                    return None
 
             if level is "minute":
                 sql_stmt = """
@@ -1651,7 +1666,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     num_sec = list(map(int, temp))[0]
                     assert(60 % num_sec == 0)
             else:
-                return None
+                if granularity[0:2].upper() == 'PT' and granularity[-1].upper() == 'S':
+                    level = "sec"
+                    try:
+                        import isodate
+                        x = isodate.parse_duration(granularity.strip())
+                        num_sec= int(x.total_seconds()) 
+                        assert(60 % num_sec == 0)
+                    except ISO8601Error:
+                        print("%s unsupported" % granularity)
+                        assert(0)
+                else:
+                    return None
 
             if level is "sec":
                 sql_stmt = """
