@@ -1,0 +1,14 @@
+/*
+div.sphinxsidebar {
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+div.sphinxsidebar #searchbox input[type="text"] {
+    width: 160px;
+}
+
+div.sphinxsidebar .search > div {
+    display: table-cell;
+}
+*/
