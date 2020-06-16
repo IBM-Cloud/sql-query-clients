@@ -122,11 +122,7 @@ class HiveMetastore():
         except KeyError:
             pass
 
-    def get_catalog_table(self,
-                          table_name,
-                          cos_url=None,
-                          force_recreate=False,
-                          blocking=True):
+    def get_catalog_table(self, table_name, cos_url=None, force_recreate=False, blocking=True):
         """synchronous version
 
         Parameters
@@ -209,10 +205,7 @@ class HiveMetastore():
                 return None
         return None
 
-    def get_catalog_table_partitioned(self,
-                                      table_name,
-                                      cos_url=None,
-                                      force_recreate=False):
+    def get_catalog_table_partitioned(self, table_name, cos_url=None, force_recreate=False):
         """
         Create a partitioned catalog table. We need to call `refresh_cache_table_partitioned`
 

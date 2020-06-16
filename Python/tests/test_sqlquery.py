@@ -14,13 +14,15 @@ def sqlquery_client():
     # disable authentication step for 300s
     sql_client.logged_on = True
     sql_client.last_logon = datetime.now()
-
+    sql_client.request_headers.update(
+        {'authorization': 'Bearer {}'.format("mock")})
     return sql_client
 
 def test_init(sqlquery_client):
     assert(sqlquery_client.request_headers == {'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': sqlquery_client.user_agent
+    'User-Agent': sqlquery_client.user_agent,
+    'authorization': 'Bearer {}'.format("mock")
     })
 
 @responses.activate
