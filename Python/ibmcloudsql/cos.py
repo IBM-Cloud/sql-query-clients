@@ -527,7 +527,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
     def get_bucket_info(self, cos_url):
         """
-        .. code-block: console
+        .. code-block:: console
 
             curl https://config.cloud-object-storage.cloud.ibm.com/v1/b/my-bucket \
             -H 'authorization: bearer <IAM_token>'

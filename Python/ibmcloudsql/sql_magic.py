@@ -50,13 +50,24 @@ class TimeSeriesTransformInput():
         """
         Help to transform from user-friendly query into library-friendly query
 
+        Using either: `per_hour`
+
+        .. code-block:: console
+            ts_segment_by_time(ts, per_hour, per_hour)
+            ts_segment_by_time(ts, hour, hour)
+
+        or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations 
+            P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W
+
         Example:
-        ts_segment_by_time(ts, per_hour, per_hour)
-        ts_segment_by_time(ts, hour, hour)
+
+        .. code-block:: python
+            ts_segment_by_time(ts, PT1H, PT1H)
 
         into
 
-        ts_segment_by_time(ts, 3600000, 3600000)
+        .. code-block:: python
+            ts_segment_by_time(ts, 3600000, 3600000)
 
         as ts_segment_by_time operates at mili-seconds level, hour=60*60*1000 miliseconds
         """
@@ -75,9 +86,14 @@ class TimeSeriesTransformInput():
                     elif result.group(i).strip().lower() in ["per_week", "week"]:
                         num[i] = 60*24*7
                     else:
-                        print("%s unsupported" % result.group(i))
-                        assert(0)
-                    num[i] = num[i] * 60 * 1000
+                        try:
+                            import isodate
+                            x = isodate.parse_duration(result.group(i).strip())
+                            num[i] = int(x.total_seconds()/60)  # (minute)
+                        except ISO8601Error:
+                            print("%s unsupported" % result.group(i))
+                            assert(0)
+                    num[i] = num[i] * 60 * 1000 # (milliseconds)
                 start_end[i] = result.span(i)
             sql_stmt = sql_stmt[:start_end[2][0]] + str(num[2]) + sql_stmt[start_end[2][1]:start_end[3][0]] + \
                 str(num[3]) +  sql_stmt[start_end[3][1]:]
@@ -206,6 +222,8 @@ class SQLMagic(TimeSeriesSchema):
 
     @TimeSeriesTransformInput.transform_sql
     def format_(self):
+        """Perform string replacement needed so that the final result is a SQL statement that is accepted by Spark SQL
+        """
         return self
 
 def test_chain_function():
@@ -354,7 +372,18 @@ if __name__ == "__main__":
           ts
    FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=53dfb2c3-ac3a-44af-a55d-d1a366a0883f STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
 SELECT field_name AS storage_account_id,
-       ts_explode(ts_seg_avg(ts_segment_by_time(ts, week, week))) AS (tt,
+       ts_explode(ts_seg_avg(ts_segment_by_time(ts, week, hour))) AS (tt,
+                                                                      value)
+FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET
+    """
+    test_04(sql_stmt)
+    sql_stmt = """
+    WITH container_ts_table AS
+  (SELECT field_name,
+          ts
+   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=53dfb2c3-ac3a-44af-a55d-d1a366a0883f STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
+SELECT field_name AS storage_account_id,
+       ts_explode(ts_seg_avg(ts_segment_by_time(ts, P1W, PT1H))) AS (tt,
                                                                       value)
 FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET
     """
