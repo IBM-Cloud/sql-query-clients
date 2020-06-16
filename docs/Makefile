@@ -35,7 +35,7 @@ latexpdf:
 	cp $(PDFBUILDDIR)/latex/*.pdf $(PDF)
 	@echo "pdflatex finished; see PDF files in $(PDF)"
 python:
-	sphinx-apidoc -f -o source ../Python/ibmcloudsql test*
+	sphinx-apidoc -f -o source ../Python/ibmcloudsql ... ../Python/ibmcloudsql/test*
 
 buildandcommithtml: html 
 	cd $(BUILDDIR)/html; git add . ; git commit -m "rebuilt docs"; git push origin gh-pages
