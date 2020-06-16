@@ -11,8 +11,10 @@ Working with data on the cloud, in the form of a SQL Query, involves multiple pa
 3. (C) `IBM Cloud SQL Query instance <https://www.ibm.com/cloud/sql-query>`_ where the SQL-based query service is provided
 4. (D) `IBM Watson Studio <https://www.ibm.com/cloud/watson-studio>`_: which provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project's IBM COS instance.
 5. (E) Visualization: can be done with Python code via IBM Watson Studio's notebook
-<!-- 6. (F) Visualization: can be done via  ...
-7. (G) The back-end server may be running on `IBM Cloud Function <https://cloud.ibm.com/functions/>`_ -->
+
+..
+    6. (F) Visualization: can be done via  ...
+    7. (G) The back-end server may be running on `IBM Cloud Function <https://cloud.ibm.com/functions/>`_ 
 
 This **sql-query-client** library makes the interacting across these multiple parts possible.
 
