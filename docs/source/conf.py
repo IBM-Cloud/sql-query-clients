@@ -158,7 +158,7 @@ if html_theme == "alabaster":
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'TimeSeries-SQLClientdoc'
+htmlhelp_basename = 'SQLClientdoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -184,8 +184,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'TimeSeries-SQLClient.tex',
-     'TimeSeries-SQLClient Documentation', 'Tuan M. HoangTrong', 'manual'),
+    (master_doc, 'SQLClient.tex',
+     'SQLClient Documentation', 'Tuan M. HoangTrong', 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------
@@ -193,7 +193,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [(master_doc, 'timeseries-sqlclient',
-              'TimeSeries-SQLClient Documentation', [author], 1)]
+              'SQLClient Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -201,8 +201,8 @@ man_pages = [(master_doc, 'timeseries-sqlclient',
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'TimeSeries-SQLClient', 'TimeSeries-SQLClient Documentation',
-     author, 'TimeSeries-SQLClient', 'One line description of project.',
+    (master_doc, 'SQLClient', 'SQLClient Documentation',
+     author, 'SQLClient', 'One line description of project.',
      'Miscellaneous'),
 ]
 
