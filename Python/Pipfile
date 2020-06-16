@@ -5,7 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 responses = ">=0.10.14"
-pytest = ">=2.8.0,<=3.10.1"
+pytest = ">=2.8.0"
 pytest-cov = "*"
 
 [packages]
@@ -16,6 +16,8 @@ pandas = "*"
 pyarrow = "==0.15.1"
 requests = ">= 2.2.0"
 backoff = "==1.10.0"
+sqlparse = "*"
+responses = "*"
 
 [scripts]
 ci = "pytest"

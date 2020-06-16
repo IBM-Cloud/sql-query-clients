@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# Copyright IBM Corp. 2018
+# Copyright IBM Corp. 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,12 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
-from .SQLQuery import SQLQuery
-from .exceptions import RateLimitedException
+class RateLimitedException(Exception):
+    """The error when number of requests exceeds the capacity"""
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+

@@ -14,13 +14,15 @@ def sqlquery_client():
     # disable authentication step for 300s
     sql_client.logged_on = True
     sql_client.last_logon = datetime.now()
-
+    sql_client.request_headers.update(
+        {'authorization': 'Bearer {}'.format("mock")})
     return sql_client
 
 def test_init(sqlquery_client):
     assert(sqlquery_client.request_headers == {'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': sqlquery_client.user_agent
+    'User-Agent': sqlquery_client.user_agent,
+    'authorization': 'Bearer {}'.format("mock")
     })
 
 @responses.activate
@@ -31,7 +33,7 @@ def test_submit_sql_no_retry(sqlquery_client):
                   json={'errors': [{'message': mock_error_message}]}, status=429)
 
     with pytest.raises(RateLimitedException, match=mock_error_message) as exc_info:
-        sqlquery_client.submit_sql('VALUES (1)')
+        sqlquery_client.submit_sql('VALUES (1)', blocking=False)
 
 @responses.activate
 def test_submit_sql_w_retry(sqlquery_client):
@@ -48,4 +50,4 @@ def test_submit_sql_w_retry(sqlquery_client):
     responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
                   json={'job_id': mock_job_id}, status=201)
 
-    assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
+    assert sqlquery_client.submit_sql('VALUES (1)', blocking=False) == mock_job_id
