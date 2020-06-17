@@ -39,6 +39,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# ------------------------------------------------------------------------------
+# Represents an IBM Watson Studio project
+# ------------------------------------------------------------------------------
 class Project():
     """https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects
 
@@ -46,6 +49,9 @@ class Project():
     """
     pass
 
+# ------------------------------------------------------------------------------
+# Helper class to interact with IBM Watson Studio projects
+# ------------------------------------------------------------------------------
 class ProjectLib():
     """
     This is used by SQLClient/COSClient via :py:meth:`read` and :py:meth:`write` methods
@@ -183,6 +189,9 @@ class ProjectLib():
         return result
 
 
+# ---------------------------------------------------------------------------------------------
+# Helper class to to do client-side mapping of COS endpoints to aliases supported in SQL Query
+# ---------------------------------------------------------------------------------------------
 class ParsedUrl(object):
     """Use this class to extract information from COS URL
 
@@ -601,7 +610,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
     def connect_project_lib(self, project, file_name=None):
         """
-        Connect to the Project's COS bucket for its own assets
+        Connect to an IBM Watson Studio Project's COS bucket for its own assets
 
         Parameters
         ----------
@@ -616,7 +625,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             self.read_project_lib_data(file_name)
 
     def read_project_lib_data(self, file_name=None):
-        """read the content from the given file (stored on ProjectLib's COS)
+        """read the content from the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------
@@ -626,7 +635,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         self._project.read(file_name)
 
     def write_project_lib_data(self, file_name=None):
-        """write the content to the given file (stored on ProjectLib's COS)
+        """write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------
@@ -637,7 +646,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
     @property
     def project_lib(self):
-        """ Project: the object"""
+        """ Project: IBM Watson Studio ProjectLib object"""
         return self._project
 
 if __name__ == "__main__":
