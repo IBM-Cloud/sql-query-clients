@@ -36,9 +36,9 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 setup:
-	conda env create sphinx python=3.6 
-	source activate sphinx
-	pip install m2r recommonmark sphinx==1.7.4 --force-reinstall
+	conda create -n sphinx python=3.6 
+	conda activate sphinx
+	pip install m2r recommonmark sphinx==2.4.4 --force-reinstall
 	echo Make sure you're in 'sphinx' virtual environment each time you build the docs
 
 latexpdf:
@@ -53,4 +53,4 @@ python:
 buildandcommithtml: html 
 	cd $(BUILDDIR)/html; git add . ; git commit -m "rebuilt docs"; git push origin gh-pages
 	echo Goto https://pages.github.ibm.com/IoT-Edge/edgeai-core/ to see the new docs.
-	echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.
+		 echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.
