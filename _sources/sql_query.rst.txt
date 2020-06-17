@@ -32,6 +32,7 @@ A. Help
     3. :meth:`.get_job_demo`
     4. :meth:`.get_cos_summary_demo`
     5. :meth:`.list_results_demo`
+
 1. :meth:`.analyze`: if you are stuck with a query that takes too long, try this one. It may provide you with suggestion on how to improve your query or revise your data source.
 
 B. SQL Query
