@@ -126,6 +126,9 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="c1"># Represents an IBM Watson Studio project</span>
+<span class="c1"># ------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="Project"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.Project">[docs]</a><span class="k">class</span> <span class="nc">Project</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects</span>
 
@@ -133,6 +136,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span></div>
 
+<span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="c1"># Helper class to interact with IBM Watson Studio projects</span>
+<span class="c1"># ------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="ProjectLib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib">[docs]</a><span class="k">class</span> <span class="nc">ProjectLib</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is used by SQLClient/COSClient via :py:meth:`read` and :py:meth:`write` methods</span>
@@ -270,6 +276,9 @@
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
+<span class="c1"># ---------------------------------------------------------------------------------------------</span>
+<span class="c1"># Helper class to to do client-side mapping of COS endpoints to aliases supported in SQL Query</span>
+<span class="c1"># ---------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="ParsedUrl"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl">[docs]</a><span class="k">class</span> <span class="nc">ParsedUrl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Use this class to extract information from COS URL</span>
 
@@ -614,7 +623,7 @@
 
 <div class="viewcode-block" id="COSClient.get_bucket_info"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_bucket_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_bucket_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        .. code-block: console</span>
+<span class="sd">        .. code-block:: console</span>
 
 <span class="sd">            curl https://config.cloud-object-storage.cloud.ibm.com/v1/b/my-bucket \</span>
 <span class="sd">            -H &#39;authorization: bearer &lt;IAM_token&gt;&#39;</span>
@@ -688,7 +697,7 @@
 
 <div class="viewcode-block" id="COSClient.connect_project_lib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib">[docs]</a>    <span class="k">def</span> <span class="nf">connect_project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Connect to the Project&#39;s COS bucket for its own assets</span>
+<span class="sd">        Connect to an IBM Watson Studio Project&#39;s COS bucket for its own assets</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -703,7 +712,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">read_project_lib_data</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="COSClient.read_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.read_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">read_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;read the content from the given file (stored on ProjectLib&#39;s COS)</span>
+        <span class="sd">&quot;&quot;&quot;read the content from the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -713,7 +722,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="COSClient.write_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.write_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">write_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;write the content to the given file (stored on ProjectLib&#39;s COS)</span>
+        <span class="sd">&quot;&quot;&quot;write the content to the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -724,7 +733,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Project: the object&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot; Project: IBM Watson Studio ProjectLib object&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span></div>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

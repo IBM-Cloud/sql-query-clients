@@ -44,7 +44,6 @@ ibmcloudsql.sql\_magic module
    :undoc-members:
    :show-inheritance:
 
-
 ibmcloudsql.utilities module
 ----------------------------
 

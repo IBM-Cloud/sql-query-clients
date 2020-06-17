@@ -200,12 +200,16 @@ is used as the data source via <cite>table_name</cite> argument.</p>
 is then needed to be transformed into a finer time-scale, for example:</p>
 <ul class="simple">
 <li><p><cite>raw</cite>: no change, just extract to a new location</p></li>
-<li><p><cite>per_sec</cite>: per every second</p></li>
-<li><p><cite>per_2sec</cite>: per every 2-second</p></li>
-<li><p><cite>per_min</cite>: per every minute</p></li>
-<li><p><cite>per_5min</cite>: per every 5 minute</p></li>
+<li><p><cite>per_sec</cite>, <cite>PT1S</cite>: per every second</p></li>
+<li><p><cite>per_2sec</cite>, <cite>PT2S</cite>: per every 2-second</p></li>
+<li><p><cite>per_min</cite>, <cite>PT1M</cite>: per every minute</p></li>
+<li><p><cite>per_5min</cite>, <cite>PT5M</cite>: per every 5 minute</p></li>
 </ul>
-<p>It support ‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60.</p>
+<p>It supports using either</p>
+<ul class="simple">
+<li><p>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60.</p></li>
+<li><p>ISO 8601 duration standard</p></li>
+</ul>
 <p>Such transformed data is then copied and save into a new location (the time-series data source), which is specified by</p>
 <ul class="simple">
 <li><p><cite>cos_out</cite>: COS URL (stored as PARQUET)</p></li>

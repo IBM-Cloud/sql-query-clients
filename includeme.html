@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Introduction" href="intro.html" />
-    <link rel="prev" title="Welcome to TimeSeries-SQLClient’s documentation!" href="index.html" />
+    <link rel="prev" title="Welcome to SQLClient’s documentation!" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -44,13 +44,14 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">README</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#list-of-clients">List of clients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-generate-docs">How to generate docs</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.sql_query</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.SQLQuery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
 </ul>
 
@@ -58,7 +59,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Welcome to TimeSeries-SQLClient’s documentation!</a></li>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to SQLClient’s documentation!</a></li>
       <li>Next: <a href="intro.html" title="next chapter">Introduction</a></li>
   </ul></li>
 </ul>
@@ -109,10 +110,32 @@
 <div class="section" id="list-of-clients">
 <h2>List of clients<a class="headerlink" href="#list-of-clients" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><cite>``ibmcloudsql`</cite> &lt;<a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python">https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python</a>&gt;`_ Python SDK</p></li>
+<li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python">ibmcloudsql</a> Python SDK</p></li>
 <li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function">Cloud Function</a> for SQL Query (uses <code class="docutils literal notranslate"><span class="pre">ibmcloudsql</span></code>)</p></li>
-<li><p><cite>``sqlQuery`</cite> &lt;<a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node">https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node</a>&gt;`_ Node SDK</p></li>
+<li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node">sqlQuery</a> Node SDK</p></li>
+<li><p><a class="reference external" href="https://ibm-cloud.github.io/sql-query-clients/">Documentation</a></p></li>
 </ul>
+</div>
+<div class="section" id="how-to-generate-docs">
+<h2>How to generate docs<a class="headerlink" href="#how-to-generate-docs" title="Permalink to this headline">¶</a></h2>
+<p>Requirement: conda</p>
+<ul class="simple">
+<li><p>In the docs folder, you run [if you don’t have sphinx and required package yet]</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">setup</span></code></p>
+<p>This create <code class="docutils literal notranslate"><span class="pre">sphinx</span></code> environment. Make sure you’re in this environment each time you run the below commands</p>
+<ul class="simple">
+<li><p>Get docstring updated</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">python</span></code></p>
+<ul class="simple">
+<li><p>generate docs in local file (in /tmp/sql-query-clients-docs/html - for the purpose of local check the output)</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code></p>
+<ul class="simple">
+<li><p>(check local generated content carefully before running this) generate and push to the server [only those with given priviledges]</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">buildandpushhtml</span></code></p>
 </div>
 </div>
 

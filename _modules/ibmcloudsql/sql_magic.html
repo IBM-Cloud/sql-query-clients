@@ -137,13 +137,27 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Help to transform from user-friendly query into library-friendly query</span>
 
+<span class="sd">        Using either: `per_hour`</span>
+
+<span class="sd">        .. code-block:: console</span>
+
+<span class="sd">            ts_segment_by_time(ts, per_hour, per_hour)</span>
+<span class="sd">            ts_segment_by_time(ts, hour, hour)</span>
+
+<span class="sd">        or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations </span>
+<span class="sd">            P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W</span>
+
 <span class="sd">        Example:</span>
-<span class="sd">        ts_segment_by_time(ts, per_hour, per_hour)</span>
-<span class="sd">        ts_segment_by_time(ts, hour, hour)</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            ts_segment_by_time(ts, PT1H, PT1H)</span>
 
 <span class="sd">        into</span>
 
-<span class="sd">        ts_segment_by_time(ts, 3600000, 3600000)</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            ts_segment_by_time(ts, 3600000, 3600000)</span>
 
 <span class="sd">        as ts_segment_by_time operates at mili-seconds level, hour=60*60*1000 miliseconds</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -162,9 +176,14 @@
                     <span class="k">elif</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_week&quot;</span><span class="p">,</span> <span class="s2">&quot;week&quot;</span><span class="p">]:</span>
                         <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">7</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> unsupported&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
-                        <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="kn">import</span> <span class="nn">isodate</span>
+                            <span class="n">x</span> <span class="o">=</span> <span class="n">isodate</span><span class="o">.</span><span class="n">parse_duration</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mi">60</span><span class="p">)</span>  <span class="c1"># (minute)</span>
+                        <span class="k">except</span> <span class="n">ISO8601Error</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> unsupported&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                            <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span> <span class="c1"># (milliseconds)</span>
                 <span class="n">start_end</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">sql_stmt</span><span class="p">[:</span><span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">+</span> <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span><span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> \
                 <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">+</span>  <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">]:]</span>
@@ -293,6 +312,8 @@
 
 <div class="viewcode-block" id="SQLMagic.format_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
     <span class="k">def</span> <span class="nf">format_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform string replacement needed so that the final result is a SQL statement that is accepted by Spark SQL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span></div></div>
 
 <div class="viewcode-block" id="test_chain_function"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.test_chain_function">[docs]</a><span class="k">def</span> <span class="nf">test_chain_function</span><span class="p">():</span>
@@ -441,7 +462,18 @@
 <span class="s2">          ts</span>
 <span class="s2">   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=53dfb2c3-ac3a-44af-a55d-d1a366a0883f STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY=&quot;field_name&quot;, timetick=&quot;time_stamp&quot;, value=&quot;observation&quot;) IN ts)</span>
 <span class="s2">SELECT field_name AS storage_account_id,</span>
-<span class="s2">       ts_explode(ts_seg_avg(ts_segment_by_time(ts, week, week))) AS (tt,</span>
+<span class="s2">       ts_explode(ts_seg_avg(ts_segment_by_time(ts, week, hour))) AS (tt,</span>
+<span class="s2">                                                                      value)</span>
+<span class="s2">FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">test_04</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
+    <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    WITH container_ts_table AS</span>
+<span class="s2">  (SELECT field_name,</span>
+<span class="s2">          ts</span>
+<span class="s2">   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=53dfb2c3-ac3a-44af-a55d-d1a366a0883f STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY=&quot;field_name&quot;, timetick=&quot;time_stamp&quot;, value=&quot;observation&quot;) IN ts)</span>
+<span class="s2">SELECT field_name AS storage_account_id,</span>
+<span class="s2">       ts_explode(ts_seg_avg(ts_segment_by_time(ts, P1W, PT1H))) AS (tt,</span>
 <span class="s2">                                                                      value)</span>
 <span class="s2">FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET</span>
 <span class="s2">    &quot;&quot;&quot;</span>
