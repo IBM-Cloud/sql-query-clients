@@ -9,4 +9,4 @@ Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/
  * [Cloud Function](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function) for SQL Query (uses `ibmcloudsql`)
  * [`sqlQuery`](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK
 
-* [Documentation](https://pages.github.com/IBM-Cloud/sql-query-clients/)
+* [Documentation](https://ibm-cloud.github.io/sql-query-clients/)
