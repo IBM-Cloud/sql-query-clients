@@ -139,6 +139,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         the max number of concurrent jobs
     client_info : str, optional
         User-defined string
+    max_tries: int, optional 
+        The number of time :meth:`.submit_sql`, in blocking=False mode, should try to request CloudSQL before giving up.
     """
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='', 
                 max_concurrent_jobs=4,
@@ -254,7 +256,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         blocking : bool, optional (default=True)
             If True, wait until it can get the job_id, i.e. when the queue is available
 
-            Default, wait. Otherwise, return if the queue is not available
+            Default: wait. Otherwise, try a few `max_tries` times, before returning even if the queue is not yet available.
 
         Returns
         -------
@@ -1032,13 +1034,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """ return the number of running jobs in the SQL Query server"""
         return self.get_jobs_count_with_status('running')
 
-    def run_sql2(self,
-                sql_stmt,
-                pagesize=None,
-                get_result=False,
-                blocking=True):
+    def run_sql2(self, sql_stmt, pagesize=None, get_result=False, blocking=True):
         """
-        Extend the behavior of self.run_sql(). 
+        Extend the behavior of :meth:`.run_sql`. 
 
         1. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.
         2. ensure the job is successfully put into the queue
@@ -1058,15 +1056,16 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Returns
         -------
         namedtuple [`data`, `job_id`]
-            `get_result` = True, then behavior like `ibmcloudsql.run_sql`() which load returned data into memory.
+            `get_result` = True, then behavior like :meth:`.run_sql` which load returned data into memory.
             The default behavior is opposite, to avoid unnecessarily overload the memory.
 
         Note
         -----
 
-        The query can return data or not. If it is supposed to return data then
+        The query can return data or not. If it is supposed to return data then data can be of 
 
-        * data can be of type: str (the error messsage, if failed) or pd.DataFrame (the real data, if succeed) - use `isinstance(data, str)` to check
+        * type: str (the error messsage, if failed) 
+        * or pd.DataFrame (the real data, if succeed) - use `isinstance(data, str)` to check
 
         """
         Container = namedtuple('RunSql', ['data', 'job_id'])

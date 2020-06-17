@@ -15,6 +15,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../Python/'))
 sys.path.insert(0, os.path.abspath('../../Python/ibmcloudsql/'))
 sys.setrecursionlimit(1500)
 import recommonmark

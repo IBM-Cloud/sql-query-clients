@@ -53,6 +53,7 @@ class TimeSeriesTransformInput():
         Using either: `per_hour`
 
         .. code-block:: console
+
             ts_segment_by_time(ts, per_hour, per_hour)
             ts_segment_by_time(ts, hour, hour)
 
@@ -62,11 +63,13 @@ class TimeSeriesTransformInput():
         Example:
 
         .. code-block:: python
+
             ts_segment_by_time(ts, PT1H, PT1H)
 
         into
 
         .. code-block:: python
+
             ts_segment_by_time(ts, 3600000, 3600000)
 
         as ts_segment_by_time operates at mili-seconds level, hour=60*60*1000 miliseconds
@@ -143,7 +146,7 @@ class SQLMagic(TimeSeriesSchema):
 
     def select_(self,  columns):
         """
-        Parameters:
+        Parameters
         ---------------
         columns: str
             a string representing a comma-separated list of columns
