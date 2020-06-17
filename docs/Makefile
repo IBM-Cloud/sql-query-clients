@@ -8,7 +8,7 @@ SPHINXBUILD   = python3 -msphinx
 SPHINXPROJ    = SQLClient
 SOURCEDIR     = source
 #BUILDDIR      = build
-BUILDDIR      = ../../sql-query-clients-docs
+BUILDDIR      = /tmp/sql-query-clients-docs
 PDFBUILDDIR  = /tmp
 PDF          = ../manual.pdf
 
@@ -23,10 +23,23 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+$(BUILDDIR)/html:
+	mkdir $(BUILDDIR)
+	cd $(BUILDDIR); git clone git@github.com:IBM-Cloud/sql-query-clients.git html; cd html; git checkout -b gh-pages remotes/origin/gh-pages
+
+html: | $(BUILDDIR)/html
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+
+setup:
+	conda env create sphinx python=3.6 
+	source activate sphinx
+	pip install m2r recommonmark sphinx==1.7.4 --force-reinstall
+	echo Make sure you're in 'sphinx' virtual environment each time you build the docs
 
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(PDFBUILDDIR)/latex
@@ -39,3 +52,5 @@ python:
 
 buildandcommithtml: html 
 	cd $(BUILDDIR)/html; git add . ; git commit -m "rebuilt docs"; git push origin gh-pages
+	echo Goto https://pages.github.ibm.com/IoT-Edge/edgeai-core/ to see the new docs.
+	echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.
