@@ -238,7 +238,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """ run the internal SQL statement that you created using the APIs provided by SQLMagic
         """
         self.format_()
-        return self.submit_sql2(self._sql_stmt,
+        return self.submit_sql(self._sql_stmt,
             pagesize=pagesize,
             blocking=blocking)
 
@@ -1140,7 +1140,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                             job_result["submit_time"])
                     job_time = delta.total_seconds()
                     if job_time < 2400:  # 40 minutes
-                        new_job_id = self.submit_sql2(job_result["statement"])
+                        new_job_id = self.submit_sql(job_result["statement"])
                         job_id_list[index] = new_job_id
                         complete_all = False
         return job_id_list

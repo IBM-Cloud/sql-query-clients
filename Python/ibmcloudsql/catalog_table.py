@@ -42,7 +42,7 @@ class HiveMetastore():
             cos_out=cos_out)
         df = None
         try:
-            job_id = self.submit_sql2(sql_stmt_show)
+            job_id = self.submit_sql(sql_stmt_show)
             sql_status = self.wait_for_job(job_id)
             if sql_status == "failed":
                 logger.debug(sql_stmt_show)
