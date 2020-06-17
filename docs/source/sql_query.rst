@@ -32,6 +32,7 @@ A. Help
     3. :meth:`.get_job_demo`
     4. :meth:`.get_cos_summary_demo`
     5. :meth:`.list_results_demo`
+
 1. :meth:`.analyze`: if you are stuck with a query that takes too long, try this one. It may provide you with suggestion on how to improve your query or revise your data source.
 
 B. SQL Query
@@ -108,12 +109,15 @@ Very often, the raw data are too dense to be digested into a time-series.  Such 
 is then needed to be transformed into a finer time-scale, for example:
 
 * `raw`: no change, just extract to a new location
-* `per_sec`: per every second
-* `per_2sec`: per every 2-second
-* `per_min`: per every minute
-* `per_5min`: per every 5 minute
+* `per_sec`, `PT1S`: per every second
+* `per_2sec`, `PT2S`: per every 2-second
+* `per_min`, `PT1M`: per every minute
+* `per_5min`, `PT5M`: per every 5 minute
 
-It support 'per_[x]sec' and 'per_[x]min' with x is divisible by 60.
+It supports using either
+
+* 'per_[x]sec' and 'per_[x]min' with x is divisible by 60.
+* ISO 8601 duration standard
 
 Such transformed data is then copied and save into a new location (the time-series data source), which is specified by
 
