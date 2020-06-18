@@ -46,7 +46,7 @@ try:
     from .catalog_table import HiveMetastore
 except Exception:
     from catalog_table import HiveMetastore
-    
+
 import logging
 logger = logging.getLogger(__name__)
 from functools import wraps
@@ -120,7 +120,7 @@ def check_saved_jobs_decorator(f):
 
     return wrapped
 
-    
+
 class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     """The class the provides necessary APIs to interact with
 
@@ -139,10 +139,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         the max number of concurrent jobs
     client_info : str, optional
         User-defined string
-    max_tries: int, optional 
+    max_tries: int, optional
         The number of time :meth:`.submit_sql`, in blocking=False mode, should try to request CloudSQL before giving up.
     """
-    def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='', 
+    def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='',
                 max_concurrent_jobs=4,
                 max_tries=1):
         COSClient.__init__(self,
@@ -157,7 +157,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.export_cos_url = target_cos_url
         if client_info == '':
             self.user_agent = 'IBM Cloud SQL Query Python SDK'
-        else: 
+        else:
             self.user_agent = client_info
 
         self.max_tries = max_tries
@@ -165,7 +165,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         # track the status of jobs - save the time to SQLQuery server
         self.jobs_tracking = {}
-        
+
         logger.debug("SQLClient created successful")
 
     def configure(self, cloud_apikey, sqlquery_instance_crn, target_cos_url):
@@ -407,13 +407,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     def wait_for_job(self, jobId):
         """
         It's possible that the job's failed because of Spark's internal error.
-        So "unknown" is added for such cases. 
+        So "unknown" is added for such cases.
 
         Return
         -------
             'failed', 'completed', or 'unknown'
         """
-        def wait_for_job(jobId): 
+        def wait_for_job(jobId):
             self.logon()
 
             while True:
@@ -696,10 +696,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         blocking: bool, optional
             Default is wait
-        
+
         Returns
         --------
-        None 
+        None
 
         Raises
         ------
@@ -739,7 +739,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 .format(jobId))
 
         if len(result_objects) == 1:
-            return 
+            return
         # HANDLING  [can be 2 rows or 3 rows] - only the last row can be non-zero in size
         max_row_index = len(result_objects) - 1
         pre_row_zeros = True
@@ -1036,7 +1036,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def run_sql2(self, sql_stmt, pagesize=None, get_result=False, blocking=True):
         """
-        Extend the behavior of :meth:`.run_sql`. 
+        Extend the behavior of :meth:`.run_sql`.
 
         1. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.
         2. ensure the job is successfully put into the queue
@@ -1062,9 +1062,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Note
         -----
 
-        The query can return data or not. If it is supposed to return data then data can be of 
+        The query can return data or not. If it is supposed to return data then data can be of
 
-        * type: str (the error messsage, if failed) 
+        * type: str (the error messsage, if failed)
         * or pd.DataFrame (the real data, if succeed) - use `isinstance(data, str)` to check
 
         """
@@ -1111,10 +1111,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             return self.get_result(jobId)
 
-    def run(self,
-                pagesize=None,
-                get_result=False,
-                blocking=True):
+    def run(self, pagesize=None, get_result=False, blocking=True):
         """ run the internal SQL statement provided by SQLMagic
         """
         self.format_()
@@ -1185,7 +1182,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         self.logon()
 
-        if url[-1] != '/': 
+        if url[-1] != '/':
             url = url + '/'
         url_parsed = self.analyze_cos_url(url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
@@ -1508,10 +1505,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             The COS URL where the data is copied to - later as data source
         granularity: str
             There are 2 options:
-            
+
             * a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec", "per_hour", "per_<x>hour"]
             with <x> is a number divided by 60, e.g. 10, 15
-            
+
             * a value that follows ISO 8601 'duration', e.g. PT1M, PT1S, PT2H
         ops: str
             The aggregation method: "avg", "sum", "max", "min", "count"
@@ -1670,7 +1667,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     try:
                         import isodate
                         x = isodate.parse_duration(granularity.strip())
-                        num_sec= int(x.total_seconds()) 
+                        num_sec= int(x.total_seconds())
                         assert(60 % num_sec == 0)
                     except ISO8601Error:
                         print("%s unsupported" % granularity)

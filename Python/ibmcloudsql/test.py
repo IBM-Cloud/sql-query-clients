@@ -6,7 +6,7 @@ import pandas as pd
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', 20)
 
-sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
 
 print("Running test with individual method invocation and Parquet target:")
@@ -249,3 +249,31 @@ try:
         sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
 except ibmcloudsql.exceptions.RateLimitedException as e:
     print("Got rate limited as expected")
+
+print("Show all catalog tables")
+print(sqlClient.target_url)
+print(sqlClient.show_catalog_tables())
+
+table_name = "test_table_partition"
+print("Create a partitioned catalog table")
+print(sqlClient.get_catalog_table_partitioned(table_name, force_recreate=True))
+print(sqlClient.show_catalog_tables())
+print("Describe a catalog table")
+print(sqlClient.describe_table(table_name))
+
+print("Drop a catalog table")
+print(sqlClient.drop_catalog_table(table_name))
+print(sqlClient.show_catalog_tables())
+
+table_name = "test_table"
+# sqlClient.sql_ui_link()
+print("Create a catalog table")
+print(sqlClient.get_catalog_table(table_name, blocking=True, force_recreate=True))
+print(sqlClient.show_catalog_tables())
+
+print("Describe a catalog table")
+print(sqlClient.describe_table(table_name))
+
+print("Drop a catalog table")
+print(sqlClient.drop_catalog_table(table_name))
+print(sqlClient.show_catalog_tables())

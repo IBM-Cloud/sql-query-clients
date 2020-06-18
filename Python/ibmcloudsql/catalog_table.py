@@ -14,7 +14,7 @@ class HiveMetastore():
         # The default URL where data should be queried
         self.cos_in_url_partitioned = "cos://us-geo/sql/customers_partitioned.csv"
         self.cos_in_url = "cos://us-geo/sql/customers.csv"
-        
+
         self.sql_stmt_create_template = """
         CREATE TABLE {table_name}
         USING CSV
@@ -28,7 +28,7 @@ class HiveMetastore():
 
     @property
     def target_url(self):
-        return self._target_url 
+        return self._target_url
     @target_url.setter
     def target_url(self, target_url):
         self._target_url = target_url
@@ -37,7 +37,7 @@ class HiveMetastore():
     def show_catalog_tables(self, tartget_cos_url=None):
         """List the available Hive Metastore"""
         if tartget_cos_url is None:
-            cos_out = self.target_url 
+            cos_out = self.target_url
         sql_stmt_show = self.sql_stmt_show_temmplate.format(
             cos_out=cos_out)
         df = None
@@ -269,7 +269,7 @@ class HiveMetastore():
                 LOCATION {cos_in}
                 """.format(table_name=table_name, cos_in=cos_url)
             logger.debug(sql_stmt_create_partitioned)
-            self.sqlClient.run_sql(sql_stmt_create_partitioned)
+            self.run_sql(sql_stmt_create_partitioned)
             time.sleep(2)
             self.refresh_cache_table_partitioned(table_name)
 
@@ -296,5 +296,5 @@ class HiveMetastore():
     def describe_table(self, table_name):
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
-            table_name=table_name, cos_out=self.cos_out_url)
-        return self.run_sql(sql_stmt, get_result=True)
+            table_name=table_name, cos_out=self.target_url)
+        return self.run_sql2(sql_stmt, get_result=True)
