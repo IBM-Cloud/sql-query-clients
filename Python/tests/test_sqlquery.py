@@ -33,7 +33,7 @@ def test_submit_sql_no_retry(sqlquery_client):
                   json={'errors': [{'message': mock_error_message}]}, status=429)
 
     with pytest.raises(RateLimitedException, match=mock_error_message) as exc_info:
-        sqlquery_client.submit_sql('VALUES (1)', blocking=False)
+        sqlquery_client.submit_sql('VALUES (1)')
 
 @responses.activate
 def test_submit_sql_w_retry(sqlquery_client):
@@ -50,4 +50,4 @@ def test_submit_sql_w_retry(sqlquery_client):
     responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
                   json={'job_id': mock_job_id}, status=201)
 
-    assert sqlquery_client.submit_sql('VALUES (1)', blocking=False) == mock_job_id
+    assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
