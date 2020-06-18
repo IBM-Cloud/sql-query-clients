@@ -34,7 +34,7 @@ To install your package in “editable” mode
 
 .. code-block:: console
 
-    cd sql-query-client
+    cd sql-query-client/Python
     pip install -e .
 
 To run the test on the package, run either

@@ -95,13 +95,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        SHOW TABLES</span>
+<span class="s2">        SHOW TABLES </span><span class="si">{like}</span><span class="s2"></span>
 <span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
 <span class="s2">        &quot;&quot;&quot;</span>
         <span class="c1"># The default URL where data should be queried</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url_partitioned</span> <span class="o">=</span> <span class="s2">&quot;cos://us-geo/sql/customers_partitioned.csv&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url</span> <span class="o">=</span> <span class="s2">&quot;cos://us-geo/sql/customers.csv&quot;</span>
-        
+
         <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"></span>
 <span class="s2">        USING CSV</span>
@@ -115,21 +115,31 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span>
     <span class="nd">@target_url</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
 
     <span class="c1"># Extended functionality</span>
-<div class="viewcode-block" id="HiveMetastore.show_catalog_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables">[docs]</a>    <span class="k">def</span> <span class="nf">show_catalog_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tartget_cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List the available Hive Metastore&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="HiveMetastore.show_catalog_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables">[docs]</a>    <span class="k">def</span> <span class="nf">show_catalog_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tartget_cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List the available Hive Metastore</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        target_cos_url: string, optional</span>
+<span class="sd">            The COR URL where the information about the catalog tables are stored</span>
+<span class="sd">        pattern: str, optional</span>
+<span class="sd">            If provided, this should be a pattern being used in name matching, e.g. &#39;*cus*&#39;, which finds all tables with the name has &#39;cus&#39;</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">tartget_cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">cos_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_url</span> 
+            <span class="n">cos_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_url</span>
         <span class="n">sql_stmt_show</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">like</span><span class="o">=</span><span class="s2">&quot;LIKE &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span> <span class="k">if</span> <span class="n">pattern</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="n">cos_out</span><span class="o">=</span><span class="n">cos_out</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql2</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
             <span class="n">sql_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">sql_status</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
@@ -356,7 +366,7 @@
 <span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
 <span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sqlClient</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">refresh_cache_table_partitioned</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span></div>
 
@@ -383,8 +393,8 @@
 <div class="viewcode-block" id="HiveMetastore.describe_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table">[docs]</a>    <span class="k">def</span> <span class="nf">describe_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        DESCRIBE TABLE </span><span class="si">{table_name}</span><span class="s2"> INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cos_out_url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql2</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>

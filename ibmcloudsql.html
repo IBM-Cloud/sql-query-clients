@@ -790,8 +790,16 @@ If not provided, it uses the internal <cite>self.cos_in_url</cite></p></li>
 
 <dl class="method">
 <dt id="ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables">
-<code class="sig-name descname">show_catalog_tables</code><span class="sig-paren">(</span><em class="sig-param">tartget_cos_url=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.show_catalog_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">show_catalog_tables</code><span class="sig-paren">(</span><em class="sig-param">tartget_cos_url=None</em>, <em class="sig-param">pattern=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.show_catalog_tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables" title="Permalink to this definition">¶</a></dt>
 <dd><p>List the available Hive Metastore</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_cos_url</strong> (<em>string</em><em>, </em><em>optional</em>) – The COR URL where the information about the catalog tables are stored</p></li>
+<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – If provided, this should be a pattern being used in name matching, e.g. ‘<em>cus</em>’, which finds all tables with the name has ‘cus’</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1273,31 +1281,6 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="function">
 <dt id="ibmcloudsql.sql_magic.print_sql">
 <code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">print_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#print_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.print_sql" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="ibmcloudsql.sql_magic.test_01">
-<code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">test_01</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#test_01"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.test_01" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="ibmcloudsql.sql_magic.test_02">
-<code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">test_02</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#test_02"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.test_02" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="ibmcloudsql.sql_magic.test_03">
-<code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">test_03</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#test_03"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.test_03" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="ibmcloudsql.sql_magic.test_04">
-<code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">test_04</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#test_04"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.test_04" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="ibmcloudsql.sql_magic.test_chain_function">
-<code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">test_chain_function</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#test_chain_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.test_chain_function" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
