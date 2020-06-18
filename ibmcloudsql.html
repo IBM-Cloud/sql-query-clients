@@ -123,7 +123,7 @@
 <li><p><strong>target_cos_url</strong> (<em>str</em><em>, </em><em>optional</em>) – the URI where retrieved data is stored</p></li>
 <li><p><strong>max_concurrent_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – the max number of concurrent jobs</p></li>
 <li><p><strong>client_info</strong> (<em>str</em><em>, </em><em>optional</em>) – User-defined string</p></li>
-<li><p><strong>max_tries</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of time <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>, in blocking=False mode, should try to request CloudSQL before giving up.</p></li>
+<li><p><strong>max_tries</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of time <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>, should try to request CloudSQL before giving up.</p></li>
 </ul>
 </dd>
 </dl>
@@ -466,7 +466,7 @@ issued by this SQLClient class object</p>
 <code class="sig-name descname">rename_exact_result</code><span class="sig-paren">(</span><em class="sig-param">jobId</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.rename_exact_result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result" title="Permalink to this definition">¶</a></dt>
 <dd><p>A SQL Query can store data into partitioned/paginated multiple objects, or single object.</p>
 <p>Even with single object, indeed, multiple objects are created, two of them has size 0.
-(&lt;URL&gt;/_SUCCESS, and &lt;URL&gt;/) beside the one that holds data (&lt;URL&gt;/)</p>
+(&lt;URL&gt;/_SUCCESS, and &lt;URL&gt;/) beside the ones that hold data (&lt;URL&gt;/&lt;data1&gt;, &lt;URL&gt;/&lt;data2&gt;)</p>
 <p>This API delete the two 0-size objects, and keep only the one that holds data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -501,8 +501,8 @@ issued by this SQLClient class object</p>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">pagesize=None</em>, <em class="sig-param">get_result=False</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>run the internal SQL statement provided by SQLMagic</p>
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">pagesize=None</em>, <em class="sig-param">get_result=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>run the internal SQL statement provided by SQLMagic using <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql_v2()</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -511,8 +511,8 @@ issued by this SQLClient class object</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="ibmcloudsql.SQLQuery.SQLQuery.run_sql2">
-<code class="sig-name descname">run_sql2</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">get_result=False</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.run_sql2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql2" title="Permalink to this definition">¶</a></dt>
+<dt id="ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2">
+<code class="sig-name descname">run_sql_v2</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">get_result=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.run_sql_v2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extend the behavior of <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a>.</p>
 <ol class="arabic simple">
 <li><p>returns a namedtuple, in that result.data is the one returned by <cite>run_sql</cite>, while result.job_id is the extra part.</p></li>
@@ -524,7 +524,6 @@ issued by this SQLClient class object</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pagesize</strong> (<em>int</em><em>, </em><em>optional</em>) – an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</p></li>
 <li><p><strong>get_result</strong> (<em>bool</em><em>, </em><em>optional</em><em> (</em><em>default=False</em><em>)</em>) – add the capability to return only the job_id, but wait for the job’s completion. Later, we can get the data using <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_result" title="ibmcloudsql.SQLQuery.SQLQuery.get_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_result()</span></code></a> (job_id, pagenumber)</p></li>
-<li><p><strong>blocking</strong> (<em>bool</em><em>, </em><em>optional</em><em> (</em><em>default=True</em><em>)</em>) – If True, wait until the queue is available</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -552,13 +551,13 @@ The default behavior is opposite, to avoid unnecessarily overload the memory.</p
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.submit">
-<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">pagesize=None</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">submit</code><span class="sig-paren">(</span><em class="sig-param">pagesize=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit" title="Permalink to this definition">¶</a></dt>
 <dd><p>run the internal SQL statement that you created using the APIs provided by SQLMagic</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.submit_sql">
-<code class="sig-name descname">submit_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">submit_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asynchronous call - submit and quickly return the job_id.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -566,9 +565,6 @@ The default behavior is opposite, to avoid unnecessarily overload the memory.</p
 <li><p><strong>sql_stmt</strong> (<em>str</em>) – SQL Query string</p></li>
 <li><p><strong>pagesize</strong> (<em>int</em><em>, </em><em>optional</em>) – an integer indicating the number of rows for each partition/page
 [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</p></li>
-<li><p><strong>blocking</strong> (<em>bool</em><em>, </em><em>optional</em><em> (</em><em>default=True</em><em>)</em>) – <p>If True, wait until it can get the job_id, i.e. when the queue is available</p>
-<p>Default: wait. Otherwise, try a few <cite>max_tries</cite> times, before returning even if the queue is not yet available.</p>
-</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -638,7 +634,7 @@ passed to the <em>json</em> argument of requests.post() API.</p>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs">
-<code class="sig-name descname">submit_sql_with_checking_saved_jobs</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">prefix=None</em>, <em class="sig-param">blocking=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql_with_checking_saved_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">submit_sql_with_checking_saved_jobs</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">prefix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql_with_checking_saved_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Do the checking if a previous job is completed. The comparison is based on the SQL query content.
 The content of previous queries are stored in a file,
 with name given by <cite>prefix</cite> argument, stored as an asset in the Project-Lib.

@@ -227,7 +227,7 @@
 <span class="sd">    client_info : str, optional</span>
 <span class="sd">        User-defined string</span>
 <span class="sd">    max_tries: int, optional</span>
-<span class="sd">        The number of time :meth:`.submit_sql`, in blocking=False mode, should try to request CloudSQL before giving up.</span>
+<span class="sd">        The number of time :meth:`.submit_sql`, should try to request CloudSQL before giving up.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_key</span><span class="p">,</span> <span class="n">instance_crn</span><span class="p">,</span> <span class="n">target_cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client_info</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
                 <span class="n">max_concurrent_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
@@ -319,17 +319,14 @@
                     <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">],</span>
                     <span class="n">query</span><span class="o">=</span><span class="n">pformat</span><span class="p">(</span><span class="n">json_data</span><span class="p">)))</span>
 
-<div class="viewcode-block" id="SQLQuery.submit"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit">[docs]</a>    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                   <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                   <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.submit"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit">[docs]</a>    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; run the internal SQL statement that you created using the APIs provided by SQLMagic</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">format_</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">,</span>
-            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">,</span>
-            <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">)</span></div>
+            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.submit_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql">[docs]</a>    <span class="k">def</span> <span class="nf">submit_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.submit_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql">[docs]</a>    <span class="k">def</span> <span class="nf">submit_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Asynchronous call - submit and quickly return the job_id.</span>
 
@@ -340,10 +337,6 @@
 <span class="sd">        pagesize: int, optional</span>
 <span class="sd">            an integer indicating the number of rows for each partition/page</span>
 <span class="sd">            [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</span>
-<span class="sd">        blocking : bool, optional (default=True)</span>
-<span class="sd">            If True, wait until it can get the job_id, i.e. when the queue is available</span>
-
-<span class="sd">            Default: wait. Otherwise, try a few `max_tries` times, before returning even if the queue is not yet available.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -449,10 +442,7 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">INTO_is_present</span><span class="p">(</span><span class="n">sql_text</span><span class="p">):</span>
             <span class="n">sqlData</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;resultset_target&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">})</span>
 
-        <span class="k">if</span> <span class="n">blocking</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">max_tries</span> <span class="o">=</span> <span class="mi">1000</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">max_tries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tries</span>
+        <span class="n">max_tries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tries</span>
         <span class="n">intrumented_send</span> <span class="o">=</span> <span class="n">backoff</span><span class="o">.</span><span class="n">on_exception</span><span class="p">(</span>
             <span class="n">backoff</span><span class="o">.</span><span class="n">expo</span><span class="p">,</span>
             <span class="n">RateLimitedException</span><span class="p">,</span>
@@ -461,11 +451,7 @@
         <span class="k">return</span> <span class="n">intrumented_send</span><span class="p">(</span><span class="n">sqlData</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.submit_sql_with_checking_saved_jobs"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs">[docs]</a>    <span class="nd">@check_saved_jobs_decorator</span>
-    <span class="k">def</span> <span class="nf">submit_sql_with_checking_saved_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                            <span class="n">sql_stmt</span><span class="p">,</span>
-                                            <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                                            <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                                            <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">submit_sql_with_checking_saved_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Do the checking if a previous job is completed. The comparison is based on the SQL query content.</span>
 <span class="sd">        The content of previous queries are stored in a file,</span>
@@ -488,8 +474,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span>
             <span class="n">sql_stmt</span><span class="p">,</span>
-            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">,</span>
-            <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">)</span></div>
+            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.wait_for_job"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job">[docs]</a>    <span class="k">def</span> <span class="nf">wait_for_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -772,7 +757,7 @@
 <span class="sd">        A SQL Query can store data into partitioned/paginated multiple objects, or single object.</span>
 
 <span class="sd">        Even with single object, indeed, multiple objects are created, two of them has size 0.</span>
-<span class="sd">        (&lt;URL&gt;/_SUCCESS, and &lt;URL&gt;/) beside the one that holds data (&lt;URL&gt;/)</span>
+<span class="sd">        (&lt;URL&gt;/_SUCCESS, and &lt;URL&gt;/) beside the ones that hold data (&lt;URL&gt;/&lt;data1&gt;, &lt;URL&gt;/&lt;data2&gt;)</span>
 
 <span class="sd">        This API delete the two 0-size objects, and keep only the one that holds data.</span>
 
@@ -853,9 +838,7 @@
 
         <span class="k">return</span></div>
 
-<div class="viewcode-block" id="SQLQuery.rename_exact_result_joblist"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result_joblist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                                    <span class="n">job_list</span><span class="p">,</span>
-                                    <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.rename_exact_result_joblist"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result_joblist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_list</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; The bulk mode of `rename_exact_result` method.</span>
 
 <span class="sd">        Parameters</span>
@@ -1121,7 +1104,7 @@
         <span class="sd">&quot;&quot;&quot; return the number of running jobs in the SQL Query server&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_jobs_count_with_status</span><span class="p">(</span><span class="s1">&#39;running&#39;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.run_sql2"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql2">[docs]</a>    <span class="k">def</span> <span class="nf">run_sql2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.run_sql_v2"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2">[docs]</a>    <span class="k">def</span> <span class="nf">run_sql_v2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extend the behavior of :meth:`.run_sql`.</span>
 
@@ -1136,9 +1119,6 @@
 
 <span class="sd">        get_result: bool, optional (default=False)</span>
 <span class="sd">            add the capability to return only the job_id, but wait for the job&#39;s completion. Later, we can get the data using :meth:`.get_result` (job_id, pagenumber)</span>
-
-<span class="sd">        blocking: bool, optional (default=True)</span>
-<span class="sd">            If True, wait until the queue is available</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1159,8 +1139,7 @@
 
         <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span>
             <span class="n">sql_stmt</span><span class="p">,</span>
-            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">,</span>
-            <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">)</span>
+            <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Job &quot;</span> <span class="o">+</span> <span class="n">job_id</span> <span class="o">+</span> <span class="s2">&quot; terminated with status: &quot;</span> <span class="o">+</span>
@@ -1198,14 +1177,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.run"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; run the internal SQL statement provided by SQLMagic</span>
+<div class="viewcode-block" id="SQLQuery.run"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; run the internal SQL statement provided by SQLMagic using :meth:`.run_sql_v2`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">format_</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">,</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql_v2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">,</span>
             <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">,</span>
-            <span class="n">get_result</span><span class="o">=</span><span class="n">get_result</span><span class="p">,</span>
-            <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">)</span></div>
+            <span class="n">get_result</span><span class="o">=</span><span class="n">get_result</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.process_failed_jobs_until_all_completed"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.process_failed_jobs_until_all_completed">[docs]</a>    <span class="k">def</span> <span class="nf">process_failed_jobs_until_all_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id_list</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

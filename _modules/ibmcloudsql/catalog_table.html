@@ -207,7 +207,7 @@
         <span class="n">sql_stmt_drop</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        DROP TABLE </span><span class="si">{table_name}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql2</span><span class="p">(</span><span class="n">sql_stmt_drop</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql_v2</span><span class="p">(</span><span class="n">sql_stmt_drop</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Job_id (</span><span class="si">{stmt}</span><span class="s2">): </span><span class="si">{job_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stmt</span><span class="o">=</span><span class="n">sql_stmt_drop</span><span class="p">,</span>
                                                             <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -394,7 +394,7 @@
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        DESCRIBE TABLE </span><span class="si">{table_name}</span><span class="s2"> INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql2</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql_v2</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
