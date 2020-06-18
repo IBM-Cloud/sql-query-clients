@@ -8,7 +8,7 @@ class HiveMetastore():
         self.partitioned_tables = set()
         self.regular_tables = set()
         self.sql_stmt_show_temmplate = """
-        SHOW TABLES
+        SHOW TABLES {like}
         INTO {cos_out} STORED AS CSV
         """
         # The default URL where data should be queried
@@ -34,11 +34,21 @@ class HiveMetastore():
         self._target_url = target_url
 
     # Extended functionality
-    def show_catalog_tables(self, tartget_cos_url=None):
-        """List the available Hive Metastore"""
+    def show_catalog_tables(self, tartget_cos_url=None, pattern=None):
+        """List the available Hive Metastore
+
+       Parameters
+       ------------
+       target_cos_url: string, optional
+            The COR URL where the information about the catalog tables are stored
+        pattern: str, optional
+            If provided, this should be a pattern being used in name matching, e.g. '*cus*', which finds all tables with the name has 'cus'
+
+        """
         if tartget_cos_url is None:
             cos_out = self.target_url
         sql_stmt_show = self.sql_stmt_show_temmplate.format(
+            like="LIKE {}".format(pattern) if pattern else "",
             cos_out=cos_out)
         df = None
         try:
