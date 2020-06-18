@@ -140,7 +140,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     client_info : str, optional
         User-defined string
     max_tries: int, optional
-        The number of time :meth:`.submit_sql`, in blocking=False mode, should try to request CloudSQL before giving up.
+        The number of time :meth:`.submit_sql`, should try to request CloudSQL before giving up.
     """
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='',
                 max_concurrent_jobs=4,
@@ -232,17 +232,14 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     msg=response.json()['errors'][0]['message'],
                     query=pformat(json_data)))
 
-    def submit(self,
-                   pagesize=None,
-                   blocking=True):
+    def submit(self, pagesize=None):
         """ run the internal SQL statement that you created using the APIs provided by SQLMagic
         """
         self.format_()
         return self.submit_sql(self._sql_stmt,
-            pagesize=pagesize,
-            blocking=blocking)
+            pagesize=pagesize)
 
-    def submit_sql(self, sql_stmt, pagesize=None, blocking=True):
+    def submit_sql(self, sql_stmt, pagesize=None):
         """
         Asynchronous call - submit and quickly return the job_id.
 
@@ -253,10 +250,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         pagesize: int, optional
             an integer indicating the number of rows for each partition/page
             [using PARTITIONED EVERY <pagesize> ROWS syntax]
-        blocking : bool, optional (default=True)
-            If True, wait until it can get the job_id, i.e. when the queue is available
-
-            Default: wait. Otherwise, try a few `max_tries` times, before returning even if the queue is not yet available.
 
         Returns
         -------
@@ -362,10 +355,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         elif self.target_cos_url and not INTO_is_present(sql_text):
             sqlData.update({'resultset_target': self.target_cos_url})
 
-        if blocking is True:
-            max_tries = 1000
-        else:
-            max_tries = self.max_tries
+        max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
             backoff.expo,
             RateLimitedException,
@@ -374,11 +364,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return intrumented_send(sqlData)
 
     @check_saved_jobs_decorator
-    def submit_sql_with_checking_saved_jobs(self,
-                                            sql_stmt,
-                                            pagesize=None,
-                                            prefix=None,
-                                            blocking=True):
+    def submit_sql_with_checking_saved_jobs(self, sql_stmt, pagesize=None, prefix=None):
         """
         Do the checking if a previous job is completed. The comparison is based on the SQL query content.
         The content of previous queries are stored in a file,
@@ -401,8 +387,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
         return self.submit_sql(
             sql_stmt,
-            pagesize=pagesize,
-            blocking=blocking)
+            pagesize=pagesize)
 
     def wait_for_job(self, jobId):
         """
@@ -685,7 +670,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         A SQL Query can store data into partitioned/paginated multiple objects, or single object.
 
         Even with single object, indeed, multiple objects are created, two of them has size 0.
-        (<URL>/_SUCCESS, and <URL>/) beside the one that holds data (<URL>/)
+        (<URL>/_SUCCESS, and <URL>/) beside the ones that hold data (<URL>/<data1>, <URL>/<data2>)
 
         This API delete the two 0-size objects, and keep only the one that holds data.
 
@@ -766,9 +751,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         return
 
-    def rename_exact_result_joblist(self,
-                                    job_list,
-                                    blocking=True):
+    def rename_exact_result_joblist(self, job_list, blocking=True):
         """ The bulk mode of `rename_exact_result` method.
 
         Parameters
@@ -1034,7 +1017,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """ return the number of running jobs in the SQL Query server"""
         return self.get_jobs_count_with_status('running')
 
-    def run_sql2(self, sql_stmt, pagesize=None, get_result=False, blocking=True):
+    def run_sql_v2(self, sql_stmt, pagesize=None, get_result=False):
         """
         Extend the behavior of :meth:`.run_sql`.
 
@@ -1049,9 +1032,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         get_result: bool, optional (default=False)
             add the capability to return only the job_id, but wait for the job's completion. Later, we can get the data using :meth:`.get_result` (job_id, pagenumber)
-
-        blocking: bool, optional (default=True)
-            If True, wait until the queue is available
 
         Returns
         -------
@@ -1072,8 +1052,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         job_id = self.submit_sql(
             sql_stmt,
-            pagesize=pagesize,
-            blocking=blocking)
+            pagesize=pagesize)
         data = None
         job_status = self.wait_for_job(job_id)
         logger.debug("Job " + job_id + " terminated with status: " +
@@ -1111,14 +1090,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             return self.get_result(jobId)
 
-    def run(self, pagesize=None, get_result=False, blocking=True):
-        """ run the internal SQL statement provided by SQLMagic
+    def run(self, pagesize=None, get_result=False):
+        """ run the internal SQL statement provided by SQLMagic using :meth:`.run_sql_v2`
         """
         self.format_()
-        return self.run_sql2(self._sql_stmt,
+        return self.run_sql_v2(self._sql_stmt,
             pagesize=pagesize,
-            get_result=get_result,
-            blocking=blocking)
+            get_result=get_result)
 
     def process_failed_jobs_until_all_completed(self, job_id_list):
         """

@@ -1,13 +1,21 @@
 import sys
 sys.path.append('ibmcloudsql')
 import ibmcloudsql
+try:
+    from exceptions import RateLimitedException
+except Exception:
+    from .exceptions import RateLimitedException
 import test_credentials
 import pandas as pd
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', 20)
 
+if test_credentials.result_location[-1] != "/":
+    test_credentials.result_location += "/"
+
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
+sqlClient.sql_ui_link()
 
 print("Running test with individual method invocation and Parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
@@ -63,7 +71,7 @@ jobidArray = []
 try:
     for x in range(test_credentials.instance_rate_limit + 1):
         jobidArray.append(sqlClient.submit_sql(sql))
-except ibmcloudsql.exceptions.RateLimitedException as e:
+except RateLimitedException as e:
     print(e)
 
 for jobId in jobidArray:
@@ -94,7 +102,7 @@ try:
 except ValueError as e:
     print(e)
 print("Running test with exact target object name creation:")
-jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location if  test_credentials.result_location[-1] == '/' else test_credentials.result_location+'/'))
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location))
 sqlClient.wait_for_job(jobId)
 result_df = sqlClient.get_result(jobId)
 sqlClient.rename_exact_result(jobId)
@@ -247,9 +255,31 @@ print("Force rate limiting:")
 try:
     for n in range(6):
         sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
-except ibmcloudsql.exceptions.RateLimitedException as e:
+except RateLimitedException as e:
     print("Got rate limited as expected")
 
+
+# add this as the previous test launches so many asynchronous runs
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test', max_tries=100)
+sqlClient.logon()
+print("Running test with run_sql_v2() no data returned:")
+result = sqlClient.run_sql_v2(
+"WITH orders_shipped AS \
+  (SELECT OrderID, EmployeeID, (CASE WHEN shippedDate < requiredDate \
+                                   THEN 'On Time' \
+                                   ELSE 'Late' \
+                                END) AS Shipped \
+   FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET) \
+SELECT e.FirstName, e.LastName, COUNT(o.OrderID) As NumOrders, Shipped \
+FROM orders_shipped o, \
+     cos://us-geo/sql/employees.parquet STORED AS PARQUET e \
+WHERE e.EmployeeID = o.EmployeeID \
+GROUP BY e.FirstName, e.LastName, Shipped \
+ORDER BY e.LastName, e.FirstName, NumOrders DESC \
+INTO {} STORED AS CSV".format(test_credentials.result_location))
+print("Result is:")
+print(result)
+# ========= CATALOG TABLES
 print("Show all catalog tables")
 print(sqlClient.target_url)
 print(sqlClient.show_catalog_tables())
@@ -266,7 +296,6 @@ print(sqlClient.drop_catalog_table(table_name))
 print(sqlClient.show_catalog_tables())
 
 table_name = "test_table"
-# sqlClient.sql_ui_link()
 print("Create a catalog table")
 print(sqlClient.get_catalog_table(table_name, blocking=True, force_recreate=True))
 print(sqlClient.show_catalog_tables())
