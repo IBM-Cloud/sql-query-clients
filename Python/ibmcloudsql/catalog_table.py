@@ -4,8 +4,8 @@ logger = logging.getLogger(__name__)
 
 class HiveMetastore():
     def __init__(self, target_url):
-        self.current_catalog_table_name = None
-        # keep tracks of what catalog tables are availables
+        self.current_table_name = None
+        # keep tracks of what tables are availables
         self.partitioned_tables = set()
         self.regular_tables = set()
         self.sql_stmt_show_temmplate = """
@@ -35,13 +35,13 @@ class HiveMetastore():
         self._target_url = target_url
 
     # Extended functionality
-    def show_catalog_tables(self, tartget_cos_url=None, pattern=None):
+    def show_tables(self, tartget_cos_url=None, pattern=None):
         """List the available Hive Metastore
 
         Parameters
         ------------
         target_cos_url: string, optional
-            The COR URL where the information about the catalog tables are stored
+            The COR URL where the information about the tables are stored
         pattern: str, optional
             If provided, this should be a pattern being used in name matching, e.g. '*cus*', which finds all tables with the name has 'cus'
 
@@ -65,19 +65,19 @@ class HiveMetastore():
             logger.info("Fail at SHOW TABLE")
         return df
 
-    def drop_all_catalog_tables(self):
+    def drop_all_tables(self):
         """
-        Delete all created catalog tables in the project
+        Delete all created tables in the project
 
         Returns
         -------
         bool
             True [if success]
         """
-        df = self.show_catalog_tables()
+        df = self.show_tables()
         if df is not None and not df.empty:
             for (_, table_name) in df["tableName"].iteritems():
-                self.drop_catalog_table(table_name)
+                self.drop_table(table_name)
                 try:
                     self.partitioned_tables.remove(table_name)
                     self.regular_tables.remove(table_name)
@@ -87,37 +87,37 @@ class HiveMetastore():
             self.regular_tables = set()
         return True
 
-    def drop_catalog_tables(self, table_names):
+    def drop_tables(self, table_names):
         """
-        Drop a list of catalog tables
+        Drop a list of tables
 
         Parameters
         ----------
             table_names: list
-                A list of catalog tables
+                A list of tables
         """
         for x in table_names:
-            self.drop_catalog_table(x)
+            self.drop_table(x)
 
-    def drop_catalog_table(self, table_name=None):
+    def drop_table(self, table_name=None):
         """
-        Drop a given catalog table
+        Drop a given table
 
         Parameters
         ----------
         table_name: str, optional
-            The name of the catalog table
+            The name of the table
             If skipped, the being tracked catalog-table is used
 
         Returns
         -------
             none
         """
-        if table_name is None and self.current_catalog_table_name is None:
+        if table_name is None and self.current_table_name is None:
             print("ERROR: please provide table_name")
         if table_name is None:
-            table_name = self.current_catalog_table_name
-            self.current_catalog_table_name = None
+            table_name = self.current_table_name
+            self.current_table_name = None
         sql_stmt_drop = """
         DROP TABLE {table_name}""".format(table_name=table_name)
         try:
@@ -133,20 +133,20 @@ class HiveMetastore():
         except KeyError:
             pass
 
-    def get_catalog_table(self, table_name, cos_url=None, force_recreate=False, blocking=True):
-        """synchronous version
+    def create_table(self, table_name, cos_url=None, force_recreate=False, blocking=True):
+        """Create a table for data on COS 
 
         Parameters
         ----------
         table_name: str
-            The name of the catalog table
+            The name of the table
 
         cos_url : str, optional
-            The COS URL from which the catalog table should reference to
+            The COS URL from which the table should reference to
             If not provided, it uses the internal `self.cos_in_url`
 
         force_recreate: bool, optional
-            (True) force to recreate an existing catalog table
+            (True) force to recreate an existing table
         blocking: bool, optional
             (True) wait until it returns the resut
 
@@ -155,37 +155,37 @@ class HiveMetastore():
             none if job "failed"
             otherwise returns
         """
-        def get_catalog_table_async(
+        def create_table_async(
                                     table_name,
                                     cos_url=None,
                                     force_recreate=False):
             """
-            the async version of `get_catalog_table`
+            the async version of `create_table`
 
             Parameters
             ----------
             table_name: str
-                The name of the catalog table
+                The name of the table
 
             cos_url : str, optional
-                The COS URL from which the catalog table should reference to
+                The COS URL from which the table should reference to
                 If not provided, it uses the internal `self.cos_in_url`
 
             force_recreate: bool, optional
-                (True) force to recreate an existing catalog table
+                (True) force to recreate an existing table
 
             Returns
             ------
                 job_id [if the table is being created]
                 None   [if the table already created]
             """
-            self.current_catalog_table_name = table_name
+            self.current_table_name = table_name
 
             if cos_url is None:
                 cos_url = self.cos_in_url
 
             # from IPython.display import display
-            df = self.show_catalog_tables()
+            df = self.show_tables()
             try:
                 found = df[df['tableName'].str.contains(table_name)]
             except Exception:
@@ -195,7 +195,7 @@ class HiveMetastore():
             # if logger.getEffectiveLevel() == logging.DEBUG:
             #     display(df)
             if len(found) > 0 and force_recreate:
-                self.drop_catalog_table(table_name)
+                self.drop_table(table_name)
             self.regular_tables.add(table_name)
             if len(found) == 0 or force_recreate:
                 sql_stmt_create = self.sql_stmt_create_template.format(
@@ -205,7 +205,7 @@ class HiveMetastore():
                 return job_id
             return None
 
-        job_id = get_catalog_table_async(table_name,
+        job_id = create_table_async(table_name,
                                               cos_url,
                                               force_recreate=force_recreate)
         if job_id is not None and blocking is True:
@@ -216,39 +216,47 @@ class HiveMetastore():
                 return None
         return None
 
-    def get_catalog_table_partitioned(self, table_name, cos_url=None, force_recreate=False):
+    def create_partitioned_table(self, table_name, cos_url=None, force_recreate=False):
         """
-        Create a partitioned catalog table. We need to call `refresh_cache_table_partitioned`
+        Create a partitioned table for data on COS. The data needs to be organized in the form that
+        match HIVE metastore criteria, e.g.
+
+        .. code-block:: console
+
+            <COS-URL>/field_1=value1_1/field_2=value_2_1/object_file
+            <COS-URL>/field_1=value1_2/field_2=value_2_1/object_file
+        
+        NOTE: Each time the data is updated, we need to call `recover_table_partitions` on the created partitioned table.
 
         Parameters
         --------------
         table_name: str
-            the name of the catalog table to be created
+            the name of the table to be created
 
         cos_url : str, optional
-            The COS URL from which the catalog table should reference to
+            The COS URL from which the table should reference to
             If not provided, it uses the internal `self.cos_in_url`
 
         force_recreate: bool
-            (True) force to recreate an existing catalog table
+            (True) force to recreate an existing table
 
         Returns
         ----------
 
         """
-        self.current_catalog_table_name = table_name
+        self.current_table_name = table_name
 
         if cos_url is None:
             cos_url = self.cos_in_url_partitioned
 
-        df = self.show_catalog_tables()
+        df = self.show_tables()
         try:
             found = df[df['tableName'].str.contains(table_name)]
         except Exception:
             # not found
             found = []
         if len(found) > 0 and force_recreate:
-            self.drop_catalog_table(table_name)
+            self.drop_table(table_name)
         self.partitioned_tables.add(table_name)
         if len(found) == 0 or force_recreate:
             if True:
@@ -282,18 +290,18 @@ class HiveMetastore():
             logger.debug(sql_stmt_create_partitioned)
             self.run_sql(sql_stmt_create_partitioned)
             time.sleep(2)
-            self.refresh_cache_table_partitioned(table_name)
+            self.recover_table_partitions(table_name)
 
-    def refresh_cache_table_partitioned(self, table_name):
+    def recover_table_partitions(self, table_name):
         """
-        This step is required after creating a new partitioned catalog table
+        This step is required after creating a new partitioned table
 
         Parameters
         ----------
             table_name: str
                 The partitioned table name
         """
-        self.current_catalog_table_name = table_name
+        self.current_table_name = table_name
         # if table_name not in self.partitioned_tables:
         #     logger.error("Table %s is not a partitioned table" % (table_name))
         #     logger.error(".... [ %s ]" %

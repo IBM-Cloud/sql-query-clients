@@ -284,27 +284,27 @@ print(result)
 # ========= CATALOG TABLES
 print("Show all catalog tables")
 print(sqlClient.target_url)
-print(sqlClient.show_catalog_tables())
+print(sqlClient.show_tables())
 
 table_name = "test_table_partition"
 print("Create a partitioned catalog table")
-print(sqlClient.get_catalog_table_partitioned(table_name, force_recreate=True))
-print(sqlClient.show_catalog_tables())
+print(sqlClient.create_partitioned_table(table_name, force_recreate=True))
+print(sqlClient.show_tables())
 print("Describe a catalog table")
 print(sqlClient.describe_table(table_name))
 
 print("Drop a catalog table")
-print(sqlClient.drop_catalog_table(table_name))
-print(sqlClient.show_catalog_tables())
+print(sqlClient.drop_table(table_name))
+print(sqlClient.show_tables())
 
 table_name = "test_table"
 print("Create a catalog table")
-print(sqlClient.get_catalog_table(table_name, blocking=True, force_recreate=True))
-print(sqlClient.show_catalog_tables())
+print(sqlClient.create_table(table_name, blocking=True, force_recreate=True))
+print(sqlClient.show_tables())
 
 print("Describe a catalog table")
 print(sqlClient.describe_table(table_name))
 
 print("Drop a catalog table")
-print(sqlClient.drop_catalog_table(table_name))
-print(sqlClient.show_catalog_tables())
+print(sqlClient.drop_table(table_name))
+print(sqlClient.show_tables())
