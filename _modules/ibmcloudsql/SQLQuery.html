@@ -149,6 +149,22 @@
 
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 
+<div class="viewcode-block" id="validate_job_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.validate_job_status">[docs]</a><span class="k">def</span> <span class="nf">validate_job_status</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;check if input about job status, via `status` argument is corrected&quot;&quot;&quot;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dictionary</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getcallargs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[</span>
+            <span class="s1">&#39;status&#39;</span><span class="p">]</span>  
+        <span class="n">supported_job_status</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_job_status</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`status` must be a value in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">supported_job_status</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">wrapped</span></div>
+
 <div class="viewcode-block" id="check_saved_jobs_decorator"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.check_saved_jobs_decorator">[docs]</a><span class="k">def</span> <span class="nf">check_saved_jobs_decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;a decorator that load data from ProjectLib, check for completed SQL</span>
 <span class="sd">    Query job, before deciding to launch it&quot;&quot;&quot;</span>
@@ -682,7 +698,7 @@
 
         <span class="k">return</span> <span class="n">result_df</span></div>
 
-<div class="viewcode-block" id="SQLQuery.list_results"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.list_results">[docs]</a>    <span class="k">def</span> <span class="nf">list_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.list_results"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.list_results">[docs]</a>    <span class="k">def</span> <span class="nf">list_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        NOTE: A single SQL Query can store the queried data in the COS output</span>
 <span class="sd">        in multiple objects/partitions</span>
@@ -699,8 +715,8 @@
 <span class="sd">        ------------</span>
 <span class="sd">        job_id: str</span>
 <span class="sd">            The Job ID</span>
-<span class="sd">        blocking: bool, default: True</span>
-<span class="sd">            If True, wait for the available slot in the work queue</span>
+<span class="sd">        wait: bool, default:False </span>
+<span class="sd">            If True, wait for the requested `job_id` to complete to get the information</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -737,7 +753,7 @@
             <span class="k">return</span> <span class="n">result_objects_df</span>
 
         <span class="n">job_id</span> <span class="o">=</span> <span class="n">jobId</span>
-        <span class="k">if</span> <span class="n">blocking</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">wait</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">job_running</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">while</span> <span class="n">job_running</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
@@ -748,26 +764,29 @@
                         <span class="k">pass</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="n">e</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">list_results</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span></div>
 
-<div class="viewcode-block" id="SQLQuery.rename_exact_result"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.rename_exact_result"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A SQL Query can store data into partitioned/paginated multiple objects, or single object.</span>
 
 <span class="sd">        Even with single object, indeed, multiple objects are created, two of them has size 0.</span>
 <span class="sd">        (&lt;URL&gt;/_SUCCESS, and &lt;URL&gt;/) beside the ones that hold data (&lt;URL&gt;/&lt;data1&gt;, &lt;URL&gt;/&lt;data2&gt;)</span>
 
-<span class="sd">        This API delete the two 0-size objects, and keep only the one that holds data.</span>
+<span class="sd">        This API deletes the two 0-size objects, and keep only the ones that hold data.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        job_id : str</span>
 <span class="sd">            A string representation of job_id</span>
 
-<span class="sd">        blocking: bool, optional</span>
-<span class="sd">            Default is wait</span>
+<span class="sd">        wait: bool, optional</span>
+<span class="sd">            The given `job_id` may not be completed yet, so you have the option to wait for it to completed first.</span>
+
+<span class="sd">            Default is False</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        --------</span>
@@ -784,10 +803,8 @@
         <span class="n">job_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
         <span class="n">job_status</span> <span class="o">=</span> <span class="n">job_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
 
-        <span class="k">while</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s2">&quot;running&quot;</span> <span class="ow">and</span> <span class="n">blocking</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
-            <span class="n">job_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
-            <span class="n">job_status</span> <span class="o">=</span> <span class="n">job_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">wait</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s1">&#39;running&#39;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SQL job with jobId </span><span class="si">{}</span><span class="s1"> still running. Come back later.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">))</span>
@@ -838,17 +855,19 @@
 
         <span class="k">return</span></div>
 
-<div class="viewcode-block" id="SQLQuery.rename_exact_result_joblist"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result_joblist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_list</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.rename_exact_result_joblist"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist">[docs]</a>    <span class="k">def</span> <span class="nf">rename_exact_result_joblist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_list</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; The bulk mode of `rename_exact_result` method.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        job_list: list</span>
 <span class="sd">            A list of job_id</span>
+<span class="sd">        wait: bool, optional</span>
+<span class="sd">            The same meaning as the one used in :meth:`.rename_exact_result`</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">job_list</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rename_exact_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="n">blocking</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rename_exact_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.delete_result"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.delete_result">[docs]</a>    <span class="k">def</span> <span class="nf">delete_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1077,15 +1096,21 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job list retrieval failed with http code </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">job_list_df</span></div>
 
-<div class="viewcode-block" id="SQLQuery.get_jobs_matching"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_matching">[docs]</a>    <span class="k">def</span> <span class="nf">get_jobs_matching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id_list</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;completed&quot;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; return the list of job_id that have the given status</span>
+<div class="viewcode-block" id="SQLQuery.get_jobs_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_with_status">[docs]</a>    <span class="nd">@validate_job_status</span>
+    <span class="k">def</span> <span class="nf">get_jobs_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id_list</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Among those given, return the list of job_id that have the given status</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        job_id_list: list</span>
-<span class="sd">            List of job_id</span>
-<span class="sd">        status : str, optional</span>
-<span class="sd">            &quot;completed&quot;, or &quot;failed&quot;</span>
+<span class="sd">            List of job_id to check</span>
+<span class="sd">        status : str </span>
+<span class="sd">            &quot;completed&quot;, &quot;running&quot;, or &quot;failed&quot;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        list:</span>
+<span class="sd">            List of job ids</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">job_id_list</span><span class="p">:</span>
@@ -1094,8 +1119,12 @@
                 <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">results</span></div>
 
-<div class="viewcode-block" id="SQLQuery.get_jobs_count_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_count_with_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_jobs_count_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; return the number of jobs in the SQL Query server for the given `status`&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SQLQuery.get_jobs_count_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_count_with_status">[docs]</a>    <span class="nd">@validate_job_status</span>
+    <span class="k">def</span> <span class="nf">get_jobs_count_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; return the number of jobs in the SQL Query server for the given `status`</span>
+<span class="sd">        </span>
+<span class="sd">        It has the limitation as described in :meth:`.get_jobs`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_jobs</span><span class="p">()</span>
         <span class="n">num_jobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">[</span><span class="n">jobs</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">status</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">num_jobs</span></div>

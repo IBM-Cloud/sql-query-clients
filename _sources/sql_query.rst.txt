@@ -64,7 +64,7 @@ D. Jobs
 4. :meth:`.get_job`
 5. :meth:`.get_jobs`
 6. :meth:`.get_number_running_jobs`
-7. :meth:`.get_jobs_matching`
+7. :meth:`.get_jobs_with_status`
 8. :meth:`.export_jobs_history`
 
 
@@ -76,15 +76,14 @@ E. COS URL handling
 F. HIVE catalog table
 ----------------------
 
-1. :meth:`.get_catalog_table`
-2. :meth:`.show_catalog_tables`
-3. :meth:`.drop_all_catalog_tables`
-4. :meth:`.drop_catalog_tables`
-5. :meth:`.drop_catalog_table`
-6. :meth:`.get_catalog_table`
-7. :meth:`.get_catalog_table_partitioned`: for partitioned catalog table
-8. :meth:`.refresh_cache_table_partitioned`:
-9. :meth:`.describe_table`
+1. :meth:`.show_tables`
+1. :meth:`.drop_all_tables`
+1. :meth:`.drop_tables`
+1. :meth:`.drop_table`
+1. :meth:`.create_table`
+1. :meth:`.create_partitioned_table`: for partitioned table
+1. :meth:`.recover_table_partitions`:
+1. :meth:`.describe_table`
 
 G. Data skipping
 ----------------------

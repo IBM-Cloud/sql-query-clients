@@ -103,6 +103,7 @@
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -125,11 +126,15 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.configure">configure() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib">connect_project_lib() (ibmcloudsql.cos.COSClient method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient">COSClient (class in ibmcloudsql.cos)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">create_partitioned_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_table">create_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -149,11 +154,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table">describe_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_catalog_tables">drop_all_catalog_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables">drop_all_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_catalog_table">drop_catalog_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_table">drop_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_catalog_tables">drop_catalog_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_tables">drop_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -191,10 +196,6 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_bucket_info">get_bucket_info() (ibmcloudsql.cos.COSClient method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.get_catalog_table">get_catalog_table() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
-</li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.get_catalog_table_partitioned">get_catalog_table_partitioned() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
-</li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary">get_cos_summary() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.get_endpoint">get_endpoint() (ibmcloudsql.cos.ParsedUrl method)</a>
@@ -203,13 +204,13 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_job">get_job() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs">get_jobs() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_count_with_status">get_jobs_count_with_status() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_matching">get_jobs_matching() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_with_status">get_jobs_with_status() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_number_running_jobs">get_number_running_jobs() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
@@ -325,7 +326,7 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.read_project_lib_data">read_project_lib_data() (ibmcloudsql.cos.COSClient method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.refresh_cache_table_partitioned">refresh_cache_table_partitioned() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.recover_table_partitions">recover_table_partitions() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result">rename_exact_result() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
@@ -351,7 +352,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.select_">select_() (ibmcloudsql.sql_magic.SQLMagic method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_catalog_tables">show_catalog_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_tables">show_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.sql_ui_link">sql_ui_link() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
@@ -396,6 +397,14 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.update_bucket">update_bucket() (ibmcloudsql.cos.COSClient method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.validate_job_status">validate_job_status() (in module ibmcloudsql.SQLQuery)</a>
 </li>
   </ul></td>
 </tr></table>
