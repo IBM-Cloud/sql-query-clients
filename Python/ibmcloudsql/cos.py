@@ -380,7 +380,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             # result = pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
         return result
 
-    def delete_zero_size_objects(self, cos_url):
+    def delete_empty_objects(self, cos_url):
         """
         Delete zero-size objects. Reference to :meth:`.list_cos_objects` for further details.
         """
