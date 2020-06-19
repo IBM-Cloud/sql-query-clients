@@ -863,6 +863,12 @@ If skipped, the being tracked catalog-table is used</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="ibmcloudsql.cos.COSClient.delete_empty_objects">
+<code class="sig-name descname">delete_empty_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.delete_empty_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.delete_empty_objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete zero-size objects. Reference to <a class="reference internal" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="ibmcloudsql.cos.COSClient.list_cos_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_cos_objects()</span></code></a> for further details.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.delete_objects">
 <code class="sig-name descname">delete_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">dry_run=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.delete_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.delete_objects" title="Permalink to this definition">¶</a></dt>
 <dd><p>delete all objects stored at the given COS URL</p>
@@ -902,12 +908,6 @@ If skipped, the being tracked catalog-table is used</p>
 <p>As the entity tag (ETag) is a hash of the object, we can use it to reliably check whether the object has changed - better
 than just file size and modification date. Sample code to handle <a class="reference external" href="https://sdbrett.com/BrettsITBlog/2017/03/python-parsing-api-xml-response-data/">request.response</a></p>
 </div>
-</dd></dl>
-
-<dl class="method">
-<dt id="ibmcloudsql.cos.COSClient.delete_zero_size_objects">
-<code class="sig-name descname">delete_zero_size_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.delete_zero_size_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.delete_zero_size_objects" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete zero-size objects. Reference to <a class="reference internal" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="ibmcloudsql.cos.COSClient.list_cos_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_cos_objects()</span></code></a> for further details.</p>
 </dd></dl>
 
 <dl class="method">

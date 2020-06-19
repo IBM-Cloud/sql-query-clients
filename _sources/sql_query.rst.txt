@@ -50,7 +50,7 @@ C. Query result
 2. :meth:`.delete_result`
 3. :meth:`.rename_exact_result`: modify the created objects on COS
 4. :meth:`.rename_exact_result_joblist`: ... from a list of jobs
-5. :meth:`.delete_zero_sized_objects`:
+5. :meth:`.delete_empty_objects`:
 6. :meth:`.get_cos_summary`
 7. :meth:`.list_results`
 

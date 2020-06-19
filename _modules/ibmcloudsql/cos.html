@@ -467,7 +467,7 @@
             <span class="c1"># result = pd.DataFrame(columns=[&#39;Object&#39;, &#39;LastModified&#39;, &#39;Size&#39;, &#39;StorageClass&#39;])</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="COSClient.delete_zero_size_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_zero_size_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_zero_size_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.delete_empty_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_empty_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_empty_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete zero-size objects. Reference to :meth:`.list_cos_objects` for further details.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
