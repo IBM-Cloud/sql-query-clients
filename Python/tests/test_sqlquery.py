@@ -51,3 +51,10 @@ def test_submit_sql_w_retry(sqlquery_client):
                   json={'job_id': mock_job_id}, status=201)
 
     assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
+
+def test_get_jobs_with_status(sqlquery_client):
+    status = "wrong"
+    job_id_list = []
+    with pytest.raises(ValueError):
+        assert sqlquery_client.get_jobs_with_status(job_id_list, status)
+        assert str(e.value) == "`status` must be a value in ['running', 'completed', 'failed']"

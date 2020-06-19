@@ -62,6 +62,22 @@ import sqlparse
 
 from enum import Enum
 
+def validate_job_status(f):
+    """check if input about job status, via `status` argument is corrected"""
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        self = args[0]
+        dictionary = inspect.getcallargs(f, *args, **kwargs)
+        status = dictionary[
+            'status']  
+        supported_job_status = ["running", "completed", "failed"]
+        if status not in supported_job_status:
+            raise ValueError("`status` must be a value in {}".format(supported_job_status))
+        else: 
+            return f(*args, **kwargs)
+
+    return wrapped
+
 def check_saved_jobs_decorator(f):
     """a decorator that load data from ProjectLib, check for completed SQL
     Query job, before deciding to launch it"""
@@ -993,15 +1009,21 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             print("Job list retrieval failed with http code {}".format(response.status_code))
         return job_list_df
 
-    def get_jobs_matching(self, job_id_list, status="completed"):
-        """ return the list of job_id that have the given status
+    @validate_job_status
+    def get_jobs_with_status(self, job_id_list, status):
+        """ Among those given, return the list of job_id that have the given status
 
         Parameters
         ----------
         job_id_list: list
-            List of job_id
-        status : str, optional
-            "completed", or "failed"
+            List of job_id to check
+        status : str 
+            "completed", "running", or "failed"
+
+        Returns
+        --------
+        list:
+            List of job ids
         """
         results = []
         for job_id in job_id_list:
@@ -1010,8 +1032,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 results.append(job_id)
         return results
 
+    @validate_job_status
     def get_jobs_count_with_status(self, status):
-        """ return the number of jobs in the SQL Query server for the given `status`"""
+        """ return the number of jobs in the SQL Query server for the given `status`
+        
+        It has the limitation as described in :meth:`.get_jobs`
+        """
         jobs = self.get_jobs()
         num_jobs = len(jobs[jobs["status"] == status])
         return num_jobs
