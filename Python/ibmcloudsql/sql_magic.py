@@ -133,6 +133,13 @@ class TimeSeriesSchema():
         """
         self._unixtime_columns = []
 
+    @property
+    def columns_in_unixtime(self ):
+        return self._unixtime_columns
+    @columns_in_unixtime.setter
+    def columns_in_unixtime(self, column_list):
+        self._unixtime_columns = column_list 
+
 
 class SQLMagic(TimeSeriesSchema):
 

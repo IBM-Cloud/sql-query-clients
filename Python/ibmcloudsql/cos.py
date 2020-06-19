@@ -74,18 +74,21 @@ class ProjectLib():
     -----
         NOTE: Currently support only one file
 
-        To support many files using dict such as self._data_out[file_name]
+        To support many files, we can switch to using dict such as self._data_out[file_name]
     """
     def __init__(self, project, file_name, file_type="json"):
         self._project = project
+        self._target_filename = None
+        self._file_type = None
         self._track_file(file_name, file_type)
         self._data_out = None
 
     def _track_file(self, filename, file_type):
         """ map to real file name """
         assert (file_type in ["json", "csv"])
+        self._file_type = file_type
         self._target_filename = filename
-        if not filename.endswith(("json", "csv")):
+        if not filename.endswith((".json", ".csv")):
             self._target_filename = self._target_filename + "." + file_type
         return self._target_filename
 
@@ -99,14 +102,15 @@ class ProjectLib():
         """ Project: the project-lib object"""
         return self._project
 
-    def read(self, file_name, file_type="json"):
+    def read(self, file_name=None, file_type="json"):
         """
         Read from project-lib's file into file-like object
 
         Parameters
         ----------
-        file_name: str
-            File name
+        file_name: str, optional
+            File name in the Watson Studio's project assets. If the file is not provided, then it reads the one passed into the object's constructor.
+
         file_type: str, optional
             The type of file, "json" or "csv"
 
@@ -190,7 +194,7 @@ class ProjectLib():
 
 
 # ---------------------------------------------------------------------------------------------
-# Helper class to to do client-side mapping of COS endpoints to aliases supported in SQL Query
+# Helper class to do client-side mapping of COS endpoints to aliases supported in SQL Query
 # ---------------------------------------------------------------------------------------------
 class ParsedUrl(object):
     """Use this class to extract information from COS URL
@@ -268,7 +272,10 @@ class ParsedUrl(object):
         return mycontainer
 
 
-# Create a child class that inherits from Parent
+# ---------------------------------------------------------------------------
+# Helper class to query information or manipulate data as objects on COS 
+# which can also be used from SQL Query
+# ---------------------------------------------------------------------------
 class COSClient(ParsedUrl, IBMCloudAccess):
     """
     Parameters
@@ -608,6 +615,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             bucket,
             firewall={"allowed_ip": ["10.142.175.0/22", "10.198.243.79"]})
 
+    # -----------------
+    # The methods below are for interacting with a file stored as an asset in a Watson Studio's Project.
+    # -----------------
     def connect_project_lib(self, project, file_name=None):
         """
         Connect to an IBM Watson Studio Project's COS bucket for its own assets
@@ -632,7 +642,10 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         file_name: str, optional
             If not specified, use the one defined from the beginning
         """
-        self._project.read(file_name)
+        if self._project is None:
+            print("Please connect to your ProjectLib object with `connect_project_lib` API")
+        else:
+            self._project.read(file_name)
 
     def write_project_lib_data(self, file_name=None):
         """write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
@@ -642,7 +655,10 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         file_name: str, optional
             If not specified, use the one defined from the beginning
         """
-        self._project.write(file_name)
+        if self._project is None:
+            print("Please connect to your ProjectLib object with `connect_project_lib` API")
+        else:
+            self._project.write(file_name)
 
     @property
     def project_lib(self):

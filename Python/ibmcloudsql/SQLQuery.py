@@ -86,7 +86,7 @@ def check_saved_jobs_decorator(f):
         self = args[0]
         dictionary = inspect.getcallargs(f, *args, **kwargs)
         prefix = dictionary[
-            'prefix']  # Gets you the username, default or modifed
+            'file_name']  # Gets you the username, default or modifed
         sql_stmt = dictionary["sql_stmt"]
         # refine query
         sql_stmt = format_sql(sql_stmt)
@@ -380,25 +380,49 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return intrumented_send(sqlData)
 
     @check_saved_jobs_decorator
-    def submit_sql_with_checking_saved_jobs(self, sql_stmt, pagesize=None, prefix=None):
+    def submit_and_track_sql(self, sql_stmt, pagesize=None, file_name=None):
         """
-        Do the checking if a previous job is completed. The comparison is based on the SQL query content.
-        The content of previous queries are stored in a file,
-        with name given by `prefix` argument, stored as an asset in the Project-Lib.
-        This is used in the scenario when you launch many many jobs, and don't want to restart from the
-        beginning.
+        When using SQL Query client via Watson Studio, you are limited to the
+        session time provided by the system. This may be a problem when you
+        launch many SQL Query jobs, as such limitation may prevent you to
+        complete all of them in one session.
+
+        This API provides the capability to put the information of each
+        launched jobs in a `file_name` stored as an asset in the Watson
+        Studio's Project. Whenever you launch a `sql_stmt` via this API, and
+        you also provide the `file_name`, the SQL Query client will check the
+        content of such file name to see if the given `sql_stmt` has been
+        launched, and if so, whether it is completed or not. If not
+        completed, then it relaunches the job, and update the content in this
+        file. Otherwise, it skips the `sql_stmt`.
+        
+        To check if a `sql_stmt` has been issued or not, the
+        :func:`.format_sql` transforms the query string into a style that can
+        be used for string comparison that is tolerance to white spaces, new
+        lines, comments, lower-case or upper-case uses in the query string.
+        This is done by the decorator :meth:`check_saved_jobs_decorator`.
+
+        This is beneficial in the scenario when you launch many many jobs, and don't want to restart from the beginning.
 
         Parameters
         ----------
-        prefix : str, optional
-            If it is used, it will looks into the ProjectLib for an asset file name $prefix.json
-            and compare the full sql statement if it has been used
-            If yes, and the result is successful, there is no need to rerun it
+        sql_stmt: str
+            sql string
+        pagesize: int, optional
+            the page size
+        file_name: str, optional
+            If it is used, it will looks into the ProjectLib for an asset file name $file_name.json and compare the full sql statement if it has been used.
+            If yes, and the result is successful, there is no need to rerun it.
 
         Note
         ----
-            This depends on the usage of :py:meth:`COSClient.connect_project_lib`,
-            :py:meth:`COSClient.read_project_lib_data`
+            To use this API, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.
+
+            This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.
+
+        Todo
+        ------
+            If SQL Query client is used from a local machine, the `file_name` can be a file on the user's local machine.
 
         """
         return self.submit_sql(
@@ -1727,3 +1751,43 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         if result is None:
             result = query_sec()
         return result
+
+    def get_ts_datasource(self, table_name, key, time_stamp, observation,
+                cos_out, granularity="raw", where_clause="", ops="avg", dry_run=False,
+                num_objects=20, print_warning=True):
+        """
+        Prepare the data source for time-series in the next-query, in that the result is
+        broken down into multiple objects using `num_objects` as the criteria
+
+        It will returns the data source in 3 columns:
+        <key>, time_stamp, observation
+
+        Parameters:
+        --------------
+        table: str
+            The catalog table name
+        key: str
+            The column name being used as the key
+        time_stamp: str
+            The column name being used as timestick
+        observation: str
+            The column name being used as value
+        cos_out: str
+            The COS URL where the data is copied to - later as data source
+        granularity: str
+            a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec"]
+            with <x> is a number divided by 60, e.g. 10, 15
+        print_warning: bool, default=True
+            print a warning or not
+
+        Returns
+        ----------
+        str
+            The COS_URL where the data with 3 fields (key, time_stamp, observation)
+            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
+        """
+        if len(self._unixtime_columns) == 0 and print_warning is True:
+            print("WARNING: You may want to assign the list of columns to`.columns_in_unixtime` to let the SQL client know what columns are timestamp and in UNIX time format")
+            
+        return self._get_ts_datasource(table_name, key, time_stamp, observation,
+                cos_out, granularity, where_clause, ops, dry_run, num_objects=num_objects)
