@@ -218,7 +218,14 @@
 <span class="sd">        100000000000000 (15 digits) means Wed Nov 16 5138 09:46:40</span>
 <span class="sd">        https://stackoverflow.com/questions/23929145/how-to-test-if-a-given-time-stamp-is-in-seconds-or-milliseconds</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span> <span class="o">=</span> <span class="p">[]</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">columns_in_unixtime</span><span class="p">(</span><span class="bp">self</span> <span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span>
+    <span class="nd">@columns_in_unixtime</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">columns_in_unixtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_list</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span> <span class="o">=</span> <span class="n">column_list</span> </div>
 
 
 <div class="viewcode-block" id="SQLMagic"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic">[docs]</a><span class="k">class</span> <span class="nc">SQLMagic</span><span class="p">(</span><span class="n">TimeSeriesSchema</span><span class="p">):</span>

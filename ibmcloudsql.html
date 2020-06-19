@@ -413,6 +413,41 @@ Use from [‘json’, ‘csv’, ‘parquet’] with case-insensitive</p></li>
 </dd></dl>
 
 <dl class="method">
+<dt id="ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource">
+<code class="sig-name descname">get_ts_datasource</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">key</em>, <em class="sig-param">time_stamp</em>, <em class="sig-param">observation</em>, <em class="sig-param">cos_out</em>, <em class="sig-param">granularity='raw'</em>, <em class="sig-param">where_clause=''</em>, <em class="sig-param">ops='avg'</em>, <em class="sig-param">dry_run=False</em>, <em class="sig-param">num_objects=20</em>, <em class="sig-param">print_warning=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.get_ts_datasource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the data source for time-series in the next-query, in that the result is
+broken down into multiple objects using <cite>num_objects</cite> as the criteria</p>
+<p>It will returns the data source in 3 columns:
+&lt;key&gt;, time_stamp, observation</p>
+<dl class="simple">
+<dt>table: str</dt><dd><p>The catalog table name</p>
+</dd>
+<dt>key: str</dt><dd><p>The column name being used as the key</p>
+</dd>
+<dt>time_stamp: str</dt><dd><p>The column name being used as timestick</p>
+</dd>
+<dt>observation: str</dt><dd><p>The column name being used as value</p>
+</dd>
+<dt>cos_out: str</dt><dd><p>The COS URL where the data is copied to - later as data source</p>
+</dd>
+<dt>granularity: str</dt><dd><p>a value in one of [“raw”, “per_min”, “per_&lt;x&gt;min”, “per_sec”, “per_&lt;x&gt;sec”]
+with &lt;x&gt; is a number divided by 60, e.g. 10, 15</p>
+</dd>
+<dt>print_warning: bool, default=True</dt><dd><p>print a warning or not</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The COS_URL where the data with 3 fields (key, time_stamp, observation)
+and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.list_results">
 <code class="sig-name descname">list_results</code><span class="sig-paren">(</span><em class="sig-param">jobId</em>, <em class="sig-param">wait=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.list_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="Permalink to this definition">¶</a></dt>
 <dd><p>NOTE: A single SQL Query can store the queried data in the COS output
@@ -568,6 +603,48 @@ The default behavior is opposite, to avoid unnecessarily overload the memory.</p
 </dd></dl>
 
 <dl class="method">
+<dt id="ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql">
+<code class="sig-name descname">submit_and_track_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">file_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_and_track_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>When using SQL Query client via Watson Studio, you are limited to the
+session time provided by the system. This may be a problem when you
+launch many SQL Query jobs, as such limitation may prevent you to
+complete all of them in one session.</p>
+<p>This API provides the capability to put the information of each
+launched jobs in a <cite>file_name</cite> stored as an asset in the Watson
+Studio’s Project. Whenever you launch a <cite>sql_stmt</cite> via this API, and
+you also provide the <cite>file_name</cite>, the SQL Query client will check the
+content of such file name to see if the given <cite>sql_stmt</cite> has been
+launched, and if so, whether it is completed or not. If not
+completed, then it relaunches the job, and update the content in this
+file. Otherwise, it skips the <cite>sql_stmt</cite>.</p>
+<p>To check if a <cite>sql_stmt</cite> has been issued or not, the
+<a class="reference internal" href="#ibmcloudsql.sql_magic.format_sql" title="ibmcloudsql.sql_magic.format_sql"><code class="xref py py-func docutils literal notranslate"><span class="pre">format_sql()</span></code></a> transforms the query string into a style that can
+be used for string comparison that is tolerance to white spaces, new
+lines, comments, lower-case or upper-case uses in the query string.
+This is done by the decorator <a class="reference internal" href="#ibmcloudsql.SQLQuery.check_saved_jobs_decorator" title="ibmcloudsql.SQLQuery.check_saved_jobs_decorator"><code class="xref py py-meth docutils literal notranslate"><span class="pre">check_saved_jobs_decorator()</span></code></a>.</p>
+<p>This is beneficial in the scenario when you launch many many jobs, and don’t want to restart from the beginning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sql_stmt</strong> (<em>str</em>) – sql string</p></li>
+<li><p><strong>pagesize</strong> (<em>int</em><em>, </em><em>optional</em>) – the page size</p></li>
+<li><p><strong>file_name</strong> (<em>str</em><em>, </em><em>optional</em>) – If it is used, it will looks into the ProjectLib for an asset file name $file_name.json and compare the full sql statement if it has been used.
+If yes, and the result is successful, there is no need to rerun it.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To use this API, the SQL Query client must already connected to the ProjectLib object via <a class="reference internal" href="#ibmcloudsql.cos.COSClient.connect_project_lib" title="ibmcloudsql.cos.COSClient.connect_project_lib"><code class="xref py py-meth docutils literal notranslate"><span class="pre">connect_project_lib()</span></code></a> method.</p>
+<p>This APIs make use of <a class="reference internal" href="#ibmcloudsql.cos.COSClient.connect_project_lib" title="ibmcloudsql.cos.COSClient.connect_project_lib"><code class="xref py py-meth docutils literal notranslate"><span class="pre">COSClient.connect_project_lib()</span></code></a>, <a class="reference internal" href="#ibmcloudsql.cos.COSClient.read_project_lib_data" title="ibmcloudsql.cos.COSClient.read_project_lib_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">COSClient.read_project_lib_data()</span></code></a>.</p>
+</div>
+<div class="admonition-todo admonition" id="id2">
+<p class="admonition-title">Todo</p>
+<p>If SQL Query client is used from a local machine, the <cite>file_name</cite> can be a file on the user’s local machine.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.submit_sql">
 <code class="sig-name descname">submit_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="Permalink to this definition">¶</a></dt>
 <dd><p>Asynchronous call - submit and quickly return the job_id.</p>
@@ -641,28 +718,6 @@ passed to the <em>json</em> argument of requests.post() API.</p>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># error code information: https://cloud.ibm.com/apidocs/sql-query</span>
 </pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs">
-<code class="sig-name descname">submit_sql_with_checking_saved_jobs</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">prefix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.submit_sql_with_checking_saved_jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Do the checking if a previous job is completed. The comparison is based on the SQL query content.
-The content of previous queries are stored in a file,
-with name given by <cite>prefix</cite> argument, stored as an asset in the Project-Lib.
-This is used in the scenario when you launch many many jobs, and don’t want to restart from the
-beginning.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>prefix</strong> (<em>str</em><em>, </em><em>optional</em>) – If it is used, it will looks into the ProjectLib for an asset file name $prefix.json
-and compare the full sql statement if it has been used
-If yes, and the result is successful, there is no need to rerun it</p>
-</dd>
-</dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This depends on the usage of <code class="xref py py-meth docutils literal notranslate"><span class="pre">COSClient.connect_project_lib()</span></code>,
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">COSClient.read_project_lib_data()</span></code></p>
 </div>
 </dd></dl>
 
@@ -929,7 +984,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="id2">
+<div class="admonition-todo admonition" id="id3">
 <p class="admonition-title">Todo</p>
 <p><a class="reference external" href="https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python">https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python</a></p>
 </div>
@@ -986,7 +1041,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.update_bucket">
 <code class="sig-name descname">update_bucket</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.update_bucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.update_bucket" title="Permalink to this definition">¶</a></dt>
-<dd><div class="admonition-todo admonition" id="id3">
+<dd><div class="admonition-todo admonition" id="id4">
 <p class="admonition-title">Todo</p>
 <p>revise this</p>
 </div>
@@ -1073,10 +1128,10 @@ than just file size and modification date. Sample code to handle <a class="refer
 </ul>
 </dd>
 </dl>
-<div class="admonition-todo admonition" id="id4">
+<div class="admonition-todo admonition" id="id5">
 <p class="admonition-title">Todo</p>
 <p>NOTE: Currently support only one file</p>
-<p>To support many files using dict such as self._data_out[file_name]</p>
+<p>To support many files, we can switch to using dict such as self._data_out[file_name]</p>
 </div>
 <dl class="method">
 <dt id="ibmcloudsql.cos.ProjectLib.data">
@@ -1102,12 +1157,12 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 <dl class="method">
 <dt id="ibmcloudsql.cos.ProjectLib.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">file_name</em>, <em class="sig-param">file_type='json'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ProjectLib.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ProjectLib.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">file_name=None</em>, <em class="sig-param">file_type='json'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ProjectLib.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ProjectLib.read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read from project-lib’s file into file-like object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_name</strong> (<em>str</em>) – File name</p></li>
+<li><p><strong>file_name</strong> (<em>str</em><em>, </em><em>optional</em>) – File name in the Watson Studio’s project assets. If the file is not provided, then it reads the one passed into the object’s constructor.</p></li>
 <li><p><strong>file_type</strong> (<em>str</em><em>, </em><em>optional</em>) – The type of file, “json” or “csv”</p></li>
 </ul>
 </dd>
@@ -1250,6 +1305,11 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dt id="ibmcloudsql.sql_magic.TimeSeriesSchema">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">TimeSeriesSchema</code><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#TimeSeriesSchema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.TimeSeriesSchema" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="ibmcloudsql.sql_magic.TimeSeriesSchema.columns_in_unixtime">
+<em class="property">property </em><code class="sig-name descname">columns_in_unixtime</code><a class="headerlink" href="#ibmcloudsql.sql_magic.TimeSeriesSchema.columns_in_unixtime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">

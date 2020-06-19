@@ -173,7 +173,7 @@
         <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">dictionary</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getcallargs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[</span>
-            <span class="s1">&#39;prefix&#39;</span><span class="p">]</span>  <span class="c1"># Gets you the username, default or modifed</span>
+            <span class="s1">&#39;file_name&#39;</span><span class="p">]</span>  <span class="c1"># Gets you the username, default or modifed</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[</span><span class="s2">&quot;sql_stmt&quot;</span><span class="p">]</span>
         <span class="c1"># refine query</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">format_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
@@ -466,26 +466,50 @@
         <span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_send_req</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">intrumented_send</span><span class="p">(</span><span class="n">sqlData</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.submit_sql_with_checking_saved_jobs"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql_with_checking_saved_jobs">[docs]</a>    <span class="nd">@check_saved_jobs_decorator</span>
-    <span class="k">def</span> <span class="nf">submit_sql_with_checking_saved_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.submit_and_track_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql">[docs]</a>    <span class="nd">@check_saved_jobs_decorator</span>
+    <span class="k">def</span> <span class="nf">submit_and_track_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Do the checking if a previous job is completed. The comparison is based on the SQL query content.</span>
-<span class="sd">        The content of previous queries are stored in a file,</span>
-<span class="sd">        with name given by `prefix` argument, stored as an asset in the Project-Lib.</span>
-<span class="sd">        This is used in the scenario when you launch many many jobs, and don&#39;t want to restart from the</span>
-<span class="sd">        beginning.</span>
+<span class="sd">        When using SQL Query client via Watson Studio, you are limited to the</span>
+<span class="sd">        session time provided by the system. This may be a problem when you</span>
+<span class="sd">        launch many SQL Query jobs, as such limitation may prevent you to</span>
+<span class="sd">        complete all of them in one session.</span>
+
+<span class="sd">        This API provides the capability to put the information of each</span>
+<span class="sd">        launched jobs in a `file_name` stored as an asset in the Watson</span>
+<span class="sd">        Studio&#39;s Project. Whenever you launch a `sql_stmt` via this API, and</span>
+<span class="sd">        you also provide the `file_name`, the SQL Query client will check the</span>
+<span class="sd">        content of such file name to see if the given `sql_stmt` has been</span>
+<span class="sd">        launched, and if so, whether it is completed or not. If not</span>
+<span class="sd">        completed, then it relaunches the job, and update the content in this</span>
+<span class="sd">        file. Otherwise, it skips the `sql_stmt`.</span>
+<span class="sd">        </span>
+<span class="sd">        To check if a `sql_stmt` has been issued or not, the</span>
+<span class="sd">        :func:`.format_sql` transforms the query string into a style that can</span>
+<span class="sd">        be used for string comparison that is tolerance to white spaces, new</span>
+<span class="sd">        lines, comments, lower-case or upper-case uses in the query string.</span>
+<span class="sd">        This is done by the decorator :meth:`check_saved_jobs_decorator`.</span>
+
+<span class="sd">        This is beneficial in the scenario when you launch many many jobs, and don&#39;t want to restart from the beginning.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        prefix : str, optional</span>
-<span class="sd">            If it is used, it will looks into the ProjectLib for an asset file name $prefix.json</span>
-<span class="sd">            and compare the full sql statement if it has been used</span>
-<span class="sd">            If yes, and the result is successful, there is no need to rerun it</span>
+<span class="sd">        sql_stmt: str</span>
+<span class="sd">            sql string</span>
+<span class="sd">        pagesize: int, optional</span>
+<span class="sd">            the page size</span>
+<span class="sd">        file_name: str, optional</span>
+<span class="sd">            If it is used, it will looks into the ProjectLib for an asset file name $file_name.json and compare the full sql statement if it has been used.</span>
+<span class="sd">            If yes, and the result is successful, there is no need to rerun it.</span>
 
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
-<span class="sd">            This depends on the usage of :py:meth:`COSClient.connect_project_lib`,</span>
-<span class="sd">            :py:meth:`COSClient.read_project_lib_data`</span>
+<span class="sd">            To use this API, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.</span>
+
+<span class="sd">            This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.</span>
+
+<span class="sd">        Todo</span>
+<span class="sd">        ------</span>
+<span class="sd">            If SQL Query client is used from a local machine, the `file_name` can be a file on the user&#39;s local machine.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span>
@@ -1813,7 +1837,47 @@
         <span class="n">result</span> <span class="o">=</span> <span class="n">query_min</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">query_sec</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="SQLQuery.get_ts_datasource"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource">[docs]</a>    <span class="k">def</span> <span class="nf">get_ts_datasource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">time_stamp</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span>
+                <span class="n">cos_out</span><span class="p">,</span> <span class="n">granularity</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ops</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">num_objects</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">print_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the data source for time-series in the next-query, in that the result is</span>
+<span class="sd">        broken down into multiple objects using `num_objects` as the criteria</span>
+
+<span class="sd">        It will returns the data source in 3 columns:</span>
+<span class="sd">        &lt;key&gt;, time_stamp, observation</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        --------------</span>
+<span class="sd">        table: str</span>
+<span class="sd">            The catalog table name</span>
+<span class="sd">        key: str</span>
+<span class="sd">            The column name being used as the key</span>
+<span class="sd">        time_stamp: str</span>
+<span class="sd">            The column name being used as timestick</span>
+<span class="sd">        observation: str</span>
+<span class="sd">            The column name being used as value</span>
+<span class="sd">        cos_out: str</span>
+<span class="sd">            The COS URL where the data is copied to - later as data source</span>
+<span class="sd">        granularity: str</span>
+<span class="sd">            a value in one of [&quot;raw&quot;, &quot;per_min&quot;, &quot;per_&lt;x&gt;min&quot;, &quot;per_sec&quot;, &quot;per_&lt;x&gt;sec&quot;]</span>
+<span class="sd">            with &lt;x&gt; is a number divided by 60, e.g. 10, 15</span>
+<span class="sd">        print_warning: bool, default=True</span>
+<span class="sd">            print a warning or not</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        str</span>
+<span class="sd">            The COS_URL where the data with 3 fields (key, time_stamp, observation)</span>
+<span class="sd">            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">print_warning</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: You may want to assign the list of columns to`.columns_in_unixtime` to let the SQL client know what columns are timestamp and in UNIX time format&quot;</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ts_datasource</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">time_stamp</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span>
+                <span class="n">cos_out</span><span class="p">,</span> <span class="n">granularity</span><span class="p">,</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">ops</span><span class="p">,</span> <span class="n">dry_run</span><span class="p">,</span> <span class="n">num_objects</span><span class="o">=</span><span class="n">num_objects</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>

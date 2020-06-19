@@ -161,18 +161,21 @@
 <span class="sd">    -----</span>
 <span class="sd">        NOTE: Currently support only one file</span>
 
-<span class="sd">        To support many files using dict such as self._data_out[file_name]</span>
+<span class="sd">        To support many files, we can switch to using dict such as self._data_out[file_name]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_project</span> <span class="o">=</span> <span class="n">project</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_filename</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_type</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_track_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data_out</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">_track_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">file_type</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; map to real file name &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="p">(</span><span class="n">file_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;csv&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_type</span> <span class="o">=</span> <span class="n">file_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;csv&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_target_filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_filename</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">file_type</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_filename</span>
 
@@ -186,14 +189,15 @@
         <span class="sd">&quot;&quot;&quot; Project: the project-lib object&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span>
 
-<div class="viewcode-block" id="ProjectLib.read"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="ProjectLib.read"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read from project-lib&#39;s file into file-like object</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        file_name: str</span>
-<span class="sd">            File name</span>
+<span class="sd">        file_name: str, optional</span>
+<span class="sd">            File name in the Watson Studio&#39;s project assets. If the file is not provided, then it reads the one passed into the object&#39;s constructor.</span>
+
 <span class="sd">        file_type: str, optional</span>
 <span class="sd">            The type of file, &quot;json&quot; or &quot;csv&quot;</span>
 
@@ -277,7 +281,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------------------------</span>
-<span class="c1"># Helper class to to do client-side mapping of COS endpoints to aliases supported in SQL Query</span>
+<span class="c1"># Helper class to do client-side mapping of COS endpoints to aliases supported in SQL Query</span>
 <span class="c1"># ---------------------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="ParsedUrl"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl">[docs]</a><span class="k">class</span> <span class="nc">ParsedUrl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Use this class to extract information from COS URL</span>
@@ -355,7 +359,10 @@
         <span class="k">return</span> <span class="n">mycontainer</span></div></div>
 
 
-<span class="c1"># Create a child class that inherits from Parent</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Helper class to query information or manipulate data as objects on COS </span>
+<span class="c1"># which can also be used from SQL Query</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="COSClient"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient">[docs]</a><span class="k">class</span> <span class="nc">COSClient</span><span class="p">(</span><span class="n">ParsedUrl</span><span class="p">,</span> <span class="n">IBMCloudAccess</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parameters</span>
@@ -695,6 +702,9 @@
             <span class="n">bucket</span><span class="p">,</span>
             <span class="n">firewall</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allowed_ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;10.142.175.0/22&quot;</span><span class="p">,</span> <span class="s2">&quot;10.198.243.79&quot;</span><span class="p">]})</span></div>
 
+    <span class="c1"># -----------------</span>
+    <span class="c1"># The methods below are for interacting with a file stored as an asset in a Watson Studio&#39;s Project.</span>
+    <span class="c1"># -----------------</span>
 <div class="viewcode-block" id="COSClient.connect_project_lib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib">[docs]</a>    <span class="k">def</span> <span class="nf">connect_project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Connect to an IBM Watson Studio Project&#39;s COS bucket for its own assets</span>
@@ -719,7 +729,10 @@
 <span class="sd">        file_name: str, optional</span>
 <span class="sd">            If not specified, use the one defined from the beginning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please connect to your ProjectLib object with `connect_project_lib` API&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="COSClient.write_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.write_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">write_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;write the content to the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
@@ -729,7 +742,10 @@
 <span class="sd">        file_name: str, optional</span>
 <span class="sd">            If not specified, use the one defined from the beginning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please connect to your ProjectLib object with `connect_project_lib` API&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
