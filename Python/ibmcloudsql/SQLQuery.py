@@ -595,7 +595,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         return result_df
 
-    def list_results(self, jobId, blocking=True):
+    def list_results(self, jobId, wait=False):
         """
         NOTE: A single SQL Query can store the queried data in the COS output
         in multiple objects/partitions
@@ -612,8 +612,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         ------------
         job_id: str
             The Job ID
-        blocking: bool, default: True
-            If True, wait for the available slot in the work queue
+        wait: bool, default:False 
+            If True, wait for the requested `job_id` to complete to get the information
 
         Returns
         -------
@@ -650,7 +650,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             return result_objects_df
 
         job_id = jobId
-        if blocking:
+        if wait is True:
             job_running = True
             while job_running:
                 try:
@@ -661,26 +661,29 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                         pass
                     else:
                         raise e
+                time.sleep(2)
         else:
             x = list_results(job_id)
         return x
 
-    def rename_exact_result(self, jobId, blocking=True):
+    def rename_exact_result(self, jobId, wait=False):
         """
         A SQL Query can store data into partitioned/paginated multiple objects, or single object.
 
         Even with single object, indeed, multiple objects are created, two of them has size 0.
         (<URL>/_SUCCESS, and <URL>/) beside the ones that hold data (<URL>/<data1>, <URL>/<data2>)
 
-        This API delete the two 0-size objects, and keep only the one that holds data.
+        This API deletes the two 0-size objects, and keep only the ones that hold data.
 
         Parameters
         ----------
         job_id : str
             A string representation of job_id
 
-        blocking: bool, optional
-            Default is wait
+        wait: bool, optional
+            The given `job_id` may not be completed yet, so you have the option to wait for it to completed first.
+
+            Default is False
 
         Returns
         --------
@@ -697,10 +700,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         job_details = self.get_job(jobId)
         job_status = job_details.get('status')
 
-        while job_status == "running" and blocking is True:
-            time.sleep(6)
-            job_details = self.get_job(jobId)
-            job_status = job_details.get('status')
+        if wait is True:
+            job_status = self.wait_for_job(jobId)
 
         if job_status == 'running':
             raise ValueError('SQL job with jobId {} still running. Come back later.'.format(jobId))
@@ -751,17 +752,19 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         return
 
-    def rename_exact_result_joblist(self, job_list, blocking=True):
+    def rename_exact_result_joblist(self, job_list, wait=False):
         """ The bulk mode of `rename_exact_result` method.
 
         Parameters
         ----------
         job_list: list
             A list of job_id
+        wait: bool, optional
+            The same meaning as the one used in :meth:`.rename_exact_result`
 
         """
         for job_id in job_list:
-            self.rename_exact_result(job_id, blocking=blocking)
+            self.rename_exact_result(job_id, wait=wait)
 
     def delete_result(self, jobId):
         """
