@@ -1,20 +1,19 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>README &#8212; SQLClient alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
-    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script src="_static/js/custom.js"></script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Introduction" href="intro.html" />
@@ -65,29 +64,21 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
   <div class="section" id="readme">
@@ -95,14 +86,16 @@
 <p>sql-query-clients
 .. image:: <a class="reference external" href="https://travis-ci.org/IBM-Cloud/sql-query-clients.svg?branch=master">https://travis-ci.org/IBM-Cloud/sql-query-clients.svg?branch=master</a></p>
 <blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">target</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://travis-ci.org/IBM-Cloud/sql-query-clients">https://travis-ci.org/IBM-Cloud/sql-query-clients</a></p>
-</dd>
-<dt class="field-even">alt</dt>
-<dd class="field-even"><p>Build Status</p>
-</dd>
-</dl>
+<div><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">target:</th><td class="field-body"><a class="reference external" href="https://travis-ci.org/IBM-Cloud/sql-query-clients">https://travis-ci.org/IBM-Cloud/sql-query-clients</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">alt:</th><td class="field-body">Build Status</td>
+</tr>
+</tbody>
+</table>
 </div></blockquote>
 <hr class="docutils" />
 <p>This repository contains application client samples and blueprint code for the <a class="reference external" href="https://cloud.ibm.com/catalog/services/sql-query#about">IBM Cloud SQL Query service</a>.</p>
@@ -110,30 +103,30 @@
 <div class="section" id="list-of-clients">
 <h2>List of clients<a class="headerlink" href="#list-of-clients" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python">ibmcloudsql</a> Python SDK</p></li>
-<li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function">Cloud Function</a> for SQL Query (uses <code class="docutils literal notranslate"><span class="pre">ibmcloudsql</span></code>)</p></li>
-<li><p><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node">sqlQuery</a> Node SDK</p></li>
-<li><p><a class="reference external" href="https://ibm-cloud.github.io/sql-query-clients/">Documentation</a></p></li>
+<li><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python">ibmcloudsql</a> Python SDK</li>
+<li><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function">Cloud Function</a> for SQL Query (uses <code class="docutils literal notranslate"><span class="pre">ibmcloudsql</span></code>)</li>
+<li><a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node">sqlQuery</a> Node SDK</li>
+<li><a class="reference external" href="https://ibm-cloud.github.io/sql-query-clients/">Documentation</a></li>
 </ul>
 </div>
 <div class="section" id="how-to-generate-docs">
 <h2>How to generate docs<a class="headerlink" href="#how-to-generate-docs" title="Permalink to this headline">¶</a></h2>
 <p>Requirement: conda</p>
 <ul class="simple">
-<li><p>In the docs folder, you run [if you don’t have sphinx and required package yet]</p></li>
+<li>In the docs folder, you run [if you don’t have sphinx and required package yet]</li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">setup</span></code></p>
 <p>This create <code class="docutils literal notranslate"><span class="pre">sphinx</span></code> environment. Make sure you’re in this environment each time you run the below commands</p>
 <ul class="simple">
-<li><p>Get docstring updated</p></li>
+<li>Get docstring updated</li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">python</span></code></p>
 <ul class="simple">
-<li><p>generate docs in local file (in /tmp/sql-query-clients-docs/html - for the purpose of local check the output)</p></li>
+<li>generate docs in local file (in /tmp/sql-query-clients-docs/html - for the purpose of local check the output)</li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code></p>
 <ul class="simple">
-<li><p>(check local generated content carefully before running this) generate and push to the server [only those with given priviledges]</p></li>
+<li>(check local generated content carefully before running this) generate and push to the server [only those with given priviledges]</li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">buildandpushhtml</span></code></p>
 </div>
@@ -141,7 +134,6 @@
 
 
           </div>
-          
         </div>
       </div>
     <div class="clearer"></div>
@@ -150,8 +142,8 @@
       &copy;2020, IBM Research.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
       <a href="_sources/includeme.rst.txt"
