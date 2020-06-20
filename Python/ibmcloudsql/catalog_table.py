@@ -121,7 +121,7 @@ class HiveMetastore():
         sql_stmt_drop = """
         DROP TABLE {table_name}""".format(table_name=table_name)
         try:
-            _, job_id = self.run_sql_v2(sql_stmt_drop)
+            _, job_id = self.execute_sql(sql_stmt_drop)
             logger.debug("Job_id ({stmt}): {job_id}".format(stmt=sql_stmt_drop,
                                                             job_id=job_id))
         except Exception:
@@ -134,7 +134,7 @@ class HiveMetastore():
             pass
 
     def create_table(self, table_name, cos_url=None, force_recreate=False, blocking=True):
-        """Create a table for data on COS 
+        """Create a table for data on COS
 
         Parameters
         ----------
@@ -225,7 +225,7 @@ class HiveMetastore():
 
             <COS-URL>/field_1=value1_1/field_2=value_2_1/object_file
             <COS-URL>/field_1=value1_2/field_2=value_2_1/object_file
-        
+
         NOTE: Each time the data is updated, we need to call `recover_table_partitions` on the created partitioned table.
 
         Parameters
@@ -316,4 +316,4 @@ class HiveMetastore():
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
             table_name=table_name, cos_out=self.target_url)
-        return self.run_sql_v2(sql_stmt, get_result=True)
+        return self.execute_sql(sql_stmt, get_result=True)

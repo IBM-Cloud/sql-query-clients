@@ -69,11 +69,11 @@ def validate_job_status(f):
         self = args[0]
         dictionary = inspect.getcallargs(f, *args, **kwargs)
         status = dictionary[
-            'status']  
+            'status']
         supported_job_status = ["running", "completed", "failed"]
         if status not in supported_job_status:
             raise ValueError("`status` must be a value in {}".format(supported_job_status))
-        else: 
+        else:
             return f(*args, **kwargs)
 
     return wrapped
@@ -395,7 +395,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         launched, and if so, whether it is completed or not. If not
         completed, then it relaunches the job, and update the content in this
         file. Otherwise, it skips the `sql_stmt`.
-        
+
         To check if a `sql_stmt` has been issued or not, the
         :func:`.format_sql` transforms the query string into a style that can
         be used for string comparison that is tolerance to white spaces, new
@@ -652,7 +652,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         ------------
         job_id: str
             The Job ID
-        wait: bool, default:False 
+        wait: bool, default:False
             If True, wait for the requested `job_id` to complete to get the information
 
         Returns
@@ -1041,7 +1041,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         ----------
         job_id_list: list
             List of job_id to check
-        status : str 
+        status : str
             "completed", "running", or "failed"
 
         Returns
@@ -1059,7 +1059,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     @validate_job_status
     def get_jobs_count_with_status(self, status):
         """ return the number of jobs in the SQL Query server for the given `status`
-        
+
         It has the limitation as described in :meth:`.get_jobs`
         """
         jobs = self.get_jobs()
@@ -1070,7 +1070,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """ return the number of running jobs in the SQL Query server"""
         return self.get_jobs_count_with_status('running')
 
-    def run_sql_v2(self, sql_stmt, pagesize=None, get_result=False):
+    def execute_sql(self, sql_stmt, pagesize=None, get_result=False):
         """
         Extend the behavior of :meth:`.run_sql`.
 
@@ -1144,10 +1144,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             return self.get_result(jobId)
 
     def run(self, pagesize=None, get_result=False):
-        """ run the internal SQL statement provided by SQLMagic using :meth:`.run_sql_v2`
+        """ run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`
         """
         self.format_()
-        return self.run_sql_v2(self._sql_stmt,
+        return self.execute_sql(self._sql_stmt,
             pagesize=pagesize,
             get_result=get_result)
 
@@ -1788,6 +1788,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
         if len(self._unixtime_columns) == 0 and print_warning is True:
             print("WARNING: You may want to assign the list of columns to`.columns_in_unixtime` to let the SQL client know what columns are timestamp and in UNIX time format")
-            
+
         return self._get_ts_datasource(table_name, key, time_stamp, observation,
                 cos_out, granularity, where_clause, ops, dry_run, num_objects=num_objects)

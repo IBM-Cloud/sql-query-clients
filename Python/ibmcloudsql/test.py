@@ -264,8 +264,8 @@ except RateLimitedException as e:
 # add this as the previous test launches so many asynchronous runs
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test', max_tries=100)
 sqlClient.logon()
-print("Running test with run_sql_v2() no data returned:")
-result = sqlClient.run_sql_v2(
+print("Running test with execute_sql() no data returned:")
+result = sqlClient.execute_sql(
 "WITH orders_shipped AS \
   (SELECT OrderID, EmployeeID, (CASE WHEN shippedDate < requiredDate \
                                    THEN 'On Time' \
