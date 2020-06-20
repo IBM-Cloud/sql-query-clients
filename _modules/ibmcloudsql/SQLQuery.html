@@ -156,11 +156,11 @@
         <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">dictionary</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getcallargs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">status</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[</span>
-            <span class="s1">&#39;status&#39;</span><span class="p">]</span>  
+            <span class="s1">&#39;status&#39;</span><span class="p">]</span>
         <span class="n">supported_job_status</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;completed&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_job_status</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`status` must be a value in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">supported_job_status</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span> 
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">wrapped</span></div>
@@ -482,7 +482,7 @@
 <span class="sd">        launched, and if so, whether it is completed or not. If not</span>
 <span class="sd">        completed, then it relaunches the job, and update the content in this</span>
 <span class="sd">        file. Otherwise, it skips the `sql_stmt`.</span>
-<span class="sd">        </span>
+
 <span class="sd">        To check if a `sql_stmt` has been issued or not, the</span>
 <span class="sd">        :func:`.format_sql` transforms the query string into a style that can</span>
 <span class="sd">        be used for string comparison that is tolerance to white spaces, new</span>
@@ -739,7 +739,7 @@
 <span class="sd">        ------------</span>
 <span class="sd">        job_id: str</span>
 <span class="sd">            The Job ID</span>
-<span class="sd">        wait: bool, default:False </span>
+<span class="sd">        wait: bool, default:False</span>
 <span class="sd">            If True, wait for the requested `job_id` to complete to get the information</span>
 
 <span class="sd">        Returns</span>
@@ -1128,7 +1128,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        job_id_list: list</span>
 <span class="sd">            List of job_id to check</span>
-<span class="sd">        status : str </span>
+<span class="sd">        status : str</span>
 <span class="sd">            &quot;completed&quot;, &quot;running&quot;, or &quot;failed&quot;</span>
 
 <span class="sd">        Returns</span>
@@ -1146,7 +1146,7 @@
 <div class="viewcode-block" id="SQLQuery.get_jobs_count_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_count_with_status">[docs]</a>    <span class="nd">@validate_job_status</span>
     <span class="k">def</span> <span class="nf">get_jobs_count_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return the number of jobs in the SQL Query server for the given `status`</span>
-<span class="sd">        </span>
+
 <span class="sd">        It has the limitation as described in :meth:`.get_jobs`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_jobs</span><span class="p">()</span>
@@ -1157,7 +1157,7 @@
         <span class="sd">&quot;&quot;&quot; return the number of running jobs in the SQL Query server&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_jobs_count_with_status</span><span class="p">(</span><span class="s1">&#39;running&#39;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.run_sql_v2"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql_v2">[docs]</a>    <span class="k">def</span> <span class="nf">run_sql_v2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.execute_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">[docs]</a>    <span class="k">def</span> <span class="nf">execute_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extend the behavior of :meth:`.run_sql`.</span>
 
@@ -1231,10 +1231,10 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.run"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; run the internal SQL statement provided by SQLMagic using :meth:`.run_sql_v2`</span>
+        <span class="sd">&quot;&quot;&quot; run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">format_</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql_v2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">,</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">,</span>
             <span class="n">pagesize</span><span class="o">=</span><span class="n">pagesize</span><span class="p">,</span>
             <span class="n">get_result</span><span class="o">=</span><span class="n">get_result</span><span class="p">)</span></div>
 
@@ -1875,7 +1875,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">print_warning</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: You may want to assign the list of columns to`.columns_in_unixtime` to let the SQL client know what columns are timestamp and in UNIX time format&quot;</span><span class="p">)</span>
-            
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ts_datasource</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">time_stamp</span><span class="p">,</span> <span class="n">observation</span><span class="p">,</span>
                 <span class="n">cos_out</span><span class="p">,</span> <span class="n">granularity</span><span class="p">,</span> <span class="n">where_clause</span><span class="p">,</span> <span class="n">ops</span><span class="p">,</span> <span class="n">dry_run</span><span class="p">,</span> <span class="n">num_objects</span><span class="o">=</span><span class="n">num_objects</span><span class="p">)</span></div></div>
 </pre></div>

@@ -1,19 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>ibmcloudsql.cos &#8212; SQLClient alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="ibmcloudsql.sql_magic" href="sql_magic.html" />
@@ -65,30 +66,38 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="ibmcloudsql-cos">
 <span id="cos-label"></span><h1>ibmcloudsql.cos<a class="headerlink" href="#ibmcloudsql-cos" title="Permalink to this headline">¶</a></h1>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.cos</span></code> provides 3 classes</p>
+<p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.cos" title="ibmcloudsql.cos"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.cos</span></code></a> provides 3 classes</p>
 <ul class="simple">
-<li><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ParsedUrl</span></code> class which provides APIs to extract information from a given URL, e.g. COS URL</li>
-<li><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code> class which (1) does what ParsedUrl can, (2) provides APIs to interact with COS - an extension to ibm-cos-sdk</li>
-<li><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ProjectLib</span></code> class which provides APIs to read/write data to Project’s COS.</li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ParsedUrl</span></code></a> class which provides APIs to extract information from a given URL, e.g. COS URL</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code></a> class which (1) does what ParsedUrl can, (2) provides APIs to interact with COS - an extension to ibm-cos-sdk</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ProjectLib" title="ibmcloudsql.cos.ProjectLib"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ProjectLib</span></code></a> class which provides APIs to read/write data to Project’s COS.</p></li>
 </ul>
 <div class="section" id="parsedurl">
 <h2>ParsedUrl<a class="headerlink" href="#parsedurl" title="Permalink to this headline">¶</a></h2>
@@ -100,19 +109,19 @@
 that can be loaded into the current notebook.</p>
 <p>A scenario where it is used is</p>
 <ol class="arabic simple">
-<li>store/reload progress information</li>
-<li>load external Python packages</li>
-<li>store/reload data files</li>
+<li><p>store/reload progress information</p></li>
+<li><p>load external Python packages</p></li>
+<li><p>store/reload data files</p></li>
 </ol>
 <p><em>Example</em>:
 When SQLClient launches many jobs, there is a chance that the progress can be stopped, and
 you don’t want to restart from the beginning. The above setting enables the SQLClient or AIOps
 to skip the completed sql queries. The <code class="docutils literal notranslate"><span class="pre">prefix_name</span></code> is the file name to be used for saving and restoring the job progress.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">project_lib</span> <span class="kn">import</span> <span class="n">Project</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">project_lib</span> <span class="kn">import</span> <span class="n">Project</span>
 <span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="n">your_project_id</span><span class="p">,</span>
                   <span class="n">project_access_token</span><span class="o">=</span><span class="n">your_project_cos_acess_token</span><span class="p">)</span>
 
-<span class="n">prefix_name</span> <span class="o">=</span> <span class="s">&quot;aiops_us_south_rgdal10_20200201&quot;</span>
+<span class="n">prefix_name</span> <span class="o">=</span> <span class="s2">&quot;aiops_us_south_rgdal10_20200201&quot;</span>
 <span class="n">sqlClient</span><span class="o">.</span><span class="n">connect_project_lib</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">prefix_name</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -122,21 +131,21 @@ to skip the completed sql queries. The <code class="docutils literal notranslate
 <p><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code> is also an <code class="xref py py-class docutils literal notranslate"><span class="pre">IBMCloudAccess</span></code> and a <code class="xref py py-class docutils literal notranslate"><span class="pre">ParsedUrl</span></code>.</p>
 <p>COSClient class further provides the APIs</p>
 <ul>
-<li><p class="first">interact with COS instance:</p>
+<li><p>interact with COS instance:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_objects()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_bucket_info()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">update_bucket()</span></code></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_objects" title="ibmcloudsql.cos.COSClient.delete_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_objects()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_bucket_info" title="ibmcloudsql.cos.COSClient.get_bucket_info"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_bucket_info()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.update_bucket" title="ibmcloudsql.cos.COSClient.update_bucket"><code class="xref py py-meth docutils literal notranslate"><span class="pre">update_bucket()</span></code></a></p></li>
 </ol>
 </div></blockquote>
 </li>
-<li><p class="first">interact with ProjectLib’s data:</p>
+<li><p>interact with ProjectLib’s data:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">connect_project_lib()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_project_lib_data()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">write_project_lib_data()</span></code></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib" title="ibmcloudsql.cos.COSClient.connect_project_lib"><code class="xref py py-meth docutils literal notranslate"><span class="pre">connect_project_lib()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.read_project_lib_data" title="ibmcloudsql.cos.COSClient.read_project_lib_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_project_lib_data()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.write_project_lib_data" title="ibmcloudsql.cos.COSClient.write_project_lib_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">write_project_lib_data()</span></code></a></p></li>
 </ol>
 </div></blockquote>
 </li>
@@ -146,6 +155,7 @@ to skip the completed sql queries. The <code class="docutils literal notranslate
 
 
           </div>
+          
         </div>
       </div>
     <div class="clearer"></div>
@@ -154,8 +164,8 @@ to skip the completed sql queries. The <code class="docutils literal notranslate
       &copy;2020, IBM Research.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/cos.rst.txt"

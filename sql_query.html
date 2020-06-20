@@ -1,19 +1,20 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
     <title>ibmcloudsql.SQLQuery &#8212; SQLClient alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="ibmcloudsql" href="modules.html" />
@@ -73,100 +74,108 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="ibmcloudsql-sqlquery">
 <span id="sql-query-label"></span><h1>ibmcloudsql.SQLQuery<a class="headerlink" href="#ibmcloudsql-sqlquery" title="Permalink to this headline">¶</a></h1>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery</span></code> provides 1 class</p>
+<p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.SQLQuery" title="ibmcloudsql.SQLQuery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery</span></code></a> provides 1 class</p>
 <ul class="simple">
-<li><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code> class</li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class</p></li>
 </ul>
-<p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code> class is also a <code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code> class, and a <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code> class.</p>
+<p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> class, and a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class.</p>
 <p>It also provides APIs</p>
 <p>1. like <code class="docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery</span></code> class for certain APIs, with extended arguments to provide a richer set of functionalities and better handling of queries.
 It is important to know that SQLQuery does not aim to implement all APIs from ibmcloudsql.SQLQuery, with the common ones
 are implemented. So for those that are not implemented, we can use such APIs via its <code class="xref py py-attr docutils literal notranslate"><span class="pre">engine</span></code></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span class="n">sqlClient</span> <span class="o">=</span> <span class="n">SQLQuery</span><span class="p">(</span><span class="o">....</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sqlClient</span> <span class="o">=</span> <span class="n">SQLQuery</span><span class="p">(</span><span class="o">....</span><span class="p">)</span>
 <span class="n">sqlClient</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="p">[</span><span class="n">ibmcloudsql</span><span class="o">-</span><span class="n">API</span><span class="p">]</span>
 </pre></div>
 </div>
 <ol class="arabic simple">
-<li><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code> (…): instantiate with initial settings</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">configure()</span></code> : update the setting</li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> (…): instantiate with initial settings</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.configure" title="ibmcloudsql.SQLQuery.SQLQuery.configure"><code class="xref py py-meth docutils literal notranslate"><span class="pre">configure()</span></code></a> : update the setting</p></li>
 </ol>
 <div class="section" id="a-help">
 <h2>A. Help<a class="headerlink" href="#a-help" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">analyze()</span></code>: if you are stuck with a query that takes too long, try this one. It may provide you with suggestion on how to improve your query or revise your data source.</li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.analyze" title="ibmcloudsql.SQLQuery.SQLQuery.analyze"><code class="xref py py-meth docutils literal notranslate"><span class="pre">analyze()</span></code></a>: if you are stuck with a query that takes too long, try this one. It may provide you with suggestion on how to improve your query or revise your data source.</p></li>
 </ol>
 </div>
 <div class="section" id="b-sql-query">
 <h2>B. SQL Query<a class="headerlink" href="#b-sql-query" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_sql()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_and_track_sql()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_schema_data()</span></code>:</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code>: the two new methods run a SQL statement generated by the approach provided by <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code> class</li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a>, <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql" title="ibmcloudsql.SQLQuery.SQLQuery.execute_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_sql()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_and_track_sql()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data" title="ibmcloudsql.SQLQuery.SQLQuery.get_schema_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_schema_data()</span></code></a>:</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit" title="ibmcloudsql.SQLQuery.SQLQuery.submit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit()</span></code></a> and <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run" title="ibmcloudsql.SQLQuery.SQLQuery.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a>: the two new methods run a SQL statement generated by the approach provided by <code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code> class</p></li>
 </ol>
 </div>
 <div class="section" id="c-query-result">
 <h2>C. Query result<a class="headerlink" href="#c-query-result" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_result()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_result()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result()</span></code>: modify the created objects on COS</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result_joblist()</span></code>: … from a list of jobs</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_empty_objects()</span></code>:</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_cos_summary()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_results()</span></code></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_result" title="ibmcloudsql.SQLQuery.SQLQuery.get_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_result()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.delete_result" title="ibmcloudsql.SQLQuery.SQLQuery.delete_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_result()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result()</span></code></a>: modify the created objects on COS</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result_joblist()</span></code></a>: … from a list of jobs</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_empty_objects" title="ibmcloudsql.cos.COSClient.delete_empty_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_empty_objects()</span></code></a>:</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary" title="ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_cos_summary()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="ibmcloudsql.SQLQuery.SQLQuery.list_results"><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_results()</span></code></a></p></li>
 </ol>
 </div>
 <div class="section" id="d-jobs">
 <h2>D. Jobs<a class="headerlink" href="#d-jobs" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">my_jobs()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">wait_for_job()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">process_failed_jobs_until_all_complete()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_job()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_jobs()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_number_running_jobs()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_jobs_with_status()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">export_jobs_history()</span></code></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.my_jobs" title="ibmcloudsql.SQLQuery.SQLQuery.my_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">my_jobs()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job" title="ibmcloudsql.SQLQuery.SQLQuery.wait_for_job"><code class="xref py py-meth docutils literal notranslate"><span class="pre">wait_for_job()</span></code></a></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">process_failed_jobs_until_all_complete()</span></code></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_job" title="ibmcloudsql.SQLQuery.SQLQuery.get_job"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_job()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs" title="ibmcloudsql.SQLQuery.SQLQuery.get_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_jobs()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_number_running_jobs" title="ibmcloudsql.SQLQuery.SQLQuery.get_number_running_jobs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_number_running_jobs()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_with_status" title="ibmcloudsql.SQLQuery.SQLQuery.get_jobs_with_status"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_jobs_with_status()</span></code></a></p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">export_jobs_history()</span></code></p></li>
 </ol>
 </div>
 <div class="section" id="e-cos-url-handling">
 <h2>E. COS URL handling<a class="headerlink" href="#e-cos-url-handling" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">cos_url_parser()</span></code></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">cos_url_parser()</span></code></p></li>
 </ol>
 </div>
 <div class="section" id="f-hive-catalog-table">
 <h2>F. HIVE catalog table<a class="headerlink" href="#f-hive-catalog-table" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">show_tables()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_all_tables()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_tables()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_table()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_table()</span></code></li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_partitioned_table()</span></code>: for partitioned table</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">recover_table_partitions()</span></code>:</li>
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">describe_table()</span></code></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_tables" title="ibmcloudsql.catalog_table.HiveMetastore.show_tables"><code class="xref py py-meth docutils literal notranslate"><span class="pre">show_tables()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables" title="ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_all_tables()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_tables" title="ibmcloudsql.catalog_table.HiveMetastore.drop_tables"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_tables()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_table" title="ibmcloudsql.catalog_table.HiveMetastore.drop_table"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_table()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_table" title="ibmcloudsql.catalog_table.HiveMetastore.create_table"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_table()</span></code></a></p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table" title="ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_partitioned_table()</span></code></a>: for partitioned table</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.recover_table_partitions" title="ibmcloudsql.catalog_table.HiveMetastore.recover_table_partitions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">recover_table_partitions()</span></code></a>:</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table" title="ibmcloudsql.catalog_table.HiveMetastore.describe_table"><code class="xref py py-meth docutils literal notranslate"><span class="pre">describe_table()</span></code></a></p></li>
 </ol>
 </div>
 <div class="section" id="g-data-skipping">
@@ -176,75 +185,72 @@ are implemented. So for those that are not implemented, we can use such APIs via
 <div class="section" id="h-prepare-data-for-time-series">
 <h2>H. Prepare data for time-series<a class="headerlink" href="#h-prepare-data-for-time-series" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_ts_datasource()</span></code> :  explaination below</li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">_get_ts_datasource()</span></code> :  explaination below</p></li>
 </ul>
 <p>Assuming a HIVE catalog table is created to store the data for fast access, which
 is used as the data source via <cite>table_name</cite> argument.</p>
 <p>A time-series comprises</p>
 <ol class="arabic simple">
-<li><cite>time_stamp</cite> information</li>
-<li><cite>observation</cite> information</li>
-<li>for what category, i.e. the <cite>key</cite></li>
+<li><p><cite>time_stamp</cite> information</p></li>
+<li><p><cite>observation</cite> information</p></li>
+<li><p>for what category, i.e. the <cite>key</cite></p></li>
 </ol>
 <p>Very often, the raw data are too dense to be digested into a time-series.  Such data
 is then needed to be transformed into a finer time-scale, for example:</p>
 <ul class="simple">
-<li><cite>raw</cite>: no change, just extract to a new location</li>
-<li><cite>per_sec</cite>, <cite>PT1S</cite>: per every second</li>
-<li><cite>per_2sec</cite>, <cite>PT2S</cite>: per every 2-second</li>
-<li><cite>per_min</cite>, <cite>PT1M</cite>: per every minute</li>
-<li><cite>per_5min</cite>, <cite>PT5M</cite>: per every 5 minute</li>
+<li><p><cite>raw</cite>: no change, just extract to a new location</p></li>
+<li><p><cite>per_sec</cite>, <cite>PT1S</cite>: per every second</p></li>
+<li><p><cite>per_2sec</cite>, <cite>PT2S</cite>: per every 2-second</p></li>
+<li><p><cite>per_min</cite>, <cite>PT1M</cite>: per every minute</p></li>
+<li><p><cite>per_5min</cite>, <cite>PT5M</cite>: per every 5 minute</p></li>
 </ul>
 <p>It supports using either</p>
 <ul class="simple">
-<li>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60.</li>
-<li>ISO 8601 duration standard</li>
+<li><p>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60.</p></li>
+<li><p>ISO 8601 duration standard</p></li>
 </ul>
 <p>Such transformed data is then copied and save into a new location (the time-series data source), which is specified by</p>
 <ul class="simple">
-<li><cite>cos_out</cite>: COS URL (stored as PARQUET)</li>
-<li><cite>num_objects</cite>: split into multiple objects or</li>
-<li><cite>num_rows</cite>: split into multiple objects based on number of rows per object</li>
+<li><p><cite>cos_out</cite>: COS URL (stored as PARQUET)</p></li>
+<li><p><cite>num_objects</cite>: split into multiple objects or</p></li>
+<li><p><cite>num_rows</cite>: split into multiple objects based on number of rows per object</p></li>
 </ul>
 <p><strong>At the end of the transformation</strong>, the data source to be used for time-series creation comprises 3 columns:</p>
 <ul class="simple">
-<li><cite>field_name</cite>: representing whatever category</li>
-<li><cite>time_stamp</cite>: representing the time-point at the given granularity</li>
-<li><cite>observation</cite>: representing the recorded information</li>
+<li><p><cite>field_name</cite>: representing whatever category</p></li>
+<li><p><cite>time_stamp</cite>: representing the time-point at the given granularity</p></li>
+<li><p><cite>observation</cite>: representing the recorded information</p></li>
 </ul>
 <p>The use of generic-name enables the task to be quickly applicable to any data source</p>
 </div>
 <div class="section" id="known-limitations-to-ibm-sql-query">
 <h2>Known limitations to IBM SQL Query:<a class="headerlink" href="#known-limitations-to-ibm-sql-query" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>SQL statement string size limit: 200KB</li>
-<li>Max concurrent SQL queries for a standard SQL Query instance is 5</li>
-<li>Max time for a query job is 1 hour. However, many jobs can be stopped at much earlier than that due to the current mechanism of AIM token timeout and this token is shared across all current SQL queries</li>
+<li><p>SQL statement string size limit: 200KB</p></li>
+<li><p>Max concurrent SQL queries for a standard SQL Query instance is 5</p></li>
+<li><p>Max time for a query job is 1 hour. However, many jobs can be stopped at much earlier than that due to the current mechanism of AIM token timeout and this token is shared across all current SQL queries</p></li>
 </ul>
 </div>
 <div class="section" id="tips">
 <h2>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first">Combine the SQL query if you can, as there is an overhead (and possibly $ cost) for a REST API request. However, also consider the current limit for a YARN executor is 7.5GB, so design the SQL query wisely. It is best if the data being accessed is organized with multiple objects, of ideal sizes (see below), since this enables more parallelism in the object store.</p>
-</li>
-<li><p class="first">Stored in Parquet format: complex data can only be stored using Json or Parquet. It’s faster with Parquet. We however can’t control the choice of compression algorithm.</p>
-</li>
-<li><p class="first">Avoid storing the data in that a single object’s size is &gt; 200MB. To check, consider using <code class="xref py py-meth docutils literal notranslate"><span class="pre">get_cos_summary()</span></code> or <code class="xref py py-meth docutils literal notranslate"><span class="pre">list_results()</span></code>. To resolve the issue, consider using</p>
+<li><p>Combine the SQL query if you can, as there is an overhead (and possibly $ cost) for a REST API request. However, also consider the current limit for a YARN executor is 7.5GB, so design the SQL query wisely. It is best if the data being accessed is organized with multiple objects, of ideal sizes (see below), since this enables more parallelism in the object store.</p></li>
+<li><p>Stored in Parquet format: complex data can only be stored using Json or Parquet. It’s faster with Parquet. We however can’t control the choice of compression algorithm.</p></li>
+<li><p>Avoid storing the data in that a single object’s size is &gt; 200MB. To check, consider using <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary" title="ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_cos_summary()</span></code></a> or <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="ibmcloudsql.SQLQuery.SQLQuery.list_results"><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_results()</span></code></a>. To resolve the issue, consider using</p>
 <blockquote>
 <div><ul class="simple">
-<li>Partition table into multiple buckets/objects type-1: PARTITION INTO &lt;x&gt; BUCKETS/OBJECTS, with maximum allowed for ‘x’ is 50.</li>
-<li>Partition table into multiple buckets/objects type-2: PARTITIONED EVERY &lt;x&gt; ROWS</li>
-<li>Hive-style partitioning: PARTITION BY (col1, col2, …)</li>
+<li><p>Partition table into multiple buckets/objects type-1: PARTITION INTO &lt;x&gt; BUCKETS/OBJECTS, with maximum allowed for ‘x’ is 50.</p></li>
+<li><p>Partition table into multiple buckets/objects type-2: PARTITIONED EVERY &lt;x&gt; ROWS</p></li>
+<li><p>Hive-style partitioning: PARTITION BY (col1, col2, …)</p></li>
 </ul>
 </div></blockquote>
 </li>
-<li><p class="first">When partitioning according to a column that has NULL values, Spark will use “__HIVE_DEFAULT_PARTITION__” in the object name, e.g. &lt;bucket&gt;/Location=__HIVE_DEFAULT_PARTITION__/&lt;data-partition&gt;</p>
-</li>
+<li><p>When partitioning according to a column that has NULL values, Spark will use “__HIVE_DEFAULT_PARTITION__” in the object name, e.g. &lt;bucket&gt;/Location=__HIVE_DEFAULT_PARTITION__/&lt;data-partition&gt;</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span class="n">sqlClient</span><span class="o">.</span><span class="n">list_results</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sqlClient</span><span class="o">.</span><span class="n">list_results</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span class="go">ObjectURL       Size    Bucket  Object</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ObjectURL       Size    Bucket  Object</span>
 <span class="go">0       cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa       0       sql-query-cos-access-ts jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa</span>
 <span class="go">1       cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS      0       sql-query-cos-access-ts jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS</span>
 <span class="go">2       cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet    7060033106      sql-query-cos-access-ts jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet</span>
@@ -254,16 +260,17 @@ is then needed to be transformed into a finer time-scale, for example:</p>
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser">sparksql-parser</a>: The module contains code that know how to parse a SQLCloud-specific statement and transform into valid SQL statement</li>
-<li><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4">grammar</a>: the grammar</li>
-<li><a class="reference external" href="https://www.ibm.com/cloud/blog/big-data-layout">tips for data layout</a></li>
-<li><a class="reference external" href="https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query">data skipping</a></li>
+<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser">sparksql-parser</a>: The module contains code that know how to parse a SQLCloud-specific statement and transform into valid SQL statement</p></li>
+<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4">grammar</a>: the grammar</p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/big-data-layout">tips for data layout</a></p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query">data skipping</a></p></li>
 </ul>
 </div>
 </div>
 
 
           </div>
+          
         </div>
       </div>
     <div class="clearer"></div>
@@ -272,8 +279,8 @@ is then needed to be transformed into a finer time-scale, for example:</p>
       &copy;2020, IBM Research.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/sql_query.rst.txt"
