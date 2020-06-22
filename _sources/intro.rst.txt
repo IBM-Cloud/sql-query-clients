@@ -1,7 +1,7 @@
 Introduction
 ================================================
 
-sql-query-client
+ibmcloudsql
 ------------------------
 
 Working with data on the cloud, in the form of a SQL Query, involves multiple parts.
@@ -16,9 +16,9 @@ Working with data on the cloud, in the form of a SQL Query, involves multiple pa
     6. (F) Visualization: can be done via  ...
     7. (G) The back-end server may be running on `IBM Cloud Function <https://cloud.ibm.com/functions/>`_ 
 
-This **sql-query-client** library makes the interacting across these multiple parts possible.
+This **ibmcloudsql** library makes the interacting across these multiple parts possible.
 
-The **sql-query-client** library  comes with multiple submodules, each one links to another via subclass mechanism.
+The **ibmcloudsql** library  comes with multiple submodules, each one links to another via subclass mechanism.
 
 ..  package extends the functionality of `ibmcloudsql <https://github.com/IBM-Cloud/sql-query-clients>`_
 
