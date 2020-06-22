@@ -28,6 +28,8 @@ This create `sphinx` environment. Make sure you're in this environment each time
 
 `make html` 
 
-* (check local generated content carefully before running this) generate and push to the server [only those with given priviledges]
+Check the output by opening the browser with the URL: `file:///tmp/sql-query-clients-docs/html/index.html`
+
+* (check the local content carefully before running this) generate and commit to the server [only those with proper  priviledges]
 
 `make buildandcommithtml`
