@@ -30,4 +30,4 @@ This create `sphinx` environment. Make sure you're in this environment each time
 
 * (check local generated content carefully before running this) generate and push to the server [only those with given priviledges]
 
-`make buildandpushhtml`
+`make buildandcommithtml`
