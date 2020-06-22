@@ -1073,32 +1073,29 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     def execute_sql(self, sql_stmt, pagesize=None, get_result=False):
         """
         Extend the behavior of :meth:`.run_sql`.
+        I.e. it is a blocking call that waits for the job to finish (unlike submiut_sql), but it has the following features:
 
-        1. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.
-        2. ensure the job is successfully put into the queue
-        3. synchronous call but has the option to NOT return the data - avoid memory overload
+        1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.
+            This is also useful when you run SQL statements such as DDLs that don't produce results at all.
+        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.
 
         Parameters
         --------------
+        sql_stmt: str
+            the SQL statement to run
+
         pagesize: int, optional
             an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY <pagesize> ROWS syntax]
 
         get_result: bool, optional (default=False)
-            add the capability to return only the job_id, but wait for the job's completion. Later, we can get the data using :meth:`.get_result` (job_id, pagenumber)
+            When set it will return only the job_id, but still wait for the job's completion.
+            Later, you can get the data using :meth:`.get_result` (job_id, pagenumber)
 
         Returns
         -------
         namedtuple [`data`, `job_id`]
-            `get_result` = True, then behavior like :meth:`.run_sql` which load returned data into memory.
-            The default behavior is opposite, to avoid unnecessarily overload the memory.
-
-        Note
-        -----
-
-        The query can return data or not. If it is supposed to return data then data can be of
-
-        * type: str (the error messsage, if failed)
-        * or pd.DataFrame (the real data, if succeed) - use `isinstance(data, str)` to check
+            `get_result` = True, then behavior like :meth:`.run_sql` which materializes the returned data as type
+             pd.DataFrame in memory. The default behavior is opposite, to avoid unintended overload of memory.
 
         """
         Container = namedtuple('RunSql', ['data', 'job_id'])
@@ -1119,11 +1116,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         if job_status == "failed":
             details = self.get_job(job_id)
             try:
-                data = "{status}: SQL job {job_id} failed while executing with error {error}. Detailed message: {msg}".format(
+                error_message = "{status}: SQL job {job_id} failed while executing with error {error}. Detailed message: {msg}".format(
                     status=job_status,
                     job_id=job_id,
                     error=details['error'],
                     msg=details['error_message'])
+                raise Exception(error_message)
             except KeyError as e:
                 pprint.pprint(details)
                 raise e
@@ -1131,17 +1129,37 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return mycontainer
 
     def run_sql(self, sql_text, pagesize=None):
+        """
+        Submits a SQL job, waits for the job to finish (unlike submiut_sql) and return the result as Pandas DataFrame.
+
+        Parameters
+        --------------
+        sql_text: str
+            the SQL statement to run
+
+        pagesize: int, optional
+            an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY <pagesize> ROWS syntax]
+
+        Returns
+        -------
+            pd.DataFrame with the query results.
+
+        """
         self.logon()
-        try:
-            jobId = self.submit_sql(sql_text, pagesize)
-        except SyntaxError as e:
-            return "SQL job submission failed. {}".format(str(e))
-        if self.wait_for_job(jobId) == 'failed':
-            details = self.get_job(jobId)
-            return "SQL job {} failed while executing with error {}. Detailed message: {}".format(jobId, details['error'],
-                                                                                                  details['error_message'])
-        else:
-            return self.get_result(jobId)
+        jobId = self.submit_sql(sql_text, pagesize)
+        job_status = self.wait_for_job(jobId)
+        if job_status == "failed":
+            details = self.get_job(job_id)
+            try:
+                error_message = "SQL job {job_id} failed while executing with error {error}. Detailed message: {msg}".format(
+                    job_id=job_id,
+                    error=details['error'],
+                    msg=details['error_message'])
+                raise Exception(error_message)
+            except KeyError as e:
+                pprint.pprint(details)
+                raise e
+        return self.get_result(jobId)
 
     def run(self, pagesize=None, get_result=False):
         """ run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`

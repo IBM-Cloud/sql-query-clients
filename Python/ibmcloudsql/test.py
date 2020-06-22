@@ -193,10 +193,16 @@ print("Result set is:")
 print(result_df.head(200))
 
 print("Running test with SQL grammar error:")
-print(sqlClient.run_sql("SELECT xyzFROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+try:
+    print(sqlClient.run_sql("SELECT xyzFROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+except Exception as e:
+    print(e)
 
 print("Running test with SQL runtime error:")
-print(sqlClient.run_sql("SELECT xyz FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+try:
+    print(sqlClient.run_sql("SELECT xyz FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+except Exception as e:
+    print(e)
 
 print("SQL UI Link:")
 sqlClient.sql_ui_link()
