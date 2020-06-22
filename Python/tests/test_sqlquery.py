@@ -14,13 +14,15 @@ def sqlquery_client():
     # disable authentication step for 300s
     sql_client.logged_on = True
     sql_client.last_logon = datetime.now()
-
+    sql_client.request_headers.update(
+        {'authorization': 'Bearer {}'.format("mock")})
     return sql_client
 
 def test_init(sqlquery_client):
     assert(sqlquery_client.request_headers == {'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': sqlquery_client.user_agent
+    'User-Agent': sqlquery_client.user_agent,
+    'authorization': 'Bearer {}'.format("mock")
     })
 
 @responses.activate
@@ -49,3 +51,10 @@ def test_submit_sql_w_retry(sqlquery_client):
                   json={'job_id': mock_job_id}, status=201)
 
     assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
+
+def test_get_jobs_with_status(sqlquery_client):
+    status = "wrong"
+    job_id_list = []
+    with pytest.raises(ValueError):
+        assert sqlquery_client.get_jobs_with_status(job_id_list, status)
+        assert str(e.value) == "`status` must be a value in ['running', 'completed', 'failed']"

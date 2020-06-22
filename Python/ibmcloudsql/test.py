@@ -1,13 +1,21 @@
 import sys
 sys.path.append('ibmcloudsql')
 import ibmcloudsql
+try:
+    from exceptions import RateLimitedException
+except Exception:
+    from .exceptions import RateLimitedException
 import test_credentials
 import pandas as pd
-pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', 20)
 
-sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
+if test_credentials.result_location[-1] != "/":
+    test_credentials.result_location += "/"
+
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
+sqlClient.sql_ui_link()
 
 print("Running test with individual method invocation and Parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
@@ -63,7 +71,7 @@ jobidArray = []
 try:
     for x in range(test_credentials.instance_rate_limit + 1):
         jobidArray.append(sqlClient.submit_sql(sql))
-except ibmcloudsql.RateLimitedException as e:
+except RateLimitedException as e:
     print(e)
 
 for jobId in jobidArray:
@@ -94,7 +102,9 @@ try:
 except ValueError as e:
     print(e)
 print("Running test with exact target object name creation:")
-jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {}myresult.parquet JOBPREFIX NONE STORED AS PARQUET".format(test_credentials.result_location))
+cos_url = "{}myresult.parquet".format(test_credentials.result_location)
+sqlClient.delete_objects(cos_url)
+jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} JOBPREFIX NONE STORED AS PARQUET".format(cos_url))
 sqlClient.wait_for_job(jobId)
 result_df = sqlClient.get_result(jobId)
 sqlClient.rename_exact_result(jobId)
@@ -183,10 +193,16 @@ print("Result set is:")
 print(result_df.head(200))
 
 print("Running test with SQL grammar error:")
-print(sqlClient.run_sql("SELECT xyzFROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+try:
+    print(sqlClient.run_sql("SELECT xyzFROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+except Exception as e:
+    print(e)
 
 print("Running test with SQL runtime error:")
-print(sqlClient.run_sql("SELECT xyz FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+try:
+    print(sqlClient.run_sql("SELECT xyz FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS CSV".format(test_credentials.result_location)))
+except Exception as e:
+    print(e)
 
 print("SQL UI Link:")
 sqlClient.sql_ui_link()
@@ -194,7 +210,7 @@ sqlClient.sql_ui_link()
 print("Job list:")
 pd.set_option('display.max_colwidth', 10)
 print(sqlClient.get_jobs().head(200))
-pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_colwidth', None)
 
 print("COS Summary:")
 print(sqlClient.get_cos_summary(test_credentials.result_location))
@@ -229,19 +245,72 @@ jobhist_df = sqlClient.run_sql("SELECT * FROM {} STORED AS PARQUET LIMIT 10 INTO
 print(jobhist_df[['job_id','status']])
 
 print("Running EU test with individual method invocation and Parquet target:")
-sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
-sqlClient_eu.logon()
-jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
-sqlClient_eu.wait_for_job(jobId)
-result_df = sqlClient_eu.get_result(jobId)
-print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
-print(result_df.head(200))
-print("EU SQL UI Link:")
-sqlClient_eu.sql_ui_link()
+try:
+    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
+    sqlClient_eu.logon()
+    jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
+    sqlClient_eu.wait_for_job(jobId)
+    result_df = sqlClient_eu.get_result(jobId)
+    print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
+    print(result_df.head(200))
+    print("EU SQL UI Link:")
+    sqlClient_eu.sql_ui_link()
+except AttributeError as _:
+    print(".. no configuration available")
+    pass
 
 print("Force rate limiting:")
 try:
     for n in range(6):
         sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
-except ibmcloudsql.RateLimitedException as e:
+except RateLimitedException as e:
     print("Got rate limited as expected")
+
+
+# add this as the previous test launches so many asynchronous runs
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test', max_tries=100)
+sqlClient.logon()
+print("Running test with execute_sql() no data returned:")
+result = sqlClient.execute_sql(
+"WITH orders_shipped AS \
+  (SELECT OrderID, EmployeeID, (CASE WHEN shippedDate < requiredDate \
+                                   THEN 'On Time' \
+                                   ELSE 'Late' \
+                                END) AS Shipped \
+   FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET) \
+SELECT e.FirstName, e.LastName, COUNT(o.OrderID) As NumOrders, Shipped \
+FROM orders_shipped o, \
+     cos://us-geo/sql/employees.parquet STORED AS PARQUET e \
+WHERE e.EmployeeID = o.EmployeeID \
+GROUP BY e.FirstName, e.LastName, Shipped \
+ORDER BY e.LastName, e.FirstName, NumOrders DESC \
+INTO {} STORED AS CSV".format(test_credentials.result_location))
+print("Result is:")
+print(result)
+# ========= CATALOG TABLES
+print("Show all catalog tables")
+print(sqlClient.target_url)
+print(sqlClient.show_tables())
+
+table_name = "test_table_partition"
+print("Create a partitioned catalog table")
+print(sqlClient.create_partitioned_table(table_name, force_recreate=True))
+print(sqlClient.show_tables())
+print("Describe a catalog table")
+print(sqlClient.describe_table(table_name))
+
+print("Drop a catalog table")
+print(sqlClient.drop_table(table_name))
+print(sqlClient.show_tables())
+
+table_name = "test_table"
+print("Create a catalog table")
+print(sqlClient.create_table(table_name, blocking=True, force_recreate=True))
+print(sqlClient.show_tables())
+
+print("Describe a catalog table")
+print(sqlClient.describe_table(table_name))
+
+print("Drop a catalog table")
+print(sqlClient.drop_table(table_name))
+print(sqlClient.show_tables())
