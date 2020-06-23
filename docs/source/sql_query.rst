@@ -93,7 +93,7 @@ G. Data skipping
 H. Prepare data for time-series
 -------------------------------------
 
-* :meth:`._get_ts_datasource` :  explaination below
+* :meth:`._get_ts_datasource` :  explanation below
 
 Assuming a HIVE catalog table is created to store the data for fast access, which
 is used as the data source via `table_name` argument.

@@ -15,6 +15,7 @@
 # ------------------------------------------------------------------------------
 
 import ibm_boto3
+import ibm_botocore
 from ibm_botocore.client import Config
 from datetime import datetime
 
@@ -88,18 +89,25 @@ class IBMCloudAccess():
             A new AIM token is created after 300 seconds.
             A token is valid for 3600 seconds
 
-            """
+        Raises
+        ---------
+        AttributeError
+           The exception is raised when the credential is incorrect.
+
+        """
         if self.logged_on and not force and (datetime.now() -
                                             self.last_logon).seconds < 300 and \
                                             ('authorization' in self.request_headers and
                                             'None' not in self.request_headers['authorization']):
-            return
+            return True
 
         ## TODO refactor construction to avoid calling private method
         boto3_session = self._session
         # ibm_boto3._get_default_session()
-        ro_credentials = boto3_session.get_credentials(
-        ).get_frozen_credentials()
+        try:
+            ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
+        except ibm_botocore.exceptions.CredentialRetrievalError:
+            raise AttributeError("Login fails due to wrong credential - check the key")
 
         self.request_headers = {'Content-Type': 'application/json'}
         self.request_headers.update({'Accept': 'application/json'})

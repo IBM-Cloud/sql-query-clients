@@ -1,3 +1,19 @@
+# ------------------------------------------------------------------------------
+# Copyright IBM Corp. 2020
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ------------------------------------------------------------------------------
+
 import sqlparse
 from functools import wraps
 import re
@@ -57,7 +73,7 @@ class TimeSeriesTransformInput():
             ts_segment_by_time(ts, per_hour, per_hour)
             ts_segment_by_time(ts, hour, hour)
 
-        or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations 
+        or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations
             P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W
 
         Example:
@@ -112,7 +128,7 @@ class TimeSeriesTransformInput():
                 sql_stmt = sql_stmt[:start_end[2][0]] + str(num[2]) + sql_stmt[start_end[2][1]:start_end[3][0]] + \
                     str(num[3]) +  sql_stmt[start_end[3][1]:]
                 result = h.search(sql_stmt)
-            return sql_stmt 
+            return sql_stmt
 
         h = handle_str_str(sql_stmt)
         sql_stmt = handle_result(h, sql_stmt)
@@ -138,7 +154,7 @@ class TimeSeriesSchema():
         return self._unixtime_columns
     @columns_in_unixtime.setter
     def columns_in_unixtime(self, column_list):
-        self._unixtime_columns = column_list 
+        self._unixtime_columns = column_list
 
 
 class SQLMagic(TimeSeriesSchema):
