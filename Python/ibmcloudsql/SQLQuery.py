@@ -199,21 +199,30 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
         return self.jobs_tracking
 
-    def configure(self, cloud_apikey, sqlquery_instance_crn, target_cos_url):
+    def configure(self, cloud_apikey=None, sqlquery_instance_crn=None, cos_out_url=None):
         """ use this to update the configuration
         """
-        self.apikey = getpass.getpass(
-            'Enter IBM Cloud API Key (leave empty to use previous one): '
-        ) or self.apikey
-        self.instance_crn = input(
-            'Enter SQL Query Instance CRN (leave empty to use previous one): '
-        ) or self.instance_crn
-        if self.target_cos_url == '':
-            self.target_cos_url = input('Enter target URI for SQL results: ')
+        if cloud_apikey is None:
+            self.apikey = getpass.getpass(
+                'Enter IBM Cloud API Key (leave empty to use previous one): '
+            ) or self.apikey
         else:
-            self.target_cos_url = input(
-                'Enter target URI for SQL results (leave empty to use ' +
-                self.target_cos_url + '): ') or self.target_cos_url
+            self.apikey = cloud_apikey
+        if sqlquery_instance_crn is None:
+            self.instance_crn = input(
+                'Enter SQL Query Instance CRN (leave empty to use previous one): '
+            ) or self.instance_crn
+        else:
+            self.sqlquery_instance_crn = sqlquery_instance_crn
+        if cos_out_url is None:
+            if self.target_cos_url == '':
+                self.target_cos_url = input('Enter target URI for SQL results: ')
+            else:
+                self.target_cos_url = input(
+                    'Enter target URI for SQL results (leave empty to use ' +
+                    self.target_cos_url + '): ') or self.target_cos_url
+        else:
+            self.cos_out_url = cos_out_url
         HiveMetastore.target_url(self, self.target_cos_url)
         self.logon(force=True)
 
