@@ -215,6 +215,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 'Enter target URI for SQL results (leave empty to use ' +
                 self.target_cos_url + '): ') or self.target_cos_url
         HiveMetastore.target_url(self, self.target_cos_url)
+        self.logon(force=True)
 
     def _send_req(self, json_data):
         '''send SQL data to API. return job id'''
