@@ -27,6 +27,9 @@ class HiveMetastore():
         """
         self._target_url = target_url
 
+    def configure(self, target_url):
+        self._target_url = target_url
+
     @property
     def target_url(self):
         return self._target_url

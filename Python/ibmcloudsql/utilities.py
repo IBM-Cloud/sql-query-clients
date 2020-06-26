@@ -78,6 +78,17 @@ class IBMCloudAccess():
         self.request_headers_xml_content.update(
             {'User-Agent': self.user_agent})
 
+    def configure(self, cloud_apikey=None):
+        if cloud_apikey is None:
+            self.apikey = getpass.getpass(
+                'Enter IBM Cloud API Key (leave empty to use previous one): '
+            ) or self.apikey
+        else:
+            self.apikey = cloud_apikey
+        self._session = self._get_default_session()
+        self.logged_on = False
+        self.last_logon = None
+
     def _get_default_session(self):
         # setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key
         ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey, )

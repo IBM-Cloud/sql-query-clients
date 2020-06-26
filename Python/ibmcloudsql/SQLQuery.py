@@ -31,9 +31,9 @@ import pyarrow
 import os
 import tempfile
 try:
-    from exceptions import RateLimitedException
+    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
 except Exception:
-    from .exceptions import RateLimitedException
+    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
 try:
     from .cos import COSClient
 except Exception:
@@ -199,21 +199,16 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
         return self.jobs_tracking
 
-    def configure(self, cloud_apikey=None, sqlquery_instance_crn=None, cos_out_url=None):
+    def configure(self, apikey=None, instance_crn=None, cos_out_url=None):
         """ use this to update the configuration
         """
-        if cloud_apikey is None:
-            self.apikey = getpass.getpass(
-                'Enter IBM Cloud API Key (leave empty to use previous one): '
-            ) or self.apikey
-        else:
-            self.apikey = cloud_apikey
-        if sqlquery_instance_crn is None:
+        COSClient.configure(self, apikey)
+        if instance_crn is None:
             self.instance_crn = input(
                 'Enter SQL Query Instance CRN (leave empty to use previous one): '
             ) or self.instance_crn
         else:
-            self.sqlquery_instance_crn = sqlquery_instance_crn
+            self.instance_crn = instance_crn
         if cos_out_url is None:
             if self.target_cos_url == '':
                 self.target_cos_url = input('Enter target URI for SQL results: ')
@@ -223,7 +218,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     self.target_cos_url + '): ') or self.target_cos_url
         else:
             self.cos_out_url = cos_out_url
-        HiveMetastore.target_url(self, self.target_cos_url)
+        HiveMetastore.configure(self, self.target_cos_url)
         self.logon(force=True)
 
     def _send_req(self, json_data):
@@ -252,11 +247,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             else:
                 raise HTTPError()
         except (KeyError, HTTPError) as _:
-            raise SyntaxError(
-                "SQL submission failed ({code}): {msg} - {query}".format(
+            error_message = "SQL submission failed ({code}): {msg} - {query}".format(
                     code=response.status_code,
                     msg=response.json()['errors'][0]['message'],
-                    query=pformat(json_data)))
+                    query=pformat(json_data))
+            crn_error = "Service CRN has an invalid format"
+            if crn_error in error_message:
+                error_message = "SQL submission failed ({code}): {msg}".format(
+                        code=response.status_code,
+                        msg=response.json()['errors'][0]['message'])
+                raise SqlQueryCrnInvalidFormatException(error_message)
+            else:
+                raise SyntaxError(error_message)
 
     def submit(self, pagesize=None):
         """ run the internal SQL statement that you created using the APIs provided by SQLMagic
@@ -1156,8 +1158,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         """
         self.logon()
-        jobId = self.submit_sql(sql_text, pagesize)
-        job_status = self.wait_for_job(jobId)
+        job_id = self.submit_sql(sql_text, pagesize)
+        job_status = self.wait_for_job(job_id)
         if job_status == "failed":
             details = self.get_job(job_id)
             try:
@@ -1165,11 +1167,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     job_id=job_id,
                     error=details['error'],
                     msg=details['error_message'])
-                raise Exception(error_message)
+                cos_in_url_error_msg = "Specify a valid Cloud Object Storage location"
+                cos_out_url_error_msg = "Specify a valid Cloud Object Storage bucket location"
+                if cos_in_url_error_msg in error_message:
+                    raise CosUrlNotFoundException(error_message)
+                elif cos_out_url_error_msg in error_message:
+                    raise CosUrlNotFoundException(error_message)
+                else:
+                    raise Exception(error_message)
             except KeyError as e:
                 pprint.pprint(details)
                 raise e
-        return self.get_result(jobId)
+        return self.get_result(job_id)
 
     def run(self, pagesize=None, get_result=False):
         """ run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`
