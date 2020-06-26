@@ -117,8 +117,9 @@ class IBMCloudAccess():
         # ibm_boto3._get_default_session()
         try:
             ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
-        except ibm_botocore.exceptions.CredentialRetrievalError:
-            raise AttributeError("Login fails: credential cannot be validated - check either (1) the key or (2) if IBM  cloud service is available")
+        except ibm_botocore.exceptions.CredentialRetrievalError as e:
+            print("Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available")
+            raise e
 
         self.request_headers = {'Content-Type': 'application/json'}
         self.request_headers.update({'Accept': 'application/json'})
