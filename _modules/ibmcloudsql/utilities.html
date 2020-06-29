@@ -102,6 +102,7 @@
 <span class="c1"># ------------------------------------------------------------------------------</span>
 
 <span class="kn">import</span> <span class="nn">ibm_boto3</span>
+<span class="kn">import</span> <span class="nn">ibm_botocore</span>
 <span class="kn">from</span> <span class="nn">ibm_botocore.client</span> <span class="kn">import</span> <span class="n">Config</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
@@ -164,6 +165,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
             <span class="p">{</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
 
+<div class="viewcode-block" id="IBMCloudAccess.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cloud_apikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
+                <span class="s1">&#39;Enter IBM Cloud API Key (leave empty to use previous one): &#39;</span>
+            <span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">cloud_apikey</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span> <span class="o">=</span> <span class="kc">None</span></div>
+
     <span class="k">def</span> <span class="nf">_get_default_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key</span>
         <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">setup_default_session</span><span class="p">(</span><span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">,</span> <span class="p">)</span>
@@ -175,18 +187,26 @@
 <span class="sd">            A new AIM token is created after 300 seconds.</span>
 <span class="sd">            A token is valid for 3600 seconds</span>
 
-<span class="sd">            &quot;&quot;&quot;</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ---------</span>
+<span class="sd">        AttributeError</span>
+<span class="sd">           The exception is raised when the credential is incorrect.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span>
                                             <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">300</span> <span class="ow">and</span> \
                                             <span class="p">(</span><span class="s1">&#39;authorization&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="ow">and</span>
                                             <span class="s1">&#39;None&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">[</span><span class="s1">&#39;authorization&#39;</span><span class="p">]):</span>
-            <span class="k">return</span>
+            <span class="k">return</span> <span class="kc">True</span>
 
         <span class="c1">## TODO refactor construction to avoid calling private method</span>
         <span class="n">boto3_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
         <span class="c1"># ibm_boto3._get_default_session()</span>
-        <span class="n">ro_credentials</span> <span class="o">=</span> <span class="n">boto3_session</span><span class="o">.</span><span class="n">get_credentials</span><span class="p">(</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">get_frozen_credentials</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ro_credentials</span> <span class="o">=</span> <span class="n">boto3_session</span><span class="o">.</span><span class="n">get_credentials</span><span class="p">()</span><span class="o">.</span><span class="n">get_frozen_credentials</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ibm_botocore</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">CredentialRetrievalError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">})</span>

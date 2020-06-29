@@ -44,7 +44,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#sql-query-client">sql-query-client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ibmcloudsql">ibmcloudsql</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
@@ -91,24 +91,24 @@
             
   <div class="section" id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="sql-query-client">
-<h2>sql-query-client<a class="headerlink" href="#sql-query-client" title="Permalink to this headline">¶</a></h2>
-<p>Working with data on the cloud, in the form of a SQL Query, involves multiple parts.</p>
+<div class="section" id="ibmcloudsql">
+<h2>ibmcloudsql<a class="headerlink" href="#ibmcloudsql" title="Permalink to this headline">¶</a></h2>
+<p>Working with structured data in IBM Cloud Object Storage using SQL language, involves multiple capabilities:</p>
 <ol class="arabic simple">
 <li><ol class="upperalpha simple">
 <li><p><a class="reference external" href="https://cloud.ibm.com/docs/iam?topic=iam-manapikey">IBM Cloud access</a> which control access to all IBM catalogs/resources</p></li>
 </ol>
 </li>
 <li><ol class="upperalpha simple" start="2">
-<li><p><a class="reference external" href="https://www.ibm.com/cloud/object-storage">IBM COS instance</a> where data is stored. This includes access to data asset as part of a IBM Watson Studio project.</p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/object-storage">IBM COS instance</a> where input and outpout data is stored.</p></li>
 </ol>
 </li>
 <li><ol class="upperalpha simple" start="3">
-<li><p><a class="reference external" href="https://www.ibm.com/cloud/sql-query">IBM Cloud SQL Query instance</a> where the SQL-based query service is provided</p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/sql-query">IBM Cloud SQL Query instance</a> which offers the SQL-based data processing service</p></li>
 </ol>
 </li>
 <li><ol class="upperalpha simple" start="4">
-<li><p><a class="reference external" href="https://www.ibm.com/cloud/watson-studio">IBM Watson Studio</a>: which provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project’s IBM COS instance.</p></li>
+<li><p>Optionally: <a class="reference external" href="https://www.ibm.com/cloud/watson-studio">IBM Watson Studio</a>: which provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project’s IBM COS instance.</p></li>
 </ol>
 </li>
 <li><ol class="upperalpha simple" start="5">
@@ -116,16 +116,15 @@
 </ol>
 </li>
 </ol>
-<p>This <strong>sql-query-client</strong> library makes the interacting across these multiple parts possible.</p>
-<p>The <strong>sql-query-client</strong> library  comes with multiple submodules, each one links to another via subclass mechanism.</p>
+<p>This <strong>ibmcloudsql</strong> library provides these multiuple parts to Python applications. It comes with multiple submodules, each one links to another via subclass mechanism.</p>
 <p>The submodules</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="utilities.html#utilities-label"><span class="std std-ref">utilities</span></a> provides (A) - the IBM Cloud service connectivity-related functionality</p></li>
 <li><p><a class="reference internal" href="cos.html#cos-label"><span class="std std-ref">cos</span></a> provides (A, B) - the COS-related functionality</p></li>
 <li><p><a class="reference internal" href="sql_query.html#sql-query-label"><span class="std std-ref">sql_query</span></a> provides (A, B, C)</p></li>
-<li><p>(D, E) is done via notebook-based examples of user-specific code  which also utilizes above submodules</p></li>
+<li><p>(D, E) is done via notebook-based examples of user-specific code which also utilizes above submodules. For getting started use this <a class="reference external" href="https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d">starter notebook</a>.</p></li>
 </ul>
-<p>To install your package in “editable” mode</p>
+<p>To install your package in from source in this repository in editable mode:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">cd sql-query-client/Python</span>
 <span class="go">pip install -e .</span>
 </pre></div>
@@ -136,6 +135,12 @@
 <span class="go">pytest</span>
 </pre></div>
 </div>
+<p>To install the published release of <strong>ibmcloudsql</strong> from <a class="reference external" href="https://pypi.org/project/ibmcloudsql/">PyPi</a>:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install ibmcloudsql</span>
+</pre></div>
+</div>
+</div></blockquote>
 </div>
 </div>
 

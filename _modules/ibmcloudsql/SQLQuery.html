@@ -86,7 +86,7 @@
             
   <h1>Source code for ibmcloudsql.SQLQuery</h1><div class="highlight"><pre>
 <span></span><span class="c1"># ------------------------------------------------------------------------------</span>
-<span class="c1"># Copyright IBM Corp. 2018</span>
+<span class="c1"># Copyright IBM Corp. 2020</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="c1"># you may not use this file except in compliance with the License.</span>
@@ -118,9 +118,9 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span>
+    <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span>
+    <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.cos</span> <span class="kn">import</span> <span class="n">COSClient</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -271,30 +271,13 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;SQLClient created successful&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SQLQuery.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="p">,</span> <span class="n">sqlquery_instance_crn</span><span class="p">,</span> <span class="n">target_cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; use this to update the configuration</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
-            <span class="s1">&#39;Enter IBM Cloud API Key (leave empty to use previous one): &#39;</span>
-        <span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
-            <span class="s1">&#39;Enter SQL Query Instance CRN (leave empty to use previous one): &#39;</span>
-        <span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Enter target URI for SQL results: &#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
-                <span class="s1">&#39;Enter target URI for SQL results (leave empty to use &#39;</span> <span class="o">+</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span>
-        <span class="n">HiveMetastore</span><span class="o">.</span><span class="n">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span></div>
-
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">my_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return information about jobs already queried via `get_job()`</span>
+<span class="sd">        Return information about jobs already queried via :meth:`.get_job`</span>
 <span class="sd">        issued by this SQLClient class object</span>
 
-<span class="sd">        This is different from :py:meth:`get_jobs()`</span>
+<span class="sd">        This is different from :py:meth:`.get_jobs`</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -302,6 +285,28 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs_tracking</span>
+
+<div class="viewcode-block" id="SQLQuery.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instance_crn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cos_out_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; use this to update the configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">COSClient</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">instance_crn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
+                <span class="s1">&#39;Enter SQL Query Instance CRN (leave empty to use previous one): &#39;</span>
+            <span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="n">instance_crn</span>
+        <span class="k">if</span> <span class="n">cos_out_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Enter target URI for SQL results: &#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
+                    <span class="s1">&#39;Enter target URI for SQL results (leave empty to use &#39;</span> <span class="o">+</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cos_out_url</span> <span class="o">=</span> <span class="n">cos_out_url</span>
+        <span class="n">HiveMetastore</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_send_req</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;send SQL data to API. return job id&#39;&#39;&#39;</span>
@@ -329,11 +334,18 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">HTTPError</span><span class="p">()</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">)</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span>
-                <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2"> - </span><span class="si">{query}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2"> - </span><span class="si">{query}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
                     <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">],</span>
-                    <span class="n">query</span><span class="o">=</span><span class="n">pformat</span><span class="p">(</span><span class="n">json_data</span><span class="p">)))</span>
+                    <span class="n">query</span><span class="o">=</span><span class="n">pformat</span><span class="p">(</span><span class="n">json_data</span><span class="p">))</span>
+            <span class="n">crn_error</span> <span class="o">=</span> <span class="s2">&quot;Service CRN has an invalid format&quot;</span>
+            <span class="k">if</span> <span class="n">crn_error</span> <span class="ow">in</span> <span class="n">error_message</span><span class="p">:</span>
+                <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+                        <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">])</span>
+                <span class="k">raise</span> <span class="n">SqlQueryCrnInvalidFormatException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SQLQuery.submit"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit">[docs]</a>    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; run the internal SQL statement that you created using the APIs provided by SQLMagic</span>
@@ -563,7 +575,7 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        jobId: int</span>
-<span class="sd">            The value, if not stored, can be retrieved from self.get_jobs()</span>
+<span class="sd">            The value, if not stored, can be retrieved from :meth:`.get_jobs`</span>
 <span class="sd">        pagenumber: int, optional</span>
 <span class="sd">            If the data, from the given `job_id` is saved in pages/partitions, then this should be a value</span>
 <span class="sd">            in the range from 1 to len(self.list_results(job_id))</span>
@@ -1160,32 +1172,29 @@
 <div class="viewcode-block" id="SQLQuery.execute_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">[docs]</a>    <span class="k">def</span> <span class="nf">execute_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extend the behavior of :meth:`.run_sql`.</span>
+<span class="sd">        I.e. it is a blocking call that waits for the job to finish (unlike submiut_sql), but it has the following features:</span>
 
-<span class="sd">        1. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.</span>
-<span class="sd">        2. ensure the job is successfully put into the queue</span>
-<span class="sd">        3. synchronous call but has the option to NOT return the data - avoid memory overload</span>
+<span class="sd">        1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.</span>
+<span class="sd">            This is also useful when you run SQL statements such as DDLs that don&#39;t produce results at all.</span>
+<span class="sd">        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        --------------</span>
+<span class="sd">        sql_stmt: str</span>
+<span class="sd">            the SQL statement to run</span>
+
 <span class="sd">        pagesize: int, optional</span>
 <span class="sd">            an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</span>
 
 <span class="sd">        get_result: bool, optional (default=False)</span>
-<span class="sd">            add the capability to return only the job_id, but wait for the job&#39;s completion. Later, we can get the data using :meth:`.get_result` (job_id, pagenumber)</span>
+<span class="sd">            When set it will return only the job_id, but still wait for the job&#39;s completion.</span>
+<span class="sd">            Later, you can get the data using :meth:`.get_result` (job_id, pagenumber)</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        namedtuple [`data`, `job_id`]</span>
-<span class="sd">            `get_result` = True, then behavior like :meth:`.run_sql` which load returned data into memory.</span>
-<span class="sd">            The default behavior is opposite, to avoid unnecessarily overload the memory.</span>
-
-<span class="sd">        Note</span>
-<span class="sd">        -----</span>
-
-<span class="sd">        The query can return data or not. If it is supposed to return data then data can be of</span>
-
-<span class="sd">        * type: str (the error messsage, if failed)</span>
-<span class="sd">        * or pd.DataFrame (the real data, if succeed) - use `isinstance(data, str)` to check</span>
+<span class="sd">            `get_result` = True, then behavior like :meth:`.run_sql` which materializes the returned data as type</span>
+<span class="sd">             pd.DataFrame in memory. The default behavior is opposite, to avoid unintended overload of memory.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">Container</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;RunSql&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;job_id&#39;</span><span class="p">])</span>
@@ -1206,11 +1215,12 @@
         <span class="k">if</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
             <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{status}</span><span class="s2">: SQL job </span><span class="si">{job_id}</span><span class="s2"> failed while executing with error </span><span class="si">{error}</span><span class="s2">. Detailed message: </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{status}</span><span class="s2">: SQL job </span><span class="si">{job_id}</span><span class="s2"> failed while executing with error </span><span class="si">{error}</span><span class="s2">. Detailed message: </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">status</span><span class="o">=</span><span class="n">job_status</span><span class="p">,</span>
                     <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
                     <span class="n">error</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">],</span>
                     <span class="n">msg</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="n">e</span>
@@ -1218,17 +1228,44 @@
         <span class="k">return</span> <span class="n">mycontainer</span></div>
 
 <div class="viewcode-block" id="SQLQuery.run_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql">[docs]</a>    <span class="k">def</span> <span class="nf">run_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_text</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Submits a SQL job, waits for the job to finish (unlike submiut_sql) and return the result as Pandas DataFrame.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        --------------</span>
+<span class="sd">        sql_text: str</span>
+<span class="sd">            the SQL statement to run</span>
+
+<span class="sd">        pagesize: int, optional</span>
+<span class="sd">            an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            pd.DataFrame with the query results.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">jobId</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_text</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">SyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;SQL job submission failed. </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;failed&#39;</span><span class="p">:</span>
-            <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
-            <span class="k">return</span> <span class="s2">&quot;SQL job </span><span class="si">{}</span><span class="s2"> failed while executing with error </span><span class="si">{}</span><span class="s2">. Detailed message: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">,</span> <span class="n">details</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">],</span>
-                                                                                                  <span class="n">details</span><span class="p">[</span><span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span></div>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_text</span><span class="p">,</span> <span class="n">pagesize</span><span class="p">)</span>
+        <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
+            <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;SQL job </span><span class="si">{job_id}</span><span class="s2"> failed while executing with error </span><span class="si">{error}</span><span class="s2">. Detailed message: </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+                    <span class="n">error</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">],</span>
+                    <span class="n">msg</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
+                <span class="n">cos_in_url_error_msg</span> <span class="o">=</span> <span class="s2">&quot;Specify a valid Cloud Object Storage location&quot;</span>
+                <span class="n">cos_out_url_error_msg</span> <span class="o">=</span> <span class="s2">&quot;Specify a valid Cloud Object Storage bucket location&quot;</span>
+                <span class="k">if</span> <span class="n">cos_in_url_error_msg</span> <span class="ow">in</span> <span class="n">error_message</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">CosUrlNotFoundException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cos_out_url_error_msg</span> <span class="ow">in</span> <span class="n">error_message</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">CosUrlNotFoundException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.run"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`</span>
@@ -1269,85 +1306,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;https://sql-query.cloud.ibm.com/sqlquery/?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)))</span></div>
-
-<div class="viewcode-block" id="SQLQuery.get_cos_summary"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_cos_summary">[docs]</a>    <span class="k">def</span> <span class="nf">get_cos_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return information for the given COR URL (may include bucket + prefix)</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        dict</span>
-<span class="sd">            A dict with keys</span>
-<span class="sd">                &quot;largest_object&quot;</span>
-<span class="sd">                &quot;largest_object_size&quot;</span>
-<span class="sd">                &quot;newest_object_timestamp&quot;</span>
-<span class="sd">                &quot;oldest_object_timestamp&quot;</span>
-<span class="sd">                &quot;smallest_object&quot;</span>
-<span class="sd">                &quot;smallest_object_size&quot;</span>
-<span class="sd">                &quot;total_objects&quot;</span>
-<span class="sd">                &quot;total_volume&quot;</span>
-<span class="sd">                &quot;url&quot;</span>
-
-<span class="sd">        Example: self.get_cos_summary_demo()</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">def</span> <span class="nf">sizeof_fmt</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;B&#39;</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1024.0</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%3.1f</span><span class="s2"> </span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
-                <span class="n">num</span> <span class="o">/=</span> <span class="mf">1024.0</span>
-            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> </span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
-        <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
-
-        <span class="n">paginator</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">get_paginator</span><span class="p">(</span><span class="s2">&quot;list_objects&quot;</span><span class="p">)</span>
-        <span class="n">page_iterator</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">paginate</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
-
-        <span class="n">total_size</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">smallest_size</span> <span class="o">=</span> <span class="mi">9999999999999999</span>
-        <span class="n">largest_size</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">max</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">smallest_object</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">largest_object</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">page_iterator</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s2">&quot;Contents&quot;</span> <span class="ow">in</span> <span class="n">page</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">page</span><span class="p">[</span><span class="s1">&#39;Contents&#39;</span><span class="p">]:</span>
-                    <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="s2">&quot;Size&quot;</span><span class="p">])</span>
-                    <span class="n">total_size</span> <span class="o">+=</span> <span class="n">size</span>
-                    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">smallest_size</span><span class="p">:</span>
-                        <span class="n">smallest_size</span> <span class="o">=</span> <span class="n">size</span>
-                        <span class="n">smallest_object</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s2">&quot;Key&quot;</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="n">largest_size</span><span class="p">:</span>
-                        <span class="n">largest_size</span> <span class="o">=</span> <span class="n">size</span>
-                        <span class="n">largest_object</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s2">&quot;Key&quot;</span><span class="p">]</span>
-                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">modified</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s1">&#39;LastModified&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">modified</span> <span class="o">&lt;</span> <span class="n">oldest_modification</span><span class="p">:</span>
-                        <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">modified</span>
-                    <span class="k">if</span> <span class="n">modified</span> <span class="o">&gt;</span> <span class="n">newest_modification</span><span class="p">:</span>
-                        <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">modified</span>
-
-        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">smallest_size</span><span class="o">=</span><span class="kc">None</span>
-            <span class="n">oldest_modification</span><span class="o">=</span><span class="kc">None</span>
-            <span class="n">newest_modification</span><span class="o">=</span><span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">oldest_modification</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%B </span><span class="si">%d</span><span class="s2">, %Y, %HH:%MM:%SS&quot;</span><span class="p">)</span>
-            <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">newest_modification</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%B </span><span class="si">%d</span><span class="s2">, %Y, %HH:%MM:%SS&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="s1">&#39;total_objects&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="s1">&#39;total_volume&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">total_size</span><span class="p">),</span>
-                <span class="s1">&#39;oldest_object_timestamp&#39;</span><span class="p">:</span> <span class="n">oldest_modification</span><span class="p">,</span>
-                <span class="s1">&#39;newest_object_timestamp&#39;</span><span class="p">:</span> <span class="n">newest_modification</span><span class="p">,</span>
-                <span class="s1">&#39;smallest_object_size&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">smallest_size</span><span class="p">),</span> <span class="s1">&#39;smallest_object&#39;</span><span class="p">:</span> <span class="n">smallest_object</span><span class="p">,</span>
-                <span class="s1">&#39;largest_object_size&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">largest_size</span><span class="p">),</span> <span class="s1">&#39;largest_object&#39;</span><span class="p">:</span> <span class="n">largest_object</span><span class="p">}</span></div>
 
 <div class="viewcode-block" id="SQLQuery.export_job_history"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.export_job_history">[docs]</a>    <span class="k">def</span> <span class="nf">export_job_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">export_file_prefix</span> <span class="o">=</span> <span class="s2">&quot;job_export_&quot;</span><span class="p">,</span> <span class="n">export_file_suffix</span> <span class="o">=</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1849,7 +1807,7 @@
 <span class="sd">        It will returns the data source in 3 columns:</span>
 <span class="sd">        &lt;key&gt;, time_stamp, observation</span>
 
-<span class="sd">        Parameters:</span>
+<span class="sd">        Parameters</span>
 <span class="sd">        --------------</span>
 <span class="sd">        table: str</span>
 <span class="sd">            The catalog table name</span>

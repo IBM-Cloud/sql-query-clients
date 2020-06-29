@@ -360,7 +360,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Helper class to query information or manipulate data as objects on COS </span>
+<span class="c1"># Helper class to query information or manipulate data as objects on COS</span>
 <span class="c1"># which can also be used from SQL Query</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="COSClient"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient">[docs]</a><span class="k">class</span> <span class="nc">COSClient</span><span class="p">(</span><span class="n">ParsedUrl</span><span class="p">,</span> <span class="n">IBMCloudAccess</span><span class="p">):</span>
@@ -447,7 +447,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
             <span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
@@ -701,6 +701,85 @@
         <span class="n">client</span><span class="o">.</span><span class="n">update_bucket_config</span><span class="p">(</span>
             <span class="n">bucket</span><span class="p">,</span>
             <span class="n">firewall</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allowed_ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;10.142.175.0/22&quot;</span><span class="p">,</span> <span class="s2">&quot;10.198.243.79&quot;</span><span class="p">]})</span></div>
+
+<div class="viewcode-block" id="COSClient.get_cos_summary"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_cos_summary">[docs]</a>    <span class="k">def</span> <span class="nf">get_cos_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return information for the given COR URL (may include bucket + prefix)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dict with keys</span>
+<span class="sd">                &quot;largest_object&quot;</span>
+<span class="sd">                &quot;largest_object_size&quot;</span>
+<span class="sd">                &quot;newest_object_timestamp&quot;</span>
+<span class="sd">                &quot;oldest_object_timestamp&quot;</span>
+<span class="sd">                &quot;smallest_object&quot;</span>
+<span class="sd">                &quot;smallest_object_size&quot;</span>
+<span class="sd">                &quot;total_objects&quot;</span>
+<span class="sd">                &quot;total_volume&quot;</span>
+<span class="sd">                &quot;url&quot;</span>
+
+<span class="sd">        Example: self.get_cos_summary_demo()</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">sizeof_fmt</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;B&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1024.0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%3.1f</span><span class="s2"> </span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+                <span class="n">num</span> <span class="o">/=</span> <span class="mf">1024.0</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> </span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+        <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+
+        <span class="n">paginator</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">get_paginator</span><span class="p">(</span><span class="s2">&quot;list_objects&quot;</span><span class="p">)</span>
+        <span class="n">page_iterator</span> <span class="o">=</span> <span class="n">paginator</span><span class="o">.</span><span class="n">paginate</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Prefix</span><span class="o">=</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+
+        <span class="n">total_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">smallest_size</span> <span class="o">=</span> <span class="mi">9999999999999999</span>
+        <span class="n">largest_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">max</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">smallest_object</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">largest_object</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">page_iterator</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;Contents&quot;</span> <span class="ow">in</span> <span class="n">page</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">page</span><span class="p">[</span><span class="s1">&#39;Contents&#39;</span><span class="p">]:</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="s2">&quot;Size&quot;</span><span class="p">])</span>
+                    <span class="n">total_size</span> <span class="o">+=</span> <span class="n">size</span>
+                    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">smallest_size</span><span class="p">:</span>
+                        <span class="n">smallest_size</span> <span class="o">=</span> <span class="n">size</span>
+                        <span class="n">smallest_object</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s2">&quot;Key&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="n">largest_size</span><span class="p">:</span>
+                        <span class="n">largest_size</span> <span class="o">=</span> <span class="n">size</span>
+                        <span class="n">largest_object</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s2">&quot;Key&quot;</span><span class="p">]</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">modified</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="s1">&#39;LastModified&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">modified</span> <span class="o">&lt;</span> <span class="n">oldest_modification</span><span class="p">:</span>
+                        <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">modified</span>
+                    <span class="k">if</span> <span class="n">modified</span> <span class="o">&gt;</span> <span class="n">newest_modification</span><span class="p">:</span>
+                        <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">modified</span>
+
+        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">smallest_size</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">oldest_modification</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">newest_modification</span><span class="o">=</span><span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">oldest_modification</span> <span class="o">=</span> <span class="n">oldest_modification</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%B </span><span class="si">%d</span><span class="s2">, %Y, %HH:%MM:%SS&quot;</span><span class="p">)</span>
+            <span class="n">newest_modification</span> <span class="o">=</span> <span class="n">newest_modification</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%B </span><span class="si">%d</span><span class="s2">, %Y, %HH:%MM:%SS&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span> <span class="s1">&#39;total_objects&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="s1">&#39;total_volume&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">total_size</span><span class="p">),</span>
+                <span class="s1">&#39;oldest_object_timestamp&#39;</span><span class="p">:</span> <span class="n">oldest_modification</span><span class="p">,</span>
+                <span class="s1">&#39;newest_object_timestamp&#39;</span><span class="p">:</span> <span class="n">newest_modification</span><span class="p">,</span>
+                <span class="s1">&#39;smallest_object_size&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">smallest_size</span><span class="p">),</span> <span class="s1">&#39;smallest_object&#39;</span><span class="p">:</span> <span class="n">smallest_object</span><span class="p">,</span>
+                <span class="s1">&#39;largest_object_size&#39;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">largest_size</span><span class="p">),</span> <span class="s1">&#39;largest_object&#39;</span><span class="p">:</span> <span class="n">largest_object</span><span class="p">}</span></div>
 
     <span class="c1"># -----------------</span>
     <span class="c1"># The methods below are for interacting with a file stored as an asset in a Watson Studio&#39;s Project.</span>
