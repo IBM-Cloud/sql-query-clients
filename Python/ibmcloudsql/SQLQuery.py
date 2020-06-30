@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# Copyright IBM Corp. 2018
+# Copyright IBM Corp. 2020
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import pyarrow
 import os
 import tempfile
 try:
-    from exceptions import RateLimitedException
+    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
 except Exception:
-    from .exceptions import RateLimitedException
+    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
 try:
     from .cos import COSClient
 except Exception:
@@ -184,30 +184,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         logger.debug("SQLClient created successful")
 
-    def configure(self, cloud_apikey, sqlquery_instance_crn, target_cos_url):
-        """ use this to update the configuration
-        """
-        self.apikey = getpass.getpass(
-            'Enter IBM Cloud API Key (leave empty to use previous one): '
-        ) or self.apikey
-        self.instance_crn = input(
-            'Enter SQL Query Instance CRN (leave empty to use previous one): '
-        ) or self.instance_crn
-        if self.target_cos_url == '':
-            self.target_cos_url = input('Enter target URI for SQL results: ')
-        else:
-            self.target_cos_url = input(
-                'Enter target URI for SQL results (leave empty to use ' +
-                self.target_cos_url + '): ') or self.target_cos_url
-        HiveMetastore.target_url(self, self.target_cos_url)
-
     @property
     def my_jobs(self):
         """
-        Return information about jobs already queried via `get_job()`
+        Return information about jobs already queried via :meth:`.get_job`
         issued by this SQLClient class object
 
-        This is different from :py:meth:`get_jobs()`
+        This is different from :py:meth:`.get_jobs`
 
         Returns
         -------
@@ -215,6 +198,28 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         """
         return self.jobs_tracking
+
+    def configure(self, apikey=None, instance_crn=None, cos_out_url=None):
+        """ use this to update the configuration
+        """
+        COSClient.configure(self, apikey)
+        if instance_crn is None:
+            self.instance_crn = input(
+                'Enter SQL Query Instance CRN (leave empty to use previous one): '
+            ) or self.instance_crn
+        else:
+            self.instance_crn = instance_crn
+        if cos_out_url is None:
+            if self.target_cos_url == '':
+                self.target_cos_url = input('Enter target URI for SQL results: ')
+            else:
+                self.target_cos_url = input(
+                    'Enter target URI for SQL results (leave empty to use ' +
+                    self.target_cos_url + '): ') or self.target_cos_url
+        else:
+            self.cos_out_url = cos_out_url
+        HiveMetastore.configure(self, self.target_cos_url)
+        self.logon(force=True)
 
     def _send_req(self, json_data):
         '''send SQL data to API. return job id'''
@@ -242,11 +247,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             else:
                 raise HTTPError()
         except (KeyError, HTTPError) as _:
-            raise SyntaxError(
-                "SQL submission failed ({code}): {msg} - {query}".format(
+            error_message = "SQL submission failed ({code}): {msg} - {query}".format(
                     code=response.status_code,
                     msg=response.json()['errors'][0]['message'],
-                    query=pformat(json_data)))
+                    query=pformat(json_data))
+            crn_error = "Service CRN has an invalid format"
+            if crn_error in error_message:
+                error_message = "SQL submission failed ({code}): {msg}".format(
+                        code=response.status_code,
+                        msg=response.json()['errors'][0]['message'])
+                raise SqlQueryCrnInvalidFormatException(error_message)
+            else:
+                raise SyntaxError(error_message)
 
     def submit(self, pagesize=None):
         """ run the internal SQL statement that you created using the APIs provided by SQLMagic
@@ -476,7 +488,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Parameters
         ----------
         jobId: int
-            The value, if not stored, can be retrieved from self.get_jobs()
+            The value, if not stored, can be retrieved from :meth:`.get_jobs`
         pagenumber: int, optional
             If the data, from the given `job_id` is saved in pages/partitions, then this should be a value
             in the range from 1 to len(self.list_results(job_id))
@@ -1146,8 +1158,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         """
         self.logon()
-        jobId = self.submit_sql(sql_text, pagesize)
-        job_status = self.wait_for_job(jobId)
+        job_id = self.submit_sql(sql_text, pagesize)
+        job_status = self.wait_for_job(job_id)
         if job_status == "failed":
             details = self.get_job(job_id)
             try:
@@ -1155,11 +1167,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     job_id=job_id,
                     error=details['error'],
                     msg=details['error_message'])
-                raise Exception(error_message)
+                cos_in_url_error_msg = "Specify a valid Cloud Object Storage location"
+                cos_out_url_error_msg = "Specify a valid Cloud Object Storage bucket location"
+                if cos_in_url_error_msg in error_message:
+                    raise CosUrlNotFoundException(error_message)
+                elif cos_out_url_error_msg in error_message:
+                    raise CosUrlNotFoundException(error_message)
+                else:
+                    raise Exception(error_message)
             except KeyError as e:
                 pprint.pprint(details)
                 raise e
-        return self.get_result(jobId)
+        return self.get_result(job_id)
 
     def run(self, pagesize=None, get_result=False):
         """ run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`
@@ -1200,85 +1219,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
                 urllib.unquote(self.instance_crn).decode('utf8')))
-
-    def get_cos_summary(self, url):
-        """
-        Return information for the given COR URL (may include bucket + prefix)
-
-        Returns
-        -------
-        dict
-            A dict with keys
-                "largest_object"
-                "largest_object_size"
-                "newest_object_timestamp"
-                "oldest_object_timestamp"
-                "smallest_object"
-                "smallest_object_size"
-                "total_objects"
-                "total_volume"
-                "url"
-
-        Example: self.get_cos_summary_demo()
-
-        """
-        def sizeof_fmt(num, suffix='B'):
-            for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
-                if abs(num) < 1024.0:
-                    return "%3.1f %s%s" % (num, unit, suffix)
-                num /= 1024.0
-            return "%.1f %s%s" % (num, 'Y', suffix)
-
-        self.logon()
-
-        if url[-1] != '/':
-            url = url + '/'
-        url_parsed = self.analyze_cos_url(url)
-        cos_client = self._get_cos_client(url_parsed.endpoint)
-
-        paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
-
-        total_size = 0
-        smallest_size = 9999999999999999
-        largest_size = 0
-        count = 0
-        oldest_modification = datetime.max.replace(tzinfo=None)
-        newest_modification = datetime.min.replace(tzinfo=None)
-        smallest_object = None
-        largest_object = None
-
-        for page in page_iterator:
-            if "Contents" in page:
-                for key in page['Contents']:
-                    size = int(key["Size"])
-                    total_size += size
-                    if size < smallest_size:
-                        smallest_size = size
-                        smallest_object = key["Key"]
-                    if size > largest_size:
-                        largest_size = size
-                        largest_object = key["Key"]
-                    count += 1
-                    modified = key['LastModified'].replace(tzinfo=None)
-                    if modified < oldest_modification:
-                        oldest_modification = modified
-                    if modified > newest_modification:
-                        newest_modification = modified
-
-        if count == 0:
-            smallest_size=None
-            oldest_modification=None
-            newest_modification=None
-        else:
-            oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
-            newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
-
-        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(total_size),
-                'oldest_object_timestamp': oldest_modification,
-                'newest_object_timestamp': newest_modification,
-                'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
-                'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
 
     def export_job_history(self, cos_url=None, export_file_prefix = "job_export_", export_file_suffix = ".parquet"):
         """
@@ -1780,7 +1720,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         It will returns the data source in 3 columns:
         <key>, time_stamp, observation
 
-        Parameters:
+        Parameters
         --------------
         table: str
             The catalog table name

@@ -53,5 +53,4 @@ python:
 
 buildandcommithtml: html 
 	cd $(BUILDDIR)/html; git add . ; git commit -m "rebuilt docs"; git push origin gh-pages
-	echo Goto https://pages.github.ibm.com/IoT-Edge/edgeai-core/ to see the new docs.
-		 echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.
+	echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.

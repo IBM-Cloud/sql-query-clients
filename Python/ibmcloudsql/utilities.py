@@ -15,6 +15,7 @@
 # ------------------------------------------------------------------------------
 
 import ibm_boto3
+import ibm_botocore
 from ibm_botocore.client import Config
 from datetime import datetime
 
@@ -77,29 +78,48 @@ class IBMCloudAccess():
         self.request_headers_xml_content.update(
             {'User-Agent': self.user_agent})
 
+    def configure(self, cloud_apikey=None):
+        if cloud_apikey is None:
+            self.apikey = getpass.getpass(
+                'Enter IBM Cloud API Key (leave empty to use previous one): '
+            ) or self.apikey
+        else:
+            self.apikey = cloud_apikey
+        self._session = self._get_default_session()
+        self.logged_on = False
+        self.last_logon = None
+
     def _get_default_session(self):
         # setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key
         ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey, )
         return ibm_boto3._get_default_session()
 
     def logon(self, force=False):
-        """"
+        """
             An AIM token is needed for any operations to IBM cloud services (e.g. COS)
             A new AIM token is created after 300 seconds.
             A token is valid for 3600 seconds
 
-            """
+        Raises
+        ---------
+        ibm_botocore.exceptions.CredentialRetrievalError: 
+           The exception is raised when the credential is incorrect.
+
+        """
         if self.logged_on and not force and (datetime.now() -
                                             self.last_logon).seconds < 300 and \
                                             ('authorization' in self.request_headers and
                                             'None' not in self.request_headers['authorization']):
-            return
+            return True
 
         ## TODO refactor construction to avoid calling private method
         boto3_session = self._session
         # ibm_boto3._get_default_session()
-        ro_credentials = boto3_session.get_credentials(
-        ).get_frozen_credentials()
+        try:
+            ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
+        except ibm_botocore.exceptions.CredentialRetrievalError as e:
+            print("Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available")
+            raise e
 
         self.request_headers = {'Content-Type': 'application/json'}
         self.request_headers.update({'Accept': 'application/json'})

@@ -23,3 +23,21 @@ class RateLimitedException(Exception):
             super().__init__(msg)
         self.original_exception = original_exception
 
+class CosUrlNotFoundException(Exception):
+    """The error when the Cloud-Object Storage (COS) URL being used is invalid or not accessible"""
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+class SqlQueryCrnInvalidFormatException(Exception):
+    """The error when the SQL Query CRN is not correct"""
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+

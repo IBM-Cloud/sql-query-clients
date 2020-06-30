@@ -40,16 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------------------
-# Represents an IBM Watson Studio project
-# ------------------------------------------------------------------------------
-class Project():
-    """https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects
-
-    GET https://api.dataplatform.cloud.ibm.com/v2/projects/
-    """
-    pass
-
-# ------------------------------------------------------------------------------
 # Helper class to interact with IBM Watson Studio projects
 # ------------------------------------------------------------------------------
 class ProjectLib():
@@ -58,7 +48,7 @@ class ProjectLib():
 
     Parameters
     ----------
-    project: Project
+    project: project_lib.Project
         The object
 
             `from project_lib import Project`
@@ -273,7 +263,7 @@ class ParsedUrl(object):
 
 
 # ---------------------------------------------------------------------------
-# Helper class to query information or manipulate data as objects on COS 
+# Helper class to query information or manipulate data as objects on COS
 # which can also be used from SQL Query
 # ---------------------------------------------------------------------------
 class COSClient(ParsedUrl, IBMCloudAccess):
@@ -360,7 +350,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
         self.logon()
 
-        if cos_url[-1] != '/': 
+        if cos_url[-1] != '/':
             cos_url = cos_url + '/'
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
@@ -614,6 +604,82 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         client.update_bucket_config(
             bucket,
             firewall={"allowed_ip": ["10.142.175.0/22", "10.198.243.79"]})
+
+    def get_cos_summary(self, url):
+        """
+        Return information for the given COR URL (may include bucket + prefix)
+
+        Returns
+        -------
+        dict
+            A dict with keys
+                "largest_object"
+                "largest_object_size"
+                "newest_object_timestamp"
+                "oldest_object_timestamp"
+                "smallest_object"
+                "smallest_object_size"
+                "total_objects"
+                "total_volume"
+                "url"
+        """
+        def sizeof_fmt(num, suffix='B'):
+            for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+                if abs(num) < 1024.0:
+                    return "%3.1f %s%s" % (num, unit, suffix)
+                num /= 1024.0
+            return "%.1f %s%s" % (num, 'Y', suffix)
+
+        self.logon()
+
+        if url[-1] != '/':
+            url = url + '/'
+        url_parsed = self.analyze_cos_url(url)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
+
+        paginator = cos_client.get_paginator("list_objects")
+        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
+
+        total_size = 0
+        smallest_size = 9999999999999999
+        largest_size = 0
+        count = 0
+        oldest_modification = datetime.max.replace(tzinfo=None)
+        newest_modification = datetime.min.replace(tzinfo=None)
+        smallest_object = None
+        largest_object = None
+
+        for page in page_iterator:
+            if "Contents" in page:
+                for key in page['Contents']:
+                    size = int(key["Size"])
+                    total_size += size
+                    if size < smallest_size:
+                        smallest_size = size
+                        smallest_object = key["Key"]
+                    if size > largest_size:
+                        largest_size = size
+                        largest_object = key["Key"]
+                    count += 1
+                    modified = key['LastModified'].replace(tzinfo=None)
+                    if modified < oldest_modification:
+                        oldest_modification = modified
+                    if modified > newest_modification:
+                        newest_modification = modified
+
+        if count == 0:
+            smallest_size=None
+            oldest_modification=None
+            newest_modification=None
+        else:
+            oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
+            newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
+
+        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(total_size),
+                'oldest_object_timestamp': oldest_modification,
+                'newest_object_timestamp': newest_modification,
+                'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
+                'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
 
     # -----------------
     # The methods below are for interacting with a file stored as an asset in a Watson Studio's Project.
