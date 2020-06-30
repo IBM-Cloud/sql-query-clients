@@ -24,7 +24,7 @@ The submodules
 
 * :ref:`utilities <utilities-label>` provides (A) - the IBM Cloud service connectivity-related functionality
 * :ref:`cos <cos-label>` provides (A, B) - the COS-related functionality
-* :ref:`sql_query <sql_query-label>` provides (A, B, C)
+* :ref:`SQLQuery <sql_query-label>` provides (A, B, C)
 * (D, E) is done via notebook-based examples of user-specific code which also utilizes above submodules. For getting started use this `starter notebook <https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d>`_.
 
 

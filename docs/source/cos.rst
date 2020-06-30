@@ -17,19 +17,20 @@ ParsedUrl
 ProjectLib
 ----------
 
-:class:`ProjectLib` class maintains a reference to an object of project_lib which can hold assets
-that can be loaded into the current notebook.
+:class:`ProjectLib` class maintains a reference to an object of IBM Watson Studio's ProjectLib 
+which can read a file stored as an asset and load them into the current notebook.
 
-A scenario where it is used is
+This file can be used in a number of scenarios, such as 
 
 1. store/reload progress information
 2. load external Python packages
 3. store/reload data files
 
 *Example*:
-When SQLClient launches many jobs, there is a chance that the progress can be stopped, and
-you don't want to restart from the beginning. The above setting enables the SQLClient or AIOps
-to skip the completed sql queries. The ``prefix_name`` is the file name to be used for saving and restoring the job progress.
+When SQLQuery launches many jobs, there is a chance that the progress can be stopped, and
+you don't want to restart from the beginning. The above setting enables the SQLQuery to skip the 
+completed sql queries. The ``file_name`` argument reference to the name of the file 
+to be used for saving and restoring the job progress.
 
 .. code-block:: python
 
@@ -37,15 +38,16 @@ to skip the completed sql queries. The ``prefix_name`` is the file name to be us
     project = Project(project_id=your_project_id,
                       project_access_token=your_project_cos_acess_token)
 
-    prefix_name = "aiops_us_south_rgdal10_20200201"
-    sqlClient.connect_project_lib(project, prefix_name)
+    # default file extension: json
+    file_name = "aiops"
+    sqlClient.connect_project_lib(project, file_name)
 
 
 
 COSClient
 ---------
 
-:class:`COSClient` is also an :class:`IBMCloudAccess` and a :class:`ParsedUrl`.
+:class:`.COSClient` is also an :class:`.IBMCloudAccess` and a :class:`.ParsedUrl`.
 
 COSClient class further provides the APIs
 
@@ -54,8 +56,12 @@ COSClient class further provides the APIs
 * interact with COS instance:
 
     1. :meth:`.delete_objects`
-    2. :meth:`.get_bucket_info`
-    3. :meth:`.update_bucket`
+    2. :meth:`.delete_empty_objects`
+    3. :meth:`.list_cos_objects`
+    4. :meth:`.update_bucket`
+    5. :meth:`.get_bucket_info`
+    6. :meth:`.get_cos_summary`
+    7. :meth:`.update_bucket`
 
 * interact with ProjectLib's data:
 

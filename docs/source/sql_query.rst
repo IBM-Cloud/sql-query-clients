@@ -9,16 +9,10 @@ ibmcloudsql.SQLQuery
 
 A :class:`.SQLQuery` class is also a :class:`.COSClient` class, and a :class:`.SQLMagic` class.
 
-It adds all APIs for SQL interaction with data on COS.
-
-1. like ``ibmcloudsql.SQLQuery`` class for certain APIs, with extended arguments to provide a richer set of functionalities and better handling of queries.
-It is important to know that class SQLQuery does not aim to implement all APIs exposed in ibmcloudsql.SQLQuery, only the common ones are implemented there directly.
-So for those that are not implemented, we can use such APIs via its :py:attr:`.engine`
 
 .. code-block:: python
 
     sqlClient = SQLQuery(....)
-    sqlClient.engine.[ibmcloudsql-API]
 
 
 1. :py:class:`.SQLQuery` (...): instantiate with initial settings
@@ -51,8 +45,7 @@ C. Work with query results
 3. :meth:`.rename_exact_result`: modify the created objects on COS
 4. :meth:`.rename_exact_result_joblist`: ... from a list of jobs
 5. :meth:`.delete_empty_objects`:
-6. :meth:`.get_cos_summary`
-7. :meth:`.list_results`
+6. :meth:`.list_results`
 
 
 D. Manage jobs
@@ -71,10 +64,12 @@ D. Manage jobs
 E. COS URL handling
 --------------------
 
-1. :meth:`.cos_url_parser`
+See :class:`.COSClient`
 
 F. Manage table catalog
 ------------------------
+
+From :class:`.HiveMetastore`
 
 1. :meth:`.show_tables`
 2. :meth:`.drop_all_tables`
@@ -105,7 +100,8 @@ A time-series comprises
 3. for what category, i.e. the `key`
 
 Very often, the raw data are too dense to be digested into a time-series.  Such data
-is then needed to be transformed into a finer time-scale, for example:
+is then needed to be transformed into a coarser time-scale, using a proper aggregated function, e.g. avg() or max(). The time window during which the summarized data point should be collected is given by passing
+a value to `granularity` argument, for example:
 
 * `raw`: no change, just extract to a new location
 * `per_sec`, or `PT1S`: per every second
@@ -113,12 +109,12 @@ is then needed to be transformed into a finer time-scale, for example:
 * `per_min`, or `PT1M`: per every minute
 * `per_5min`, or `PT5M`: per every 5 minute
 
-It supports using either
+In general, a valid value to `granularity` should follow the convention 
 
 * 'per_[x]sec' and 'per_[x]min' with x is divisible by 60.
 * ISO 8601 duration standard
 
-Such transformed data is then copied and save into a new location (the time-series data source), which is specified by
+The transformed data is then copied and save into a new location (the time-series data source), which is specified by
 
 * `cos_out`: COS URL (stored as PARQUET)
 * `num_objects`: split into multiple objects or

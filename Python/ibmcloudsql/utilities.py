@@ -95,14 +95,14 @@ class IBMCloudAccess():
         return ibm_boto3._get_default_session()
 
     def logon(self, force=False):
-        """"
+        """
             An AIM token is needed for any operations to IBM cloud services (e.g. COS)
             A new AIM token is created after 300 seconds.
             A token is valid for 3600 seconds
 
         Raises
         ---------
-        AttributeError
+        ibm_botocore.exceptions.CredentialRetrievalError: 
            The exception is raised when the credential is incorrect.
 
         """

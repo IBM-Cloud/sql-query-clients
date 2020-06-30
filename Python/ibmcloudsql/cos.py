@@ -40,16 +40,6 @@ logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------------------
-# Represents an IBM Watson Studio project
-# ------------------------------------------------------------------------------
-class Project():
-    """https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects
-
-    GET https://api.dataplatform.cloud.ibm.com/v2/projects/
-    """
-    pass
-
-# ------------------------------------------------------------------------------
 # Helper class to interact with IBM Watson Studio projects
 # ------------------------------------------------------------------------------
 class ProjectLib():
@@ -58,7 +48,7 @@ class ProjectLib():
 
     Parameters
     ----------
-    project: Project
+    project: project_lib.Project
         The object
 
             `from project_lib import Project`
@@ -632,9 +622,6 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                 "total_objects"
                 "total_volume"
                 "url"
-
-        Example: self.get_cos_summary_demo()
-
         """
         def sizeof_fmt(num, suffix='B'):
             for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
