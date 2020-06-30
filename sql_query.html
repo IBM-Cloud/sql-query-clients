@@ -106,12 +106,7 @@
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class</p></li>
 </ul>
 <p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> class, and a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class.</p>
-<p>It adds all APIs for SQL interaction with data on COS.</p>
-<p>1. like <code class="docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery</span></code> class for certain APIs, with extended arguments to provide a richer set of functionalities and better handling of queries.
-It is important to know that class SQLQuery does not aim to implement all APIs exposed in ibmcloudsql.SQLQuery, only the common ones are implemented there directly.
-So for those that are not implemented, we can use such APIs via its <code class="xref py py-attr docutils literal notranslate"><span class="pre">engine</span></code></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sqlClient</span> <span class="o">=</span> <span class="n">SQLQuery</span><span class="p">(</span><span class="o">....</span><span class="p">)</span>
-<span class="n">sqlClient</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="p">[</span><span class="n">ibmcloudsql</span><span class="o">-</span><span class="n">API</span><span class="p">]</span>
 </pre></div>
 </div>
 <ol class="arabic simple">
@@ -142,7 +137,6 @@ So for those that are not implemented, we can use such APIs via its <code class=
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result()</span></code></a>: modify the created objects on COS</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_exact_result_joblist()</span></code></a>: … from a list of jobs</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_empty_objects" title="ibmcloudsql.cos.COSClient.delete_empty_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_empty_objects()</span></code></a>:</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_cos_summary" title="ibmcloudsql.cos.COSClient.get_cos_summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_cos_summary()</span></code></a></p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="ibmcloudsql.SQLQuery.SQLQuery.list_results"><code class="xref py py-meth docutils literal notranslate"><span class="pre">list_results()</span></code></a></p></li>
 </ol>
 </div>
@@ -161,12 +155,11 @@ So for those that are not implemented, we can use such APIs via its <code class=
 </div>
 <div class="section" id="e-cos-url-handling">
 <h2>E. COS URL handling<a class="headerlink" href="#e-cos-url-handling" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic simple">
-<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">cos_url_parser()</span></code></p></li>
-</ol>
+<p>See <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a></p>
 </div>
 <div class="section" id="f-manage-table-catalog">
 <h2>F. Manage table catalog<a class="headerlink" href="#f-manage-table-catalog" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore" title="ibmcloudsql.catalog_table.HiveMetastore"><code class="xref py py-class docutils literal notranslate"><span class="pre">HiveMetastore</span></code></a></p>
 <ol class="arabic simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_tables" title="ibmcloudsql.catalog_table.HiveMetastore.show_tables"><code class="xref py py-meth docutils literal notranslate"><span class="pre">show_tables()</span></code></a></p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables" title="ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_all_tables()</span></code></a></p></li>
@@ -196,7 +189,8 @@ is used as the data source via <cite>table_name</cite> argument.</p>
 <li><p>for what category, i.e. the <cite>key</cite></p></li>
 </ol>
 <p>Very often, the raw data are too dense to be digested into a time-series.  Such data
-is then needed to be transformed into a finer time-scale, for example:</p>
+is then needed to be transformed into a coarser time-scale, using a proper aggregated function, e.g. avg() or max(). The time window during which the summarized data point should be collected is given by passing
+a value to <cite>granularity</cite> argument, for example:</p>
 <ul class="simple">
 <li><p><cite>raw</cite>: no change, just extract to a new location</p></li>
 <li><p><cite>per_sec</cite>, or <cite>PT1S</cite>: per every second</p></li>
@@ -204,12 +198,12 @@ is then needed to be transformed into a finer time-scale, for example:</p>
 <li><p><cite>per_min</cite>, or <cite>PT1M</cite>: per every minute</p></li>
 <li><p><cite>per_5min</cite>, or <cite>PT5M</cite>: per every 5 minute</p></li>
 </ul>
-<p>It supports using either</p>
+<p>In general, a valid value to <cite>granularity</cite> should follow the convention</p>
 <ul class="simple">
 <li><p>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60.</p></li>
 <li><p>ISO 8601 duration standard</p></li>
 </ul>
-<p>Such transformed data is then copied and save into a new location (the time-series data source), which is specified by</p>
+<p>The transformed data is then copied and save into a new location (the time-series data source), which is specified by</p>
 <ul class="simple">
 <li><p><cite>cos_out</cite>: COS URL (stored as PARQUET)</p></li>
 <li><p><cite>num_objects</cite>: split into multiple objects or</p></li>

@@ -898,7 +898,7 @@ If skipped, the being tracked catalog-table is used</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>project</strong> (<a class="reference internal" href="#ibmcloudsql.cos.Project" title="ibmcloudsql.cos.Project"><em>Project</em></a>) – The project-lib object</p></li>
+<li><p><strong>project</strong> (<em>Project</em>) – The project-lib object</p></li>
 <li><p><strong>file_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the file in ProjectLib’s COS bucket where data will be read/stored</p></li>
 </ul>
 </dd>
@@ -984,9 +984,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dd><p>Return information for the given COR URL (may include bucket + prefix)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><ul>
-<li><p><em>dict</em> –</p>
-<dl class="simple">
+<dd class="field-odd"><p><dl class="simple">
 <dt>A dict with keys</dt><dd><p>”largest_object”
 “largest_object_size”
 “newest_object_timestamp”
@@ -998,10 +996,10 @@ than just file size and modification date. Sample code to handle <a class="refer
 “url”</p>
 </dd>
 </dl>
-</li>
-<li><p><strong>Example</strong> (<em>self.get_cos_summary_demo()</em>)</p></li>
-</ul>
 </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1038,7 +1036,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dd><p>IBM Watson Studio ProjectLib object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#ibmcloudsql.cos.Project" title="ibmcloudsql.cos.Project">Project</a></p>
+<dd class="field-odd"><p>Project</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1117,14 +1115,6 @@ than just file size and modification date. Sample code to handle <a class="refer
 </dd></dl>
 
 <dl class="class">
-<dt id="ibmcloudsql.cos.Project">
-<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.cos.</code><code class="sig-name descname">Project</code><a class="reference internal" href="_modules/ibmcloudsql/cos.html#Project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.Project" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p><a class="reference external" href="https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects">https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects</a></p>
-<p>GET <a class="reference external" href="https://api.dataplatform.cloud.ibm.com/v2/projects/">https://api.dataplatform.cloud.ibm.com/v2/projects/</a></p>
-</dd></dl>
-
-<dl class="class">
 <dt id="ibmcloudsql.cos.ProjectLib">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.cos.</code><code class="sig-name descname">ProjectLib</code><span class="sig-paren">(</span><em class="sig-param">project</em>, <em class="sig-param">file_name</em>, <em class="sig-param">file_type='json'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ProjectLib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ProjectLib" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -1132,7 +1122,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>project</strong> (<a class="reference internal" href="#ibmcloudsql.cos.Project" title="ibmcloudsql.cos.Project"><em>Project</em></a>) – <p>The object</p>
+<li><p><strong>project</strong> (<em>project_lib.Project</em>) – <p>The object</p>
 <blockquote>
 <div><p><cite>from project_lib import Project</cite></p>
 </div></blockquote>
@@ -1166,7 +1156,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dd><p>the project-lib object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#ibmcloudsql.cos.Project" title="ibmcloudsql.cos.Project">Project</a></p>
+<dd class="field-odd"><p>Project</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1409,15 +1399,14 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.utilities.IBMCloudAccess.logon">
 <code class="sig-name descname">logon</code><span class="sig-paren">(</span><em class="sig-param">force=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess.logon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess.logon" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>“</dt><dd><p>An AIM token is needed for any operations to IBM cloud services (e.g. COS)
+<dd><blockquote>
+<div><p>An AIM token is needed for any operations to IBM cloud services (e.g. COS)
 A new AIM token is created after 300 seconds.
 A token is valid for 3600 seconds</p>
-</dd>
-</dl>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><strong>AttributeError</strong> – The exception is raised when the credential is incorrect.</p>
+<dd class="field-odd"><p><strong>ibm_botocore.exceptions.CredentialRetrievalError:</strong> – The exception is raised when the credential is incorrect.</p>
 </dd>
 </dl>
 </dd></dl>

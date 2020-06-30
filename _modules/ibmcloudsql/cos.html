@@ -127,16 +127,6 @@
 
 
 <span class="c1"># ------------------------------------------------------------------------------</span>
-<span class="c1"># Represents an IBM Watson Studio project</span>
-<span class="c1"># ------------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="Project"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.Project">[docs]</a><span class="k">class</span> <span class="nc">Project</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;https://api.dataplatform.cloud.ibm.com/api-explorer/#/Projects/getProjects</span>
-
-<span class="sd">    GET https://api.dataplatform.cloud.ibm.com/v2/projects/</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
-
-<span class="c1"># ------------------------------------------------------------------------------</span>
 <span class="c1"># Helper class to interact with IBM Watson Studio projects</span>
 <span class="c1"># ------------------------------------------------------------------------------</span>
 <div class="viewcode-block" id="ProjectLib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib">[docs]</a><span class="k">class</span> <span class="nc">ProjectLib</span><span class="p">():</span>
@@ -145,7 +135,7 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    project: Project</span>
+<span class="sd">    project: project_lib.Project</span>
 <span class="sd">        The object</span>
 
 <span class="sd">            `from project_lib import Project`</span>
@@ -719,9 +709,6 @@
 <span class="sd">                &quot;total_objects&quot;</span>
 <span class="sd">                &quot;total_volume&quot;</span>
 <span class="sd">                &quot;url&quot;</span>
-
-<span class="sd">        Example: self.get_cos_summary_demo()</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">def</span> <span class="nf">sizeof_fmt</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;B&#39;</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]:</span>

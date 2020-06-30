@@ -182,14 +182,14 @@
         <span class="k">return</span> <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
 
 <div class="viewcode-block" id="IBMCloudAccess.logon"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.logon">[docs]</a>    <span class="k">def</span> <span class="nf">logon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            An AIM token is needed for any operations to IBM cloud services (e.g. COS)</span>
 <span class="sd">            A new AIM token is created after 300 seconds.</span>
 <span class="sd">            A token is valid for 3600 seconds</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ---------</span>
-<span class="sd">        AttributeError</span>
+<span class="sd">        ibm_botocore.exceptions.CredentialRetrievalError: </span>
 <span class="sd">           The exception is raised when the credential is incorrect.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
