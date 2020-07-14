@@ -221,6 +221,16 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         HiveMetastore.configure(self, self.target_cos_url)
         self.logon(force=True)
 
+    def _response_error_msg(self, response):
+        try:
+            return response.json()['errors'][0]['message']
+        except:
+            # if we get the error from some intermediate proxy, it may
+            # not match the SQLQuery error format
+            return "Non-parseable error: {txt}".format(
+                txt=response.text[0:200])
+
+
     def _send_req(self, json_data):
         '''send SQL data to API. return job id'''
 
@@ -236,7 +246,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 raise RateLimitedException(
                     "SQL submission failed ({code}): {msg}".format(
                         code=response.status_code,
-                        msg=response.json()['errors'][0]['message']))
+                        msg=self._response_error_msg(response)))
 
             # any other error but 429 will be raised here, like 403 etc
             response.raise_for_status()
@@ -245,17 +255,20 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             if 'job_id' in resp:
                 return resp['job_id']
             else:
-                raise HTTPError()
-        except (KeyError, HTTPError) as _:
+                raise SyntaxError("Response {resp} contains no job ID".format(
+                    resp=resp
+                ))
+        except (HTTPError) as _:
+            msg = self._response_error_msg(response)
             error_message = "SQL submission failed ({code}): {msg} - {query}".format(
                     code=response.status_code,
-                    msg=response.json()['errors'][0]['message'],
+                    msg=msg,
                     query=pformat(json_data))
             crn_error = "Service CRN has an invalid format"
             if crn_error in error_message:
                 error_message = "SQL submission failed ({code}): {msg}".format(
                         code=response.status_code,
-                        msg=response.json()['errors'][0]['message'])
+                        msg=msg)
                 raise SqlQueryCrnInvalidFormatException(error_message)
             else:
                 raise SyntaxError(error_message)
@@ -927,7 +940,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     headers=self.request_headers,
                 )
             except HTTPError as e:
-                if e.response.status_code == 400:
+                if e.response.status_code == 404:
                     raise ValueError("SQL jobId {} unknown".format(jobId))
                 else:
                     raise e
