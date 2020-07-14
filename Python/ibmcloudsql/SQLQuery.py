@@ -783,8 +783,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         if len(result_objects) > 3:
             raise ValueError('Renaming partitioned results of jobId {} to single exact result object name not supported.'.format(jobId))
-        if len(result_objects) == 3 and (int(result_objects.Size[0]) != 0
-                                         or int(result_objects.Size[1]) != 0):
+        if (len(result_objects) == 3 and (int(result_objects.Size[0]) != 0 or int(result_objects.Size[1]) != 0))\
+                or len(result_objects) < 3:
             raise ValueError(
                 'Results of job_id {} don\'t seem to be regular SQL query output.'
                 .format(jobId))

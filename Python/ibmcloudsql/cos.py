@@ -350,8 +350,6 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
         self.logon()
 
-        if cos_url[-1] != '/':
-            cos_url = cos_url + '/'
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
         cos_client = self._get_default_cos_client(url_parsed.endpoint)
