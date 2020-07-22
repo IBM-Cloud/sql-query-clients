@@ -437,8 +437,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
-            <span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>

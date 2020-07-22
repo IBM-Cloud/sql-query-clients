@@ -308,6 +308,16 @@
         <span class="n">HiveMetastore</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">_response_error_msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1"># if we get the error from some intermediate proxy, it may</span>
+            <span class="c1"># not match the SQLQuery error format</span>
+            <span class="k">return</span> <span class="s2">&quot;Non-parseable error: </span><span class="si">{txt}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">txt</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">200</span><span class="p">])</span>
+
+
     <span class="k">def</span> <span class="nf">_send_req</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;send SQL data to API. return job id&#39;&#39;&#39;</span>
 
@@ -323,7 +333,7 @@
                 <span class="k">raise</span> <span class="n">RateLimitedException</span><span class="p">(</span>
                     <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-                        <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]))</span>
+                        <span class="n">msg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_response_error_msg</span><span class="p">(</span><span class="n">response</span><span class="p">)))</span>
 
             <span class="c1"># any other error but 429 will be raised here, like 403 etc</span>
             <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
@@ -332,17 +342,20 @@
             <span class="k">if</span> <span class="s1">&#39;job_id&#39;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">HTTPError</span><span class="p">()</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">)</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s2">&quot;Response </span><span class="si">{resp}</span><span class="s2"> contains no job ID&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">resp</span><span class="o">=</span><span class="n">resp</span>
+                <span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">HTTPError</span><span class="p">)</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_response_error_msg</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
             <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2"> - </span><span class="si">{query}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-                    <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">],</span>
+                    <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span>
                     <span class="n">query</span><span class="o">=</span><span class="n">pformat</span><span class="p">(</span><span class="n">json_data</span><span class="p">))</span>
             <span class="n">crn_error</span> <span class="o">=</span> <span class="s2">&quot;Service CRN has an invalid format&quot;</span>
             <span class="k">if</span> <span class="n">crn_error</span> <span class="ow">in</span> <span class="n">error_message</span><span class="p">:</span>
                 <span class="n">error_message</span> <span class="o">=</span> <span class="s2">&quot;SQL submission failed (</span><span class="si">{code}</span><span class="s2">): </span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">code</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-                        <span class="n">msg</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">])</span>
+                        <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="n">SqlQueryCrnInvalidFormatException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
@@ -857,8 +870,8 @@
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_objects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Renaming partitioned results of jobId </span><span class="si">{}</span><span class="s1"> to single exact result object name not supported.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_objects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span>
-                                         <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result_objects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">))</span>\
+                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">result_objects</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s1">&#39;Results of job_id </span><span class="si">{}</span><span class="s1"> don</span><span class="se">\&#39;</span><span class="s1">t seem to be regular SQL query output.&#39;</span>
                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">))</span>
@@ -1014,7 +1027,7 @@
                     <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">400</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SQL jobId </span><span class="si">{}</span><span class="s2"> unknown&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">e</span>
