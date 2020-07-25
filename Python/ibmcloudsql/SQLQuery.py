@@ -210,7 +210,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             self.instance_crn = instance_crn
         if cos_out_url is None:
-            if self.target_cos_url == '':
+            if self.target_cos_url is None or self.target_cos_url == '':
                 self.target_cos_url = input('Enter target URI for SQL results: ')
             else:
                 self.target_cos_url = input(
@@ -1098,7 +1098,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     def execute_sql(self, sql_stmt, pagesize=None, get_result=False):
         """
         Extend the behavior of :meth:`.run_sql`.
-        I.e. it is a blocking call that waits for the job to finish (unlike submiut_sql), but it has the following features:
+        I.e. it is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:
 
         1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.
             This is also useful when you run SQL statements such as DDLs that don't produce results at all.
@@ -1155,7 +1155,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def run_sql(self, sql_text, pagesize=None):
         """
-        Submits a SQL job, waits for the job to finish (unlike submiut_sql) and return the result as Pandas DataFrame.
+        Submits a SQL job, waits for the job to finish (unlike :meth:`.submit_sql`) and return the result as Pandas DataFrame.
 
         Parameters
         --------------
@@ -1224,14 +1224,17 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return job_id_list
 
     def sql_ui_link(self):
+        """ both print out and also return the string containing SQL Query URL"""
         self.logon()
 
         if sys.version_info >= (3, 0):
-            print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
-                urllib.parse.unquote(self.instance_crn)))
+            result = "https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
+                urllib.parse.unquote(self.instance_crn))
         else:
-            print ("https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
-                urllib.unquote(self.instance_crn).decode('utf8')))
+            result = "https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
+                urllib.unquote(self.instance_crn).decode('utf8'))
+        print(result)
+        return result
 
     def export_job_history(self, cos_url=None, export_file_prefix = "job_export_", export_file_suffix = ".parquet"):
         """
@@ -1296,7 +1299,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             print("No new jobs to export")
 
-    def get_schema_data(self, cos_url, type="json"):
+    def get_schema_data(self, cos_url, type="json", dry_run=False):
         """
         Return the schema information
 
@@ -1320,7 +1323,11 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
         INTO {cos_out} STORED AS JSON
         """.format(cos_in=cos_url, type=type.upper(), cos_out=self.target_cos_url)
-        return self.run_sql(sql_stmt)
+        if dry_run:
+            print(sql_stmt)
+            return None
+        else:
+            return self.run_sql(sql_stmt)
 
     def analyze(self, job_id):
         """Provides some insights about the data layout from the current SQL statement
