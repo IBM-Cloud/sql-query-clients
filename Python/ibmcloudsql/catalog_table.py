@@ -26,6 +26,7 @@ class HiveMetastore():
         INTO {cos_out} STORED AS CSV
         """
         self._target_url = target_url
+        self.supported_format_types = ["PARQUET", "CSV", "JSON"]
 
     def configure(self, target_url):
         self._target_url = target_url
@@ -219,7 +220,7 @@ class HiveMetastore():
                 return None
         return None
 
-    def create_partitioned_table(self, table_name, cos_url=None, force_recreate=False):
+    def create_partitioned_table(self, table_name, cos_url=None, format_type="CSV", force_recreate=False, schema=None):
         """
         Create a partitioned table for data on COS. The data needs to be organized in the form that
         match HIVE metastore criteria, e.g.
@@ -240,8 +241,16 @@ class HiveMetastore():
             The COS URL from which the table should reference to
             If not provided, it uses the internal `self.cos_in_url`
 
+        format_type: string, optional
+            The type of the data above that you want to reference (default: CSV)
+
         force_recreate: bool
             (True) force to recreate an existing table
+
+        schema: None or string
+            If None, then automatic schema detection is used. Otherwise, pass in the comma-separated
+            string in the form "(columnName type, columnName type)"
+
 
         Returns
         ----------
@@ -261,35 +270,32 @@ class HiveMetastore():
         if len(found) > 0 and force_recreate:
             self.drop_table(table_name)
         self.partitioned_tables.add(table_name)
+        assert(format_type.upper() in self.supported_format_types)
         if len(found) == 0 or force_recreate:
-            if True:
+            if schema is None:
                 # auto-detection of scheme
                 self.sql_stmt_create_partitioned_template = """
                 CREATE TABLE {table_name}
-                USING CSV
+                USING {format_type}
                 LOCATION {cos_in}
                 """
                 sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(
-                    table_name=table_name, cos_in=cos_url)
+                    table_name=table_name, cos_in=cos_url, format_type=format_type)
             else:
                 # explit selection of scheme -> need to tell "PARTITIONED BY"
+                schema = schema.strip()
+                if schema[0] == '(' or schema[-1] == ')':
+                    if schema[0] != '(' or schema[-1] != ')':
+                        print("schema wrong format, should be: (name type, name type)")
+                        assert(0)
+                else:
+                    schema = '(' + schema + ')'
                 sql_stmt_create_partitioned = """
-                CREATE TABLE {table_name} (
-                customerID string,
-                companyName string,
-                contactName string,
-                contactTitle string,
-                address string,
-                region string,
-                postalCode string,
-                country string,
-                phone string,
-                fax string
-                )
-                USING CSV
+                CREATE TABLE {table_name} {schema}
+                USING {format_type}
                 PARTITIONED BY (country)
                 LOCATION {cos_in}
-                """.format(table_name=table_name, cos_in=cos_url)
+                """.format(table_name=table_name, cos_in=cos_url, format_type=format_type, schema=schema)
             logger.debug(sql_stmt_create_partitioned)
             self.run_sql(sql_stmt_create_partitioned)
             time.sleep(2)
@@ -314,6 +320,7 @@ class HiveMetastore():
 
         sql_stmt = """ALTER TABLE {table_name} RECOVER PARTITIONS
         """.format(table_name=table_name)
+        self.run_sql(sql_stmt)
 
     def describe_table(self, table_name):
         sql_stmt = """
