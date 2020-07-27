@@ -1310,6 +1310,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         type : str, optional
             The format type of the data, default is 'json'
             Use from ['json', 'csv', 'parquet'] with case-insensitive
+        dry_run: bool, optional
+            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
 
         Returns
         -------
@@ -1521,6 +1523,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             * a value that follows ISO 8601 'duration', e.g. PT1M, PT1S, PT2H
         ops: str
             The aggregation method: "avg", "sum", "max", "min", "count"
+        dry_run: bool, optional
+            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
+        num_objects: None or int
+            The number of objects to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.
+        num_rows: None or int
+            The number of rows for each object to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.
 
         Returns
         ----------
@@ -1755,6 +1763,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         granularity: str
             a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec"]
             with <x> is a number divided by 60, e.g. 10, 15
+        dry_run: bool, optional
+            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
+        num_objects: int, optional
+            The number of objects to be created for storing the data
         print_warning: bool, default=True
             print a warning or not
 
