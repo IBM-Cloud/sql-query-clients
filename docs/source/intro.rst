@@ -4,38 +4,46 @@ Introduction
 ibmcloudsql
 ------------------------
 
-Working with structured data in IBM Cloud Object Storage using SQL language, involves multiple capabilities:
+The **ibmcloudsql** library provides to Python applications the APIs for working with structured data stored on IBM Cloud Object Storage using SQL language, which involves multiple resources/catalogs:
 
-1. (A) `IBM Cloud access <https://cloud.ibm.com/docs/iam?topic=iam-manapikey>`_ which control access to all IBM catalogs/resources
-2. (B) `IBM COS instance <https://www.ibm.com/cloud/object-storage>`_ where input and outpout data is stored.
-3. (C) `IBM Cloud SQL Query instance <https://www.ibm.com/cloud/sql-query>`_ which offers the SQL-based data processing service
-4. (D) Optionally: `IBM Watson Studio <https://www.ibm.com/cloud/watson-studio>`_: which provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project's IBM COS instance.
-5. (E) Visualization: can be done with Python code via IBM Watson Studio's notebook
+1. `IAM <https://cloud.ibm.com/docs/account?topic=account-iamoverview>`_ that controls access to all IBM cloud catalogs/resources.
+2. `IBM COS <https://www.ibm.com/cloud/object-storage>`_ where input and outpout data is stored.
+3. `IBM Cloud SQL Query <https://www.ibm.com/cloud/sql-query>`_ that offers the SQL-based data processing service.
+4. `IBM Watson Studio <https://www.ibm.com/cloud/watson-studio>`_ (optional): that provides notebook environment for running notebook, in that (Python) code and data asset are also stored, implicitly, in the Project's IBM Cloud Object Storage instance. Such project asset can be accessed using the `project-lib library <https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/project-lib-python.html>`_.
 
 ..
-    6. (F) Visualization: can be done via  ...
-    7. (G) The back-end server may be running on `IBM Cloud Function <https://cloud.ibm.com/functions/>`_ 
+    5. Visualization: can be done with Python code via IBM Watson Studio's notebook.
+    6. Visualization: can be done via  ...
+    7. The back-end server may be running on `IBM Cloud Function <https://cloud.ibm.com/functions/>`_. 
 
-This **ibmcloudsql** library provides these multiuple parts to Python applications. It comes with multiple submodules, each one links to another via subclass mechanism.
+The **ibmcloudsql** library comes with multiple submodules, each contains one or many classes. The classes relate to each other via subclass mechanism.  The submodules are the following:
 
-..  package extends the functionality of `ibmcloudsql <https://github.com/IBM-Cloud/sql-query-clients>`_
+* :ref:`utilities <utilities-label>` provides access to (1) - the IBM Cloud service connectivity-related functionality.
+* :ref:`cos <cos-label>` provides access to (1, 2, 4) - the COS-related functionality.
+* :ref:`sql_magic <sql-magic-label>` provides the capability to construct a complex SQL statement, including time-series-related functionality.
+* :ref:`SQLQuery <sql_query-label>` provides access to (3) and to those provided by these submodules (utilities, cos, sql_magic).
 
-The submodules
+For getting started, use this `starter notebook <https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d>`_.
+which provides notebook-based examples of user-specific code that also utilizes above submodules. 
 
-* :ref:`utilities <utilities-label>` provides (A) - the IBM Cloud service connectivity-related functionality
-* :ref:`cos <cos-label>` provides (A, B) - the COS-related functionality
-* :ref:`SQLQuery <sql_query-label>` provides (A, B, C)
-* (D, E) is done via notebook-based examples of user-specific code which also utilizes above submodules. For getting started use this `starter notebook <https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d>`_.
+install 
+------------------------
 
+To install the published release of **ibmcloudsql** from `PyPi <https://pypi.org/project/ibmcloudsql/>`_, run the following:
 
-To install your package in from source in this repository in editable mode:
+ .. code-block:: console
+
+     pip install ibmcloudsql
+
+For development purpose, you can also checkout the source, and then install in editable mode:
 
 .. code-block:: console
 
+    git clone git@github.com:IBM-Cloud/sql-query-clients.git
     cd sql-query-client/Python
     pip install -e .
 
-To run the test on the package, run either
+To run the test on the package, run one of the following:
 
 .. code-block:: console
 
@@ -43,8 +51,3 @@ To run the test on the package, run either
 
     pytest
 
-To install the published release of **ibmcloudsql** from `PyPi <https://pypi.org/project/ibmcloudsql/>`_:
-
- .. code-block:: console
-
-     pip install ibmcloudsql
