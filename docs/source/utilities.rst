@@ -4,7 +4,7 @@
 ibmcloudsql.utilities
 ================================================
 
-The module provides :py:class:`.IBMCloudAccess` class, and some module-level utilities.
+The module provides :py:class:`.IBMCloudAccess` class, and the following module-level utilities:
 
-* :func:`rename_keys`: rename keys in a dict
-* :func:`static_vars`: decorator that assign initial values to a 'static' variables in function, access to these variables require using also `<func_name>.`
+* :func:`rename_keys`: Renames keys in a dict.
+* :func:`static_vars`: Decorator that assigns initial values to 'static' variables in function. To access these variables, use `<func_name>.`
