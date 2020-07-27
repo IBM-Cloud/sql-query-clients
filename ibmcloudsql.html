@@ -408,6 +408,7 @@ in the range from 1 to len(self.list_results(job_id))</p></li>
 <li><p><strong>cos_url</strong> (<em>str</em>) – The COS URL where data is stored</p></li>
 <li><p><strong>type</strong> (<em>str</em><em>, </em><em>optional</em>) – The format type of the data, default is ‘json’
 Use from [‘json’, ‘csv’, ‘parquet’] with case-insensitive</p></li>
+<li><p><strong>dry_run</strong> (<em>bool</em><em>, </em><em>optional</em>) – This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -436,6 +437,8 @@ broken down into multiple objects using <cite>num_objects</cite> as the criteria
 <li><p><strong>cos_out</strong> (<em>str</em>) – The COS URL where the data is copied to - later as data source</p></li>
 <li><p><strong>granularity</strong> (<em>str</em>) – a value in one of [“raw”, “per_min”, “per_&lt;x&gt;min”, “per_sec”, “per_&lt;x&gt;sec”]
 with &lt;x&gt; is a number divided by 60, e.g. 10, 15</p></li>
+<li><p><strong>dry_run</strong> (<em>bool</em><em>, </em><em>optional</em>) – This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</p></li>
+<li><p><strong>num_objects</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of objects to be created for storing the data</p></li>
 <li><p><strong>print_warning</strong> (<em>bool</em><em>, </em><em>default=True</em>) – print a warning or not</p></li>
 </ul>
 </dd>

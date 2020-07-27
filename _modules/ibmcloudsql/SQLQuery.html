@@ -1397,6 +1397,8 @@
 <span class="sd">        type : str, optional</span>
 <span class="sd">            The format type of the data, default is &#39;json&#39;</span>
 <span class="sd">            Use from [&#39;json&#39;, &#39;csv&#39;, &#39;parquet&#39;] with case-insensitive</span>
+<span class="sd">        dry_run: bool, optional</span>
+<span class="sd">            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1608,6 +1610,12 @@
 <span class="sd">            * a value that follows ISO 8601 &#39;duration&#39;, e.g. PT1M, PT1S, PT2H</span>
 <span class="sd">        ops: str</span>
 <span class="sd">            The aggregation method: &quot;avg&quot;, &quot;sum&quot;, &quot;max&quot;, &quot;min&quot;, &quot;count&quot;</span>
+<span class="sd">        dry_run: bool, optional</span>
+<span class="sd">            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</span>
+<span class="sd">        num_objects: None or int</span>
+<span class="sd">            The number of objects to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.</span>
+<span class="sd">        num_rows: None or int</span>
+<span class="sd">            The number of rows for each object to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        ----------</span>
@@ -1842,6 +1850,10 @@
 <span class="sd">        granularity: str</span>
 <span class="sd">            a value in one of [&quot;raw&quot;, &quot;per_min&quot;, &quot;per_&lt;x&gt;min&quot;, &quot;per_sec&quot;, &quot;per_&lt;x&gt;sec&quot;]</span>
 <span class="sd">            with &lt;x&gt; is a number divided by 60, e.g. 10, 15</span>
+<span class="sd">        dry_run: bool, optional</span>
+<span class="sd">            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</span>
+<span class="sd">        num_objects: int, optional</span>
+<span class="sd">            The number of objects to be created for storing the data</span>
 <span class="sd">        print_warning: bool, default=True</span>
 <span class="sd">            print a warning or not</span>
 
