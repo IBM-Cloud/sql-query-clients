@@ -61,7 +61,6 @@ COSClient class further provides the APIs
     4. :meth:`.update_bucket`
     5. :meth:`.get_bucket_info`
     6. :meth:`.get_cos_summary`
-    7. :meth:`.update_bucket`
 
 * interact with ProjectLib's data:
 

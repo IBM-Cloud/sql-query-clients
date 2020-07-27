@@ -40,6 +40,7 @@ A :class:`.SQLMagic` class is also a :class:`TimeSeriesSchema` class.
 
 * :meth:`.reset_`: resets the internal storage of an SQL statement (use this before constructing a new one)
 * :meth:`.print_sql`: prints and checks the current content of an SQL statement
+* :meth:`.get_sql`: returns the string representation of the SQL statement 
 
 * :meth:`.with_`: provides table name and the SQL query for that table
 * :meth:`.select_`: provides column names
@@ -52,6 +53,6 @@ A :class:`.SQLMagic` class is also a :class:`TimeSeriesSchema` class.
 * :meth:`.store_at_`: provides COS URL and format of data
 * :meth:`.partiton_objects_`: provides number of objects
 * :meth:`.partition_rows_`: provides number of rows per object
+* :meth:`.partition_by_`: provides the string of tuple of column names for HIVE catalog partitioning 
 * :meth:`.format_`: applies transformation needed to map user-friendly time series queries into library-friendly time series queries
-
 
