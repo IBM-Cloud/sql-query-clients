@@ -12,12 +12,12 @@ ibmcloudsql.cos
 ParsedUrl
 ---------
 
-:class:`ParsedUrl` provides the APIs to parse a COS URL.
+:class:`.ParsedUrl` provides the APIs to parse a COS URL.
 
 ProjectLib
 ----------
 
-:class:`ProjectLib` class maintains a reference to an object of IBM Watson Studio's ProjectLib 
+:class:`.ProjectLib` class maintains a reference to an object of IBM Watson Studio's ProjectLib 
 which can read a file stored as an asset and load them into the current notebook.
 
 This file can be used in a number of scenarios, such as 
