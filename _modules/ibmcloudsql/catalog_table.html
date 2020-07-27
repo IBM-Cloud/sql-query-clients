@@ -113,6 +113,7 @@
 <span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
 <span class="s2">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PARQUET&quot;</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;JSON&quot;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="HiveMetastore.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span></div>
@@ -306,7 +307,7 @@
                 <span class="k">return</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
-<div class="viewcode-block" id="HiveMetastore.create_partitioned_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_partitioned_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="HiveMetastore.create_partitioned_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_partitioned_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a partitioned table for data on COS. The data needs to be organized in the form that</span>
 <span class="sd">        match HIVE metastore criteria, e.g.</span>
@@ -327,8 +328,16 @@
 <span class="sd">            The COS URL from which the table should reference to</span>
 <span class="sd">            If not provided, it uses the internal `self.cos_in_url`</span>
 
+<span class="sd">        format_type: string, optional</span>
+<span class="sd">            The type of the data above that you want to reference (default: CSV)</span>
+
 <span class="sd">        force_recreate: bool</span>
 <span class="sd">            (True) force to recreate an existing table</span>
+
+<span class="sd">        schema: None or string</span>
+<span class="sd">            If None, then automatic schema detection is used. Otherwise, pass in the comma-separated</span>
+<span class="sd">            string in the form &quot;(columnName type, columnName type)&quot;</span>
+
 
 <span class="sd">        Returns</span>
 <span class="sd">        ----------</span>
@@ -348,35 +357,32 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">force_recreate</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">drop_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">force_recreate</span><span class="p">:</span>
-            <span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># auto-detection of scheme</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_partitioned_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">                CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"></span>
-<span class="s2">                USING CSV</span>
+<span class="s2">                USING </span><span class="si">{format_type}</span><span class="s2"></span>
 <span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
 <span class="s2">                &quot;&quot;&quot;</span>
                 <span class="n">sql_stmt_create_partitioned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_partitioned_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># explit selection of scheme -&gt; need to tell &quot;PARTITIONED BY&quot;</span>
+                <span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;(&#39;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;schema wrong format, should be: (name type, name type)&quot;</span><span class="p">)</span>
+                        <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">schema</span> <span class="o">=</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="n">schema</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
                 <span class="n">sql_stmt_create_partitioned</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">                CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"> (</span>
-<span class="s2">                customerID string,</span>
-<span class="s2">                companyName string,</span>
-<span class="s2">                contactName string,</span>
-<span class="s2">                contactTitle string,</span>
-<span class="s2">                address string,</span>
-<span class="s2">                region string,</span>
-<span class="s2">                postalCode string,</span>
-<span class="s2">                country string,</span>
-<span class="s2">                phone string,</span>
-<span class="s2">                fax string</span>
-<span class="s2">                )</span>
-<span class="s2">                USING CSV</span>
+<span class="s2">                CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"> </span><span class="si">{schema}</span><span class="s2"></span>
+<span class="s2">                USING </span><span class="si">{format_type}</span><span class="s2"></span>
 <span class="s2">                PARTITIONED BY (country)</span>
 <span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
-<span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">)</span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -400,7 +406,8 @@
         <span class="c1">#     assert (0)</span>
 
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;ALTER TABLE </span><span class="si">{table_name}</span><span class="s2"> RECOVER PARTITIONS</span>
-<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span></div>
+<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HiveMetastore.describe_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table">[docs]</a>    <span class="k">def</span> <span class="nf">describe_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>

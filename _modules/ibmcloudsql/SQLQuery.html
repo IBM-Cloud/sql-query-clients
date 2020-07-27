@@ -297,7 +297,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="n">instance_crn</span>
         <span class="k">if</span> <span class="n">cos_out_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Enter target URI for SQL results: &#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
@@ -1185,7 +1185,7 @@
 <div class="viewcode-block" id="SQLQuery.execute_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">[docs]</a>    <span class="k">def</span> <span class="nf">execute_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extend the behavior of :meth:`.run_sql`.</span>
-<span class="sd">        I.e. it is a blocking call that waits for the job to finish (unlike submiut_sql), but it has the following features:</span>
+<span class="sd">        I.e. it is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:</span>
 
 <span class="sd">        1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.</span>
 <span class="sd">            This is also useful when you run SQL statements such as DDLs that don&#39;t produce results at all.</span>
@@ -1242,7 +1242,7 @@
 
 <div class="viewcode-block" id="SQLQuery.run_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql">[docs]</a>    <span class="k">def</span> <span class="nf">run_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_text</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Submits a SQL job, waits for the job to finish (unlike submiut_sql) and return the result as Pandas DataFrame.</span>
+<span class="sd">        Submits a SQL job, waits for the job to finish (unlike :meth:`.submit_sql`) and return the result as Pandas DataFrame.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        --------------</span>
@@ -1311,14 +1311,17 @@
         <span class="k">return</span> <span class="n">job_id_list</span></div>
 
 <div class="viewcode-block" id="SQLQuery.sql_ui_link"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.sql_ui_link">[docs]</a>    <span class="k">def</span> <span class="nf">sql_ui_link</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; both print out and also return the string containing SQL Query URL&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;https://sql-query.cloud.ibm.com/sqlquery/?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">)))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;https://sql-query.cloud.ibm.com/sqlquery/?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;https://sql-query.cloud.ibm.com/sqlquery/?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)))</span></div>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;https://sql-query.cloud.ibm.com/sqlquery/?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SQLQuery.export_job_history"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.export_job_history">[docs]</a>    <span class="k">def</span> <span class="nf">export_job_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">export_file_prefix</span> <span class="o">=</span> <span class="s2">&quot;job_export_&quot;</span><span class="p">,</span> <span class="n">export_file_suffix</span> <span class="o">=</span> <span class="s2">&quot;.parquet&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1383,7 +1386,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No new jobs to export&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLQuery.get_schema_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_schema_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLQuery.get_schema_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_schema_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the schema information</span>
 
@@ -1407,7 +1410,11 @@
 <span class="s2">        SELECT * FROM DESCRIBE(</span><span class="si">{cos_in}</span><span class="s2"> STORED AS </span><span class="si">{type}</span><span class="s2">)</span>
 <span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS JSON</span>
 <span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLQuery.analyze"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Provides some insights about the data layout from the current SQL statement</span>

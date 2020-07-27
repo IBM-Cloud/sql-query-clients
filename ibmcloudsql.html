@@ -183,7 +183,7 @@
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.execute_sql">
 <code class="sig-name descname">execute_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em>, <em class="sig-param">pagesize=None</em>, <em class="sig-param">get_result=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.execute_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.execute_sql" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extend the behavior of <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a>.
-I.e. it is a blocking call that waits for the job to finish (unlike submiut_sql), but it has the following features:</p>
+I.e. it is a blocking call that waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>), but it has the following features:</p>
 <ol class="arabic simple">
 <li><dl class="simple">
 <dt>Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.</dt><dd><p>This is also useful when you run SQL statements such as DDLs that don’t produce results at all.</p>
@@ -400,7 +400,7 @@ in the range from 1 to len(self.list_results(job_id))</p></li>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.get_schema_data">
-<code class="sig-name descname">get_schema_data</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">type='json'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.get_schema_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_schema_data</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">type='json'</em>, <em class="sig-param">dry_run=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.get_schema_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the schema information</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -557,7 +557,7 @@ issued by this SQLClient class object</p>
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.run_sql">
 <code class="sig-name descname">run_sql</code><span class="sig-paren">(</span><em class="sig-param">sql_text</em>, <em class="sig-param">pagesize=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.run_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="Permalink to this definition">¶</a></dt>
-<dd><p>Submits a SQL job, waits for the job to finish (unlike submiut_sql) and return the result as Pandas DataFrame.</p>
+<dd><p>Submits a SQL job, waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>) and return the result as Pandas DataFrame.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -577,7 +577,8 @@ issued by this SQLClient class object</p>
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.sql_ui_link">
 <code class="sig-name descname">sql_ui_link</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.sql_ui_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.sql_ui_link" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>both print out and also return the string containing SQL Query URL</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.submit">
@@ -748,7 +749,7 @@ Query job, before deciding to launch it</p>
 
 <dl class="method">
 <dt id="ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">
-<code class="sig-name descname">create_partitioned_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">cos_url=None</em>, <em class="sig-param">force_recreate=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.create_partitioned_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">create_partitioned_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">cos_url=None</em>, <em class="sig-param">format_type='CSV'</em>, <em class="sig-param">force_recreate=False</em>, <em class="sig-param">schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.create_partitioned_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a partitioned table for data on COS. The data needs to be organized in the form that
 match HIVE metastore criteria, e.g.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">&lt;COS-URL&gt;/field_1=value1_1/field_2=value_2_1/object_file</span>
@@ -762,7 +763,10 @@ match HIVE metastore criteria, e.g.</p>
 <li><p><strong>table_name</strong> (<em>str</em>) – the name of the table to be created</p></li>
 <li><p><strong>cos_url</strong> (<em>str</em><em>, </em><em>optional</em>) – The COS URL from which the table should reference to
 If not provided, it uses the internal <cite>self.cos_in_url</cite></p></li>
+<li><p><strong>format_type</strong> (<em>string</em><em>, </em><em>optional</em>) – The type of the data above that you want to reference (default: CSV)</p></li>
 <li><p><strong>force_recreate</strong> (<em>bool</em>) – (True) force to recreate an existing table</p></li>
+<li><p><strong>schema</strong> (<em>None</em><em> or </em><em>string</em>) – If None, then automatic schema detection is used. Otherwise, pass in the comma-separated
+string in the form “(columnName type, columnName type)”</p></li>
 </ul>
 </dd>
 </dl>
@@ -1231,6 +1235,13 @@ than just file size and modification date. Sample code to handle <a class="refer
 <p>The error when the SQL Query CRN is not correct</p>
 </dd></dl>
 
+<dl class="exception">
+<dt id="ibmcloudsql.exceptions.UnsupportedStorageFormatException">
+<em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">UnsupportedStorageFormatException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#UnsupportedStorageFormatException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.UnsupportedStorageFormatException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>The error when the SQL Query CRN is not correct</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-ibmcloudsql.sql_magic">
 <span id="ibmcloudsql-sql-magic-module"></span><h2>ibmcloudsql.sql_magic module<a class="headerlink" href="#module-ibmcloudsql.sql_magic" title="Permalink to this headline">¶</a></h2>
@@ -1246,17 +1257,22 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 <dl class="method">
 <dt id="ibmcloudsql.sql_magic.SQLMagic.from_cos_">
-<code class="sig-name descname">from_cos_</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">format_type='parquet'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.from_cos_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.from_cos_" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">from_cos_</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">format_type='parquet'</em>, <em class="sig-param">alias=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.from_cos_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.from_cos_" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.sql_magic.SQLMagic.from_table_">
-<code class="sig-name descname">from_table_</code><span class="sig-paren">(</span><em class="sig-param">table</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.from_table_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.from_table_" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">from_table_</code><span class="sig-paren">(</span><em class="sig-param">table</em>, <em class="sig-param">alias=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.from_table_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.from_table_" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.sql_magic.SQLMagic.from_view_">
 <code class="sig-name descname">from_view_</code><span class="sig-paren">(</span><em class="sig-param">sql_stmt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.from_view_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.from_view_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_magic.SQLMagic.get_sql">
+<code class="sig-name descname">get_sql</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.get_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.get_sql" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1273,6 +1289,11 @@ than just file size and modification date. Sample code to handle <a class="refer
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_magic.SQLMagic.partition_by_">
+<code class="sig-name descname">partition_by_</code><span class="sig-paren">(</span><em class="sig-param">columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic.partition_by_"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic.partition_by_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.sql_magic.SQLMagic.partition_objects_">
