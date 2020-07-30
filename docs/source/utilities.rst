@@ -1,7 +1,7 @@
 .. _utilities-label:
 
 
-ibmcloudsql.utilities
+Utilities
 ================================================
 
 The module provides :py:class:`.IBMCloudAccess` class, and the following module-level utilities:
