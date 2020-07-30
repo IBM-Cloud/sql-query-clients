@@ -1,6 +1,6 @@
 .. _sql-magic-label:
 
-ibmcloudsql.sql_magic
+SQL Magic
 ================================================
 
 :mod:`ibmcloudsql.sql_magic` provides the following three classes:
@@ -9,7 +9,7 @@ ibmcloudsql.sql_magic
 * :py:class:`.TimeSeriesSchema` class: provides hints about the schema of the data to support :meth:`get_ts_datasource`
 * :py:class:`.SQLMagic` class: provides APIs to help constructing a complete SQL query without knowing the details about syntax specific to IBM Cloud SQL
 
-TimeSeriesTransformInput
+Time series transform input
 ------------------------
 
 A :class:`.TimeSeriesTransformInput` class: provides utilities for mapping from user-friendly time series query into library-friendly time series query
@@ -28,12 +28,12 @@ Example:
 * :meth:`.transform_sql`: the decorator that is applied on the :meth:`SQLMagic.print_sql` and :meth:`SQLMagic.format_` methods
 * :meth:`.ts_segment_by_time`
 
-TimeSeriesSchema
+Time series schema
 ------------------------
 
 * :attr:`unixtime_columns`: shows which columns contain time stamp data in Unix time format
 
-SQLMagic
+Time series schema SQL Magic
 ------------------------
 
 A :class:`.SQLMagic` class is also a :class:`TimeSeriesSchema` class.
