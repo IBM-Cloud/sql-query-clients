@@ -41,3 +41,11 @@ class SqlQueryCrnInvalidFormatException(Exception):
             super().__init__(msg)
         self.original_exception = original_exception
 
+class UnsupportedStorageFormatException(Exception):
+    """The error when the SQL Query CRN is not correct"""
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception

@@ -18,6 +18,7 @@ import ibm_boto3
 import ibm_botocore
 from ibm_botocore.client import Config
 from datetime import datetime
+import getpass
 
 
 def rename_keys(d, keys):
@@ -102,7 +103,7 @@ class IBMCloudAccess():
 
         Raises
         ---------
-        ibm_botocore.exceptions.CredentialRetrievalError: 
+        ibm_botocore.exceptions.CredentialRetrievalError:
            The exception is raised when the credential is incorrect.
 
         """

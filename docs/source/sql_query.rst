@@ -52,12 +52,13 @@ Manage jobs
 
 1. :meth:`.my_jobs`
 2. :meth:`.wait_for_job`
-3. :meth:`.process_failed_jobs_until_all_complete`
+3. :meth:`.process_failed_jobs_until_all_completed`
 4. :meth:`.get_job`
 5. :meth:`.get_jobs`
 6. :meth:`.get_number_running_jobs`
 7. :meth:`.get_jobs_with_status`
-8. :meth:`.export_jobs_history`
+8. :meth:`.get_jobs_count_with_status`
+9. :meth:`.export_job_history`
 
 Manage Cloud Object Storage URL
 --------------------

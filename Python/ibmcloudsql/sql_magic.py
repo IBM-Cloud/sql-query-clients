@@ -17,6 +17,10 @@
 import sqlparse
 from functools import wraps
 import re
+try:
+    from exceptions import UnsupportedStorageFormatException
+except Exception:
+    from .exceptions import UnsupportedStorageFormatException
 
 def format_sql(sql_stmt):
     """format SQL string to ensure proper content for string comparison
@@ -166,11 +170,16 @@ class SQLMagic(TimeSeriesSchema):
         self._has_stored_location = False
         self._has_with_clause = False
         self._has_select_clause = False
-        self.supported_format_types = ["PARQUET", "CVS", "JSON"]
+        self.supported_format_types = ["PARQUET", "CSV", "JSON"]
+        self._has_from_clause = False
 
     @TimeSeriesTransformInput.transform_sql
     def print_sql(self):
         print_sql(self._sql_stmt)
+
+    @TimeSeriesTransformInput.transform_sql
+    def get_sql(self):
+        return format_sql(self._sql_stmt)
 
     def reset_(self):
         self._sql_stmt = ""
@@ -198,12 +207,26 @@ class SQLMagic(TimeSeriesSchema):
         self._has_select_clause = True
         return self
 
-    def from_table_(self, table):
-        self._sql_stmt = self._sql_stmt + " FROM " + table
+    def from_table_(self, table, alias=None):
+        if self._has_from_clause:
+            self._sql_stmt += ", "
+        else:
+            self._sql_stmt += " FROM "
+        self._sql_stmt += table
+        if alias:
+            self._sql_stmt += " " + alias.strip()
+        self._has_from_clause = True
         return self
 
-    def from_cos_(self, cos_url, format_type="parquet"):
-        self._sql_stmt = self._sql_stmt + " FROM " + cos_url + " STORED AS" + format_type
+    def from_cos_(self, cos_url, format_type="parquet", alias=None):
+        if self._has_from_clause:
+            self._sql_stmt += ", "
+        else:
+            self._sql_stmt += " FROM "
+        self._sql_stmt += cos_url + " STORED AS " + format_type.strip()
+        if alias:
+            self._sql_stmt += " " + alias.strip()
+        self._has_from_clause = True
         return self
 
     def from_view_(self, sql_stmt):
@@ -215,6 +238,7 @@ class SQLMagic(TimeSeriesSchema):
             self._sql_stmt = self._sql_stmt + " WHERE " + condition
         else:
             self._sql_stmt = self._sql_stmt + ", " + condition
+        self._has_from_clause = False
         return self
 
     def order_by_(self, columns):
@@ -224,7 +248,7 @@ class SQLMagic(TimeSeriesSchema):
         condition: str
             a string representing a comma-separated list of columns
         """
-        self._sql_stmt = self._sql_stmt + "ORDER BY " + columns
+        self._sql_stmt = self._sql_stmt + " ORDER BY " + columns
         return self
 
     def group_by_(self, columns):
@@ -242,6 +266,9 @@ class SQLMagic(TimeSeriesSchema):
             assert(0)
         if len(format_type) > 0 and format_type.upper() in self.supported_format_types:
             self._sql_stmt = self._sql_stmt + " STORED AS " + format_type.upper()
+        else:
+            if format_type.upper() not in self.supported_format_types:
+                raise UnsupportedStorageFormatException("ERROR: unsupported type {}".format(format_type))
         return self
 
     # def store_as_(self, format_type="parquet"):
@@ -250,6 +277,13 @@ class SQLMagic(TimeSeriesSchema):
     #     else:
     #         self._sql_stmt = self._sql_stmt + " STORED AS " + format_type.upper()
     #     return self
+
+    def partition_by_(self, columns):
+        if " PARTITION " not in self._sql_stmt and " PARTITIONED " not in self._sql_stmt:
+            self._sql_stmt += " PARTITIONED BY " + str(columns)
+        else:
+            assert(0)
+        return self
 
     def partition_objects_(self, num_objects):
         if "PARTITION" not in self._sql_stmt:
