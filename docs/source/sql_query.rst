@@ -61,7 +61,7 @@ Manage jobs
 9. :meth:`.export_job_history`
 
 Manage Cloud Object Storage URL
---------------------
+-------------------------------
 
 See :class:`.COSClient`
 

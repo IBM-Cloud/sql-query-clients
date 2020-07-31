@@ -21,7 +21,7 @@ Catalog\Table module
    :show-inheritance:
 
 Cloud Object Storage module
-----------------------
+----------------------------
 
 .. automodule:: ibmcloudsql.cos
    :members:
