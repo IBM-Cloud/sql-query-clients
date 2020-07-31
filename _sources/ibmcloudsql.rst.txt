@@ -4,7 +4,7 @@ ibmcloudsql package
 Submodules
 ----------
 
-ibmcloudsql.SQLQuery module
+SQL Query module
 ---------------------------
 
 .. automodule:: ibmcloudsql.SQLQuery
@@ -12,7 +12,7 @@ ibmcloudsql.SQLQuery module
    :undoc-members:
    :show-inheritance:
 
-ibmcloudsql.catalog\_table module
+Catalog\Table module
 ---------------------------------
 
 .. automodule:: ibmcloudsql.catalog_table
@@ -20,15 +20,15 @@ ibmcloudsql.catalog\_table module
    :undoc-members:
    :show-inheritance:
 
-ibmcloudsql.cos module
-----------------------
+Cloud Object Storage module
+----------------------------
 
 .. automodule:: ibmcloudsql.cos
    :members:
    :undoc-members:
    :show-inheritance:
 
-ibmcloudsql.exceptions module
+Exceptions module
 -----------------------------
 
 .. automodule:: ibmcloudsql.exceptions
@@ -36,7 +36,7 @@ ibmcloudsql.exceptions module
    :undoc-members:
    :show-inheritance:
 
-ibmcloudsql.sql\_magic module
+Magic module
 -----------------------------
 
 .. automodule:: ibmcloudsql.sql_magic
@@ -44,7 +44,7 @@ ibmcloudsql.sql\_magic module
    :undoc-members:
    :show-inheritance:
 
-ibmcloudsql.utilities module
+Utilities module
 ----------------------------
 
 .. automodule:: ibmcloudsql.utilities

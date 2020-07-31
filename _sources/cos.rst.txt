@@ -1,36 +1,36 @@
 .. _cos-label:
 
-ibmcloudsql.cos
+Cloud Object Storage (COS)
 ================================================
 
 :mod:`ibmcloudsql.cos` provides 3 classes
 
-* :py:class:`ibmcloudsql.cos.ParsedUrl` class which provides APIs to extract information from a given URL, e.g. COS URL
-* :py:class:`ibmcloudsql.cos.COSClient` class which (1) does what ParsedUrl can, (2) provides APIs to interact with COS - an extension to ibm-cos-sdk
-* :py:class:`ibmcloudsql.cos.ProjectLib` class which provides APIs to read/write data to Project's COS.
+* :py:class:`ibmcloudsql.cos.ParsedUrl` class that provides APIs to extract information from a given URL, for example from a COS URL.
+* :py:class:`ibmcloudsql.cos.COSClient` class that does what ParsedUrl can and provides APIs to interact with COS (an extension to ibm-cos-sdk).
+* :py:class:`ibmcloudsql.cos.ProjectLib` class that provides APIs to read/write data to a project's COS.
 
-ParsedUrl
----------
+Parsed URL
+-----------
 
 :class:`.ParsedUrl` provides the APIs to parse a COS URL.
 
-ProjectLib
-----------
+Project Lib
+------------
 
-:class:`.ProjectLib` class maintains a reference to an object of IBM Watson Studio's ProjectLib 
-which can read a file stored as an asset and load them into the current notebook.
+:class:`ProjectLib` class maintains a reference to an object in IBM Watson Studio's ProjectLib 
+that can read a file stored as an asset and load them into the current notebook.
 
-This file can be used in a number of scenarios, such as 
+This file can be used in a number of scenarios, such as:
 
-1. store/reload progress information
-2. load external Python packages
-3. store/reload data files
+1. Store/reload progress information
+2. Load external Python packages
+3. Store/reload data files
 
 *Example*:
-When SQLQuery launches many jobs, there is a chance that the progress can be stopped, and
+When SQLQuery launches many jobs, there is a chance that the progress is stopped, and
 you don't want to restart from the beginning. The above setting enables the SQLQuery to skip the 
-completed sql queries. The ``file_name`` argument reference to the name of the file 
-to be used for saving and restoring the job progress.
+completed sql queries. The ``file_name`` argument is a reference to the name of the file that you can 
+use for saving and restoring the job progress.
 
 .. code-block:: python
 
@@ -44,16 +44,16 @@ to be used for saving and restoring the job progress.
 
 
 
-COSClient
----------
+COS Client
+-----------
 
 :class:`.COSClient` is also an :class:`.IBMCloudAccess` and a :class:`.ParsedUrl`.
 
-COSClient class further provides the APIs
+COSClient class further provides the following APIs:
 
 .. 1. interact with COS URL: based on :py:class:`ibmcloudsql.cos.ParsedUrl` class
 
-* interact with COS instance:
+* To interact with the COS instance:
 
     1. :meth:`.delete_objects`
     2. :meth:`.delete_empty_objects`
@@ -62,7 +62,7 @@ COSClient class further provides the APIs
     5. :meth:`.get_bucket_info`
     6. :meth:`.get_cos_summary`
 
-* interact with ProjectLib's data:
+* To interact with the ProjectLib's data:
 
     1. :meth:`.connect_project_lib`
     2. :meth:`.read_project_lib_data`

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>ibmcloudsql.cos &#8212; SQLClient alpha documentation</title>
+    <title>Cloud Object Storage (COS) &#8212; SQLClient alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -17,8 +17,8 @@
     <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="ibmcloudsql.sql_magic" href="sql_magic.html" />
-    <link rel="prev" title="ibmcloudsql.utilities" href="utilities.html" />
+    <link rel="next" title="SQL Magic" href="sql_magic.html" />
+    <link rel="prev" title="Utilities" href="utilities.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -44,15 +44,15 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">ibmcloudsql.cos</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#parsedurl">ParsedUrl</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#projectlib">ProjectLib</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cosclient">COSClient</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cloud Object Storage (COS)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#parsed-url">Parsed URL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#project-lib">Project Lib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cos-client">COS Client</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.SQLQuery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQL Magic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQL Query</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
 </ul>
 
@@ -60,8 +60,8 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="utilities.html" title="previous chapter">ibmcloudsql.utilities</a></li>
-      <li>Next: <a href="sql_magic.html" title="next chapter">ibmcloudsql.sql_magic</a></li>
+      <li>Previous: <a href="utilities.html" title="previous chapter">Utilities</a></li>
+      <li>Next: <a href="sql_magic.html" title="next chapter">SQL Magic</a></li>
   </ul></li>
 </ul>
 </div>
@@ -91,33 +91,33 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="ibmcloudsql-cos">
-<span id="cos-label"></span><h1>ibmcloudsql.cos<a class="headerlink" href="#ibmcloudsql-cos" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="cloud-object-storage-cos">
+<span id="cos-label"></span><h1>Cloud Object Storage (COS)<a class="headerlink" href="#cloud-object-storage-cos" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.cos" title="ibmcloudsql.cos"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.cos</span></code></a> provides 3 classes</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ParsedUrl</span></code></a> class which provides APIs to extract information from a given URL, e.g. COS URL</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code></a> class which (1) does what ParsedUrl can, (2) provides APIs to interact with COS - an extension to ibm-cos-sdk</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ProjectLib" title="ibmcloudsql.cos.ProjectLib"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ProjectLib</span></code></a> class which provides APIs to read/write data to Project’s COS.</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ParsedUrl</span></code></a> class that provides APIs to extract information from a given URL, for example from a COS URL.</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code></a> class that does what ParsedUrl can and provides APIs to interact with COS (an extension to ibm-cos-sdk).</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ProjectLib" title="ibmcloudsql.cos.ProjectLib"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ProjectLib</span></code></a> class that provides APIs to read/write data to a project’s COS.</p></li>
 </ul>
-<div class="section" id="parsedurl">
-<h2>ParsedUrl<a class="headerlink" href="#parsedurl" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="parsed-url">
+<h2>Parsed URL<a class="headerlink" href="#parsed-url" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParsedUrl</span></code></a> provides the APIs to parse a COS URL.</p>
 </div>
-<div class="section" id="projectlib">
-<h2>ProjectLib<a class="headerlink" href="#projectlib" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ProjectLib" title="ibmcloudsql.cos.ProjectLib"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProjectLib</span></code></a> class maintains a reference to an object of IBM Watson Studio’s ProjectLib
-which can read a file stored as an asset and load them into the current notebook.</p>
-<p>This file can be used in a number of scenarios, such as</p>
+<div class="section" id="project-lib">
+<h2>Project Lib<a class="headerlink" href="#project-lib" title="Permalink to this headline">¶</a></h2>
+<p><code class="xref py py-class docutils literal notranslate"><span class="pre">ProjectLib</span></code> class maintains a reference to an object in IBM Watson Studio’s ProjectLib
+that can read a file stored as an asset and load them into the current notebook.</p>
+<p>This file can be used in a number of scenarios, such as:</p>
 <ol class="arabic simple">
-<li><p>store/reload progress information</p></li>
-<li><p>load external Python packages</p></li>
-<li><p>store/reload data files</p></li>
+<li><p>Store/reload progress information</p></li>
+<li><p>Load external Python packages</p></li>
+<li><p>Store/reload data files</p></li>
 </ol>
 <p><em>Example</em>:
-When SQLQuery launches many jobs, there is a chance that the progress can be stopped, and
+When SQLQuery launches many jobs, there is a chance that the progress is stopped, and
 you don’t want to restart from the beginning. The above setting enables the SQLQuery to skip the
-completed sql queries. The <code class="docutils literal notranslate"><span class="pre">file_name</span></code> argument reference to the name of the file
-to be used for saving and restoring the job progress.</p>
+completed sql queries. The <code class="docutils literal notranslate"><span class="pre">file_name</span></code> argument is a reference to the name of the file that you can
+use for saving and restoring the job progress.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">project_lib</span> <span class="kn">import</span> <span class="n">Project</span>
 <span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="n">your_project_id</span><span class="p">,</span>
                   <span class="n">project_access_token</span><span class="o">=</span><span class="n">your_project_cos_acess_token</span><span class="p">)</span>
@@ -128,12 +128,12 @@ to be used for saving and restoring the job progress.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="cosclient">
-<h2>COSClient<a class="headerlink" href="#cosclient" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cos-client">
+<h2>COS Client<a class="headerlink" href="#cos-client" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> is also an <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess" title="ibmcloudsql.utilities.IBMCloudAccess"><code class="xref py py-class docutils literal notranslate"><span class="pre">IBMCloudAccess</span></code></a> and a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParsedUrl</span></code></a>.</p>
-<p>COSClient class further provides the APIs</p>
+<p>COSClient class further provides the following APIs:</p>
 <ul>
-<li><p>interact with COS instance:</p>
+<li><p>To interact with the COS instance:</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_objects" title="ibmcloudsql.cos.COSClient.delete_objects"><code class="xref py py-meth docutils literal notranslate"><span class="pre">delete_objects()</span></code></a></p></li>
@@ -145,7 +145,7 @@ to be used for saving and restoring the job progress.</p>
 </ol>
 </div></blockquote>
 </li>
-<li><p>interact with ProjectLib’s data:</p>
+<li><p>To interact with the ProjectLib’s data:</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib" title="ibmcloudsql.cos.COSClient.connect_project_lib"><code class="xref py py-meth docutils literal notranslate"><span class="pre">connect_project_lib()</span></code></a></p></li>

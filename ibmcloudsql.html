@@ -43,19 +43,19 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">ibmcloudsql.utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cos.html">ibmcloudsql.cos</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">ibmcloudsql.sql_magic</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">ibmcloudsql.SQLQuery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">Cloud Object Storage (COS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQL Magic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQL Query</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">ibmcloudsql</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">ibmcloudsql package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.SQLQuery">ibmcloudsql.SQLQuery module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.catalog_table">ibmcloudsql.catalog_table module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.cos">ibmcloudsql.cos module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.exceptions">ibmcloudsql.exceptions module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.sql_magic">ibmcloudsql.sql_magic module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.utilities">ibmcloudsql.utilities module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.SQLQuery">SQL Query module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.catalog_table">CatalogTable module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.cos">Cloud Object Storage module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.exceptions">Exceptions module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.sql_magic">Magic module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.utilities">Utilities module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql">Module contents</a></li>
 </ul>
 </li>
@@ -105,7 +105,7 @@
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-ibmcloudsql.SQLQuery">
-<span id="ibmcloudsql-sqlquery-module"></span><h2>ibmcloudsql.SQLQuery module<a class="headerlink" href="#module-ibmcloudsql.SQLQuery" title="Permalink to this headline">¶</a></h2>
+<span id="sql-query-module"></span><h2>SQL Query module<a class="headerlink" href="#module-ibmcloudsql.SQLQuery" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.SQLQuery.</code><code class="sig-name descname">SQLQuery</code><span class="sig-paren">(</span><em class="sig-param">api_key</em>, <em class="sig-param">instance_crn</em>, <em class="sig-param">target_cos_url=None</em>, <em class="sig-param">client_info=''</em>, <em class="sig-param">max_concurrent_jobs=4</em>, <em class="sig-param">max_tries=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery" title="Permalink to this definition">¶</a></dt>
@@ -740,7 +740,7 @@ Query job, before deciding to launch it</p>
 
 </div>
 <div class="section" id="module-ibmcloudsql.catalog_table">
-<span id="ibmcloudsql-catalog-table-module"></span><h2>ibmcloudsql.catalog_table module<a class="headerlink" href="#module-ibmcloudsql.catalog_table" title="Permalink to this headline">¶</a></h2>
+<span id="catalogtable-module"></span><h2>CatalogTable module<a class="headerlink" href="#module-ibmcloudsql.catalog_table" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.catalog_table.HiveMetastore">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.catalog_table.</code><code class="sig-name descname">HiveMetastore</code><span class="sig-paren">(</span><em class="sig-param">target_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore" title="Permalink to this definition">¶</a></dt>
@@ -881,7 +881,7 @@ If skipped, the being tracked catalog-table is used</p>
 
 </div>
 <div class="section" id="module-ibmcloudsql.cos">
-<span id="ibmcloudsql-cos-module"></span><h2>ibmcloudsql.cos module<a class="headerlink" href="#module-ibmcloudsql.cos" title="Permalink to this headline">¶</a></h2>
+<span id="cloud-object-storage-module"></span><h2>Cloud Object Storage module<a class="headerlink" href="#module-ibmcloudsql.cos" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.cos.COSClient">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.cos.</code><code class="sig-name descname">COSClient</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">cos_url=''</em>, <em class="sig-param">client_info='COS Client'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient" title="Permalink to this definition">¶</a></dt>
@@ -1216,7 +1216,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 </div>
 <div class="section" id="module-ibmcloudsql.exceptions">
-<span id="ibmcloudsql-exceptions-module"></span><h2>ibmcloudsql.exceptions module<a class="headerlink" href="#module-ibmcloudsql.exceptions" title="Permalink to this headline">¶</a></h2>
+<span id="exceptions-module"></span><h2>Exceptions module<a class="headerlink" href="#module-ibmcloudsql.exceptions" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
 <dt id="ibmcloudsql.exceptions.CosUrlNotFoundException">
 <em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">CosUrlNotFoundException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#CosUrlNotFoundException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.CosUrlNotFoundException" title="Permalink to this definition">¶</a></dt>
@@ -1247,7 +1247,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 </div>
 <div class="section" id="module-ibmcloudsql.sql_magic">
-<span id="ibmcloudsql-sql-magic-module"></span><h2>ibmcloudsql.sql_magic module<a class="headerlink" href="#module-ibmcloudsql.sql_magic" title="Permalink to this headline">¶</a></h2>
+<span id="magic-module"></span><h2>Magic module<a class="headerlink" href="#module-ibmcloudsql.sql_magic" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.sql_magic.SQLMagic">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.sql_magic.</code><code class="sig-name descname">SQLMagic</code><a class="reference internal" href="_modules/ibmcloudsql/sql_magic.html#SQLMagic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_magic.SQLMagic" title="Permalink to this definition">¶</a></dt>
@@ -1409,7 +1409,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 </div>
 <div class="section" id="module-ibmcloudsql.utilities">
-<span id="ibmcloudsql-utilities-module"></span><h2>ibmcloudsql.utilities module<a class="headerlink" href="#module-ibmcloudsql.utilities" title="Permalink to this headline">¶</a></h2>
+<span id="utilities-module"></span><h2>Utilities module<a class="headerlink" href="#module-ibmcloudsql.utilities" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.utilities.IBMCloudAccess">
 <em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.utilities.</code><code class="sig-name descname">IBMCloudAccess</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">client_info=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess" title="Permalink to this definition">¶</a></dt>
