@@ -10,12 +10,12 @@ Cloud Object Storage (COS)
 * :py:class:`ibmcloudsql.cos.ProjectLib` class that provides APIs to read/write data to a project's COS.
 
 Parsed URL
----------
+-----------
 
 :class:`.ParsedUrl` provides the APIs to parse a COS URL.
 
 Project Lib
-----------
+------------
 
 :class:`ProjectLib` class maintains a reference to an object in IBM Watson Studio's ProjectLib 
 that can read a file stored as an asset and load them into the current notebook.
@@ -45,7 +45,7 @@ use for saving and restoring the job progress.
 
 
 COS Client
----------
+-----------
 
 :class:`.COSClient` is also an :class:`.IBMCloudAccess` and a :class:`.ParsedUrl`.
 

@@ -10,7 +10,7 @@ SQL Magic
 * :py:class:`.SQLMagic` class: provides APIs to help constructing a complete SQL query without knowing the details about syntax specific to IBM Cloud SQL
 
 Time series transform input
-------------------------
+---------------------------
 
 A :class:`.TimeSeriesTransformInput` class: provides utilities for mapping from user-friendly time series query into library-friendly time series query
 
@@ -34,7 +34,7 @@ Time series schema
 * :attr:`unixtime_columns`: shows which columns contain time stamp data in Unix time format
 
 Time series schema SQL Magic
-------------------------
+-----------------------------
 
 A :class:`.SQLMagic` class is also a :class:`.TimeSeriesSchema` class.
 
