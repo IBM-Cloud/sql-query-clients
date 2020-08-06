@@ -1,6 +1,6 @@
 .. _cos-label:
 
-Cloud Object Storage (COS)
+COSClient Class
 ================================================
 
 :mod:`ibmcloudsql.cos` provides 3 classes

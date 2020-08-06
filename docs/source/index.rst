@@ -3,20 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to SQLClient's documentation!
+ibmcloudsql Python SDK documentation
 ================================================
 
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
 
-   includeme
    intro
-   utilities
+   sql_query
    cos
    sql_magic
-   sql_query
+   utilities
    modules
+   includeme
 
 
 Indices and tables

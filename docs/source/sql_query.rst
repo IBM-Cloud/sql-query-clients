@@ -1,6 +1,6 @@
 .. _sql_query-label:
 
-SQL Query
+SQLQuery Class
 ================================================
 
 :mod:`ibmcloudsql.SQLQuery` provides the following single class:
@@ -8,6 +8,7 @@ SQL Query
 * :py:class:`.SQLQuery` class
 
 An :class:`.SQLQuery` class is also a :class:`.COSClient` class, and an :class:`.SQLMagic` class.
+This way the :class:`.SQLQuery` class acts as the central consolidated API interface for all of the ibmcloudsql module.
 
 
 .. code-block:: python
