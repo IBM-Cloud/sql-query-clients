@@ -99,7 +99,7 @@ A time series is comprised of the following:
 
 Very often, the raw data is too dense to be digested into a time series. Such data has to be transformed into a coarser timescale, using a proper aggregated function, for example, avg() or max(). The time window during which the summarized data point is to be collected is given by passing a value to `granularity` argument, as in the following example:
 
-* `raw`: No change, just extract to a new location
+* `raw`: No change, just extract to a new location.
 * `per_sec`, or `PT1S`: Per every second.
 * `per_2sec`, or `PT2S`: Per every two seconds.
 * `per_min`, or `PT1M`: Per every minute.
@@ -158,7 +158,7 @@ Tips
 References
 --------------
 
-*  `sparksql-parser <https://github.ibm.com/SqlServiceWdp/sparksql-parser>`_: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.
-* `grammar <https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4>`_
-* `tips for data layout <https://www.ibm.com/cloud/blog/big-data-layout>`_
-* `data skipping <https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query>`_
+*  `Sparksql-parser <https://github.ibm.com/SqlServiceWdp/sparksql-parser>`_: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.
+* `Grammar <https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4>`_
+* `Tips for data layout <https://www.ibm.com/cloud/blog/big-data-layout>`_
+* `Data skipping <https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query>`_
