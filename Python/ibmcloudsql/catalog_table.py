@@ -18,7 +18,7 @@ class HiveMetastore():
 
         self.sql_stmt_create_template = """
         CREATE TABLE {table_name}
-        USING CSV
+        USING {format_type}
         LOCATION {cos_in}
         """
         self.sql_stmt_show_temmplate = """
@@ -49,6 +49,9 @@ class HiveMetastore():
         pattern: str, optional
             If provided, this should be a pattern being used in name matching, e.g. '*cus*', which finds all tables with the name has 'cus'
 
+        Returns
+        --------
+        DataFrame
         """
         if tartget_cos_url is None:
             cos_out = self.target_url
@@ -137,7 +140,7 @@ class HiveMetastore():
         except KeyError:
             pass
 
-    def create_table(self, table_name, cos_url=None, force_recreate=False, blocking=True):
+    def create_table(self, table_name, cos_url=None, format_type="CSV", force_recreate=False, blocking=True, schema=None):
         """Create a table for data on COS
 
         Parameters
@@ -148,11 +151,16 @@ class HiveMetastore():
         cos_url : str, optional
             The COS URL from which the table should reference to
             If not provided, it uses the internal `self.cos_in_url`
+        format_type: string, optional
+            The type of the data above that you want to reference (default: CSV)
 
         force_recreate: bool, optional
             (True) force to recreate an existing table
         blocking: bool, optional
             (True) wait until it returns the resut
+        schema: None or string
+            If None, then automatic schema detection is used. Otherwise, pass in the comma-separated
+            string in the form "(columnName type, columnName type)"
 
         Returns
         -------
@@ -162,7 +170,9 @@ class HiveMetastore():
         def create_table_async(
                                     table_name,
                                     cos_url=None,
-                                    force_recreate=False):
+                                    format_type="CSV",
+                                    force_recreate=False,
+                                    schema=None):
             """
             the async version of `create_table`
 
@@ -202,16 +212,26 @@ class HiveMetastore():
                 self.drop_table(table_name)
             self.regular_tables.add(table_name)
             if len(found) == 0 or force_recreate:
-                sql_stmt_create = self.sql_stmt_create_template.format(
-                    table_name=table_name, cos_in=cos_url)
+                if schema is None:
+                    sql_stmt_create = self.sql_stmt_create_template.format(
+                        table_name=table_name, cos_in=cos_url, format_type=format_type)
+                else:
+                    # explit selection of scheme -> need to tell "PARTITIONED BY"
+                    schema = self._format_schema(schema)
+                    sql_stmt_create = """
+                    CREATE TABLE {table_name} {schema}
+                    USING {format_type}
+                    LOCATION {cos_in}
+                    """.format(table_name=table_name, cos_in=cos_url, format_type=format_type, schema=schema)
+
                 logger.debug(sql_stmt_create)
                 job_id = self.submit_sql(sql_stmt_create)
                 return job_id
             return None
 
         job_id = create_table_async(table_name,
-                                              cos_url,
-                                              force_recreate=force_recreate)
+                                    cos_url, format_type=format_type,
+                                    force_recreate=force_recreate, schema=schema)
         if job_id is not None and blocking is True:
             job_status = self.wait_for_job(job_id)
             if job_status == "completed":
@@ -219,6 +239,17 @@ class HiveMetastore():
             else:
                 return None
         return None
+
+    def _format_schema(self, schema):
+        """format the schema string to ensure it is enclosed by ( and )"""
+        schema = schema.strip()
+        if schema[0] == '(' or schema[-1] == ')':
+            if schema[0] != '(' or schema[-1] != ')':
+                print("schema wrong format, should be: (name type, name type)")
+                assert(0)
+        else:
+            schema = '(' + schema + ')'
+        return schema
 
     def create_partitioned_table(self, table_name, cos_url=None, format_type="CSV", force_recreate=False, schema=None):
         """
@@ -283,13 +314,7 @@ class HiveMetastore():
                     table_name=table_name, cos_in=cos_url, format_type=format_type)
             else:
                 # explit selection of scheme -> need to tell "PARTITIONED BY"
-                schema = schema.strip()
-                if schema[0] == '(' or schema[-1] == ')':
-                    if schema[0] != '(' or schema[-1] != ')':
-                        print("schema wrong format, should be: (name type, name type)")
-                        assert(0)
-                else:
-                    schema = '(' + schema + ')'
+                schema = self._format_schema(schema)
                 sql_stmt_create_partitioned = """
                 CREATE TABLE {table_name} {schema}
                 USING {format_type}
@@ -323,6 +348,10 @@ class HiveMetastore():
         self.run_sql(sql_stmt)
 
     def describe_table(self, table_name):
+        if self.target_url is None:
+            msg = "Need to define target COS URL"
+            raise ValueError(msg)
+
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
             table_name=table_name, cos_out=self.target_url)
