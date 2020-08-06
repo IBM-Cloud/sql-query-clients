@@ -16,3 +16,5 @@
 
 from .SQLQuery import SQLQuery
 from .exceptions import RateLimitedException
+from .sql_magic import SQLMagic
+from .cos import COSClient
