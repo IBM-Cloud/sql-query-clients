@@ -181,11 +181,14 @@ class SQLMagic(TimeSeriesSchema):
     def get_sql(self):
         return format_sql(self._sql_stmt)
 
+    @TimeSeriesTransformInput.transform_sql
     def reset_(self):
+        res = format_sql(self._sql_stmt)
         self._sql_stmt = ""
         self._has_stored_location = False
         self._has_with_clause = False
         self._has_select_clause = False
+        return res
 
     def with_(self, table_name, sql_stmt):
         if "WITH" not in self._sql_stmt:
@@ -241,6 +244,18 @@ class SQLMagic(TimeSeriesSchema):
         self._has_from_clause = False
         return self
 
+    def join_table_(self, table, condition, type="inner"):
+        self.supported_join_types = ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
+                "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
+        import re
+        type = re.sub(' +', ' ', type)
+        if type.upper() not in self.supported_join_types:
+            msg = "Wrong 'type', use a value in " + str(self.supported_join_types)
+            raise ValueError(msg)
+
+        self._sql_stmt = self._sql_stmt + " " + type + " JOIN " + table + " ON " + condition
+        return self
+
     def order_by_(self, columns):
         """
         Parameters
@@ -258,7 +273,7 @@ class SQLMagic(TimeSeriesSchema):
             self._sql_stmt = self._sql_stmt + ", " + columns
         return self
 
-    def store_at_(self, cos_url, format_type=""):
+    def store_at_(self, cos_url, format_type="CSV"):
         if self._has_stored_location is False:
             self._sql_stmt = self._sql_stmt + " INTO " + cos_url
             self._has_stored_location = True

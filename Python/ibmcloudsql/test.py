@@ -315,3 +315,56 @@ print(sqlClient.describe_table(table_name))
 print("Drop a catalog table")
 print(sqlClient.drop_table(table_name))
 print(sqlClient.show_tables())
+
+# ============= SQLMagic
+sqlmagic = ibmcloudsql.SQLMagic()
+targeturl = "cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/"
+(sqlClient.with_("humidity_location_table",
+                     (sqlmagic.select_("location")
+                             .from_view_("select count(*) as count, location from dht where humidity > 70.0 group by location")
+                             .where_("count > 1000 and count < 2000")
+                     ).reset_()
+                )
+    .with_("pm_location_table",
+                     (sqlmagic.select_("location")
+                             .from_view_("select count(*) as count, location from sds group by location")
+                             .where_("count > 1000 and count < 2000")
+                     ).reset_()
+            )
+    .select_("humidity_location_table.location")
+    .from_table_("humidity_location_table")
+    .join_table_("pm_location_table", type="inner", condition="humidity_location_table.location=pm_location_table.location")
+    .store_at_(targeturl)
+    )
+expected_sql = """WITH humidity_location_table AS
+  (SELECT LOCATION
+   FROM
+     (SELECT count(*) AS COUNT,
+             LOCATION
+      FROM dht
+      WHERE humidity > 70.0
+      GROUP BY LOCATION)
+   WHERE COUNT > 1000
+     AND COUNT < 2000 ),
+     pm_location_table AS
+  (SELECT LOCATION
+   FROM
+     (SELECT count(*) AS COUNT,
+             LOCATION
+      FROM sds
+      GROUP BY LOCATION)
+   WHERE COUNT > 1000
+     AND COUNT < 2000 )
+SELECT humidity_location_table.location
+FROM humidity_location_table
+INNER JOIN pm_location_table ON humidity_location_table.location=pm_location_table.location INTO cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/ STORED AS CSV"""
+assert(sqlClient.get_sql() == expected_sql)
+
+try:
+    (sqlClient
+        .join_table_("pm_location_table", type="inner a", condition="humidity_location_table.location=pm_location_table.location")
+    )
+except ValueError:
+    print("Got ValueError as expected")
+except Exception:
+    assert(0)
