@@ -265,11 +265,17 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     msg=msg,
                     query=pformat(json_data))
             crn_error = "Service CRN has an invalid format"
+            crn_invalid_plan_error = "upgrade this instance"
             if crn_error in error_message:
                 error_message = "SQL submission failed ({code}): {msg}".format(
                         code=response.status_code,
                         msg=msg)
                 raise SqlQueryCrnInvalidFormatException(error_message)
+            elif crn_invalid_plan_error in error_message:
+                error_message = "SQL submission failed ({code}): {msg}".format(
+                        code=response.status_code,
+                        msg=msg)
+                raise SqlQueryInvalidPlanException(error_message)
             else:
                 raise SyntaxError(error_message)
 
