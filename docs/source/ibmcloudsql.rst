@@ -12,7 +12,7 @@ SQL Query module
    :undoc-members:
    :show-inheritance:
 
-Catalog\Table module
+Catalog/Table module
 ---------------------------------
 
 .. automodule:: ibmcloudsql.catalog_table
