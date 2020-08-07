@@ -1,6 +1,6 @@
 .. _sql-magic-label:
 
-SQL Magic
+SQLMagic Class
 ================================================
 
 :mod:`ibmcloudsql.sql_magic` provides the following three classes:

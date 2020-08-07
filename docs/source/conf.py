@@ -24,7 +24,7 @@ import m2r
 
 # -- Project information -----------------------------------------------------
 
-project = 'SQLClient'
+project = 'ibmcloudsql'
 copyright = '2020, IBM Research'
 author = 'Tuan M. HoangTrong'
 
