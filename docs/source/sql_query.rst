@@ -8,7 +8,7 @@ SQLQuery Class
 * :py:class:`.SQLQuery` class
 
 An :class:`.SQLQuery` class is also a :class:`.COSClient` class, and an :class:`.SQLMagic` class.
-This way the :class:`.SQLQuery` class acts as the central consolidated API interface for all of the ibmcloudsql module.
+This way the :class:`.SQLQuery` class acts as the central consolidated API interface for the entire ibmcloudsql module.
 
 
 .. code-block:: python
