@@ -1324,9 +1324,14 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         DataFrame
 
         """
-        if type.upper() not in ["JSON", "CSV", "PARQUET"]:
-            logger.error("use wrong format")
-            raise Exception("Use wrong format of data: 'type' option")
+        supported_types = ["JSON", "CSV", "PARQUET"]
+
+        if self.target_cos_url is None:
+            msg = "Need to pass target COS URL to SQL Client object"
+            raise ValueError(msg)
+        if type.upper() not in supported_types:
+            msg = "Expected 'type' value: " + str(supported_types)
+            raise ValueError(msg)
         sql_stmt = """
         SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
         INTO {cos_out} STORED AS JSON
@@ -1335,7 +1340,11 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             print(sql_stmt)
             return None
         else:
-            return self.run_sql(sql_stmt)
+            df = self.run_sql(sql_stmt)
+            if df.name[0] == "_corrupt_record":
+                msg = "ERROR: Revise 'type' value, underlying data format maybe different"
+                raise ValueError(msg)
+            return df
 
     def analyze(self, job_id):
         """Provides some insights about the data layout from the current SQL statement
