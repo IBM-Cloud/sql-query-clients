@@ -317,6 +317,8 @@ print(sqlClient.drop_table(table_name))
 print(sqlClient.show_tables())
 
 # ============= SQLMagic
+print("==================================")
+print("Check query string generation")
 sqlmagic = ibmcloudsql.SQLMagic()
 targeturl = "cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/"
 (sqlClient.with_("humidity_location_table",
@@ -360,10 +362,21 @@ FROM humidity_location_table
 INNER JOIN pm_location_table ON humidity_location_table.location=pm_location_table.location INTO cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/ STORED AS CSV"""
 assert(sqlClient.get_sql() == expected_sql)
 
+print("==================================")
+print("Check generating JOIN statement")
 try:
     (sqlClient
         .join_table_("pm_location_table", type="inner a", condition="humidity_location_table.location=pm_location_table.location")
     )
+except ValueError:
+    print("Got ValueError as expected")
+except Exception:
+    assert(0)
+
+print("==================================")
+print("Check get_schema_data")
+try:
+    df = sqlClient.get_schema_data("cos://us-geo/sql/oklabdata/parquet/sds011/2017/09/", type="csv")
 except ValueError:
     print("Got ValueError as expected")
 except Exception:
