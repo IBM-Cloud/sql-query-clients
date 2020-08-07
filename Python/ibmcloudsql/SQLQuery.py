@@ -265,11 +265,17 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     msg=msg,
                     query=pformat(json_data))
             crn_error = "Service CRN has an invalid format"
+            crn_invalid_plan_error = "upgrade this instance"
             if crn_error in error_message:
                 error_message = "SQL submission failed ({code}): {msg}".format(
                         code=response.status_code,
                         msg=msg)
                 raise SqlQueryCrnInvalidFormatException(error_message)
+            elif crn_invalid_plan_error in error_message:
+                error_message = "SQL submission failed ({code}): {msg}".format(
+                        code=response.status_code,
+                        msg=msg)
+                raise SqlQueryInvalidPlanException(error_message)
             else:
                 raise SyntaxError(error_message)
 
@@ -1318,9 +1324,14 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         DataFrame
 
         """
-        if type.upper() not in ["JSON", "CSV", "PARQUET"]:
-            logger.error("use wrong format")
-            raise Exception("Use wrong format of data: 'type' option")
+        supported_types = ["JSON", "CSV", "PARQUET"]
+
+        if self.target_cos_url is None:
+            msg = "Need to pass target COS URL to SQL Client object"
+            raise ValueError(msg)
+        if type.upper() not in supported_types:
+            msg = "Expected 'type' value: " + str(supported_types)
+            raise ValueError(msg)
         sql_stmt = """
         SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
         INTO {cos_out} STORED AS JSON
@@ -1329,7 +1340,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             print(sql_stmt)
             return None
         else:
-            return self.run_sql(sql_stmt)
+            df = self.run_sql(sql_stmt)
+            if (df.name[0] == "_corrupt_record") or \
+                ('�]�]L�' in df.name[0] and 'PAR1' in df.name[0]):
+                msg = "ERROR: Revise 'type' value, underlying data format maybe different"
+                raise ValueError(msg)
+            return df
 
     def analyze(self, job_id):
         """Provides some insights about the data layout from the current SQL statement

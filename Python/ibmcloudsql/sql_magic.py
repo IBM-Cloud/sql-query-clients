@@ -173,19 +173,23 @@ class SQLMagic(TimeSeriesSchema):
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
         self._has_from_clause = False
 
-    @TimeSeriesTransformInput.transform_sql
     def print_sql(self):
-        print_sql(self._sql_stmt)
+        print_sql(self.get_sql())
 
     @TimeSeriesTransformInput.transform_sql
     def get_sql(self):
+        """return the current sql string"""
         return format_sql(self._sql_stmt)
 
     def reset_(self):
+        """reset and returns the current sql string"""
+        res = self.get_sql()
         self._sql_stmt = ""
         self._has_stored_location = False
         self._has_with_clause = False
         self._has_select_clause = False
+        self._has_from_clause = False
+        return res
 
     def with_(self, table_name, sql_stmt):
         if "WITH" not in self._sql_stmt:
@@ -214,6 +218,8 @@ class SQLMagic(TimeSeriesSchema):
             self._sql_stmt += " FROM "
         self._sql_stmt += table
         if alias:
+            # NOTE: it's ok for not using 'AS'
+            # self._sql_stmt += " AS " + alias.strip()
             self._sql_stmt += " " + alias.strip()
         self._has_from_clause = True
         return self
@@ -241,6 +247,25 @@ class SQLMagic(TimeSeriesSchema):
         self._has_from_clause = False
         return self
 
+    def join_cos_(self, cos_url, condition, type="inner", alias=None):
+        table = cos_url
+        return self.join_table_(table, condition, type=type, alias=alias)
+
+    def join_table_(self, table, condition, type="inner", alias=None):
+        self.supported_join_types = ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
+                "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
+        import re
+        type = re.sub(' +', ' ', type)
+        if type.upper() not in self.supported_join_types:
+            msg = "Wrong 'type', use a value in " + str(self.supported_join_types)
+            raise ValueError(msg)
+
+        if alias is None:
+            self._sql_stmt = self._sql_stmt + " " + type + " JOIN " + table + " ON " + condition
+        else:
+            self._sql_stmt = self._sql_stmt + " " + type + " JOIN " + table + " AS " + alias + " ON " + condition
+        return self
+
     def order_by_(self, columns):
         """
         Parameters
@@ -258,7 +283,7 @@ class SQLMagic(TimeSeriesSchema):
             self._sql_stmt = self._sql_stmt + ", " + columns
         return self
 
-    def store_at_(self, cos_url, format_type=""):
+    def store_at_(self, cos_url, format_type="CSV"):
         if self._has_stored_location is False:
             self._sql_stmt = self._sql_stmt + " INTO " + cos_url
             self._has_stored_location = True
