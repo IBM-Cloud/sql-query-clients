@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>SQL Query &#8212; SQLClient alpha documentation</title>
+    <title>SQLQuery Class &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -17,8 +17,8 @@
     <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="ibmcloudsql" href="modules.html" />
-    <link rel="prev" title="SQL Magic" href="sql_magic.html" />
+    <link rel="next" title="COSClient Class" href="cos.html" />
+    <link rel="prev" title="Introduction" href="intro.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -30,7 +30,7 @@
     
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">SQLClient</a></h1>
+<h1 class="logo"><a href="index.html">ibmcloudsql</a></h1>
 
 
 
@@ -42,12 +42,8 @@
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cos.html">Cloud Object Storage (COS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQL Magic</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">SQL Query</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SQLQuery Class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#help">Help</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#submit-sql-jobs">Submit SQL jobs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#work-with-query-results">Work with query results</a></li>
@@ -61,15 +57,19 @@
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">Github Repository</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="sql_magic.html" title="previous chapter">SQL Magic</a></li>
-      <li>Next: <a href="modules.html" title="next chapter">ibmcloudsql</a></li>
+      <li>Previous: <a href="intro.html" title="previous chapter">Introduction</a></li>
+      <li>Next: <a href="cos.html" title="next chapter">COSClient Class</a></li>
   </ul></li>
 </ul>
 </div>
@@ -99,13 +99,14 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="sql-query">
-<span id="sql-query-label"></span><h1>SQL Query<a class="headerlink" href="#sql-query" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sqlquery-class">
+<span id="sql-query-label"></span><h1>SQLQuery Class<a class="headerlink" href="#sqlquery-class" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.SQLQuery" title="ibmcloudsql.SQLQuery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery</span></code></a> provides the following single class:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class</p></li>
 </ul>
-<p>An <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> class, and an <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class.</p>
+<p>An <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> class, and an <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class.
+This way the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class acts as the central consolidated API interface for the entire ibmcloudsql module.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sqlClient</span> <span class="o">=</span> <span class="n">SQLQuery</span><span class="p">(</span><span class="o">....</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -190,7 +191,7 @@
 </ol>
 <p>Very often, the raw data is too dense to be digested into a time series. Such data has to be transformed into a coarser timescale, using a proper aggregated function, for example, avg() or max(). The time window during which the summarized data point is to be collected is given by passing a value to <cite>granularity</cite> argument, as in the following example:</p>
 <ul class="simple">
-<li><p><cite>raw</cite>: No change, just extract to a new location</p></li>
+<li><p><cite>raw</cite>: No change, just extract to a new location.</p></li>
 <li><p><cite>per_sec</cite>, or <cite>PT1S</cite>: Per every second.</p></li>
 <li><p><cite>per_2sec</cite>, or <cite>PT2S</cite>: Per every two seconds.</p></li>
 <li><p><cite>per_min</cite>, or <cite>PT1M</cite>: Per every minute.</p></li>
@@ -252,10 +253,10 @@
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser">sparksql-parser</a>: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.</p></li>
-<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4">grammar</a></p></li>
-<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/big-data-layout">tips for data layout</a></p></li>
-<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query">data skipping</a></p></li>
+<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser">Sparksql-parser</a>: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.</p></li>
+<li><p><a class="reference external" href="https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4">Grammar</a></p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/big-data-layout">Tips for data layout</a></p></li>
+<li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query">Data skipping</a></p></li>
 </ul>
 </div>
 </div>

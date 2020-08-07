@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>ibmcloudsql.sql_magic &#8212; SQLClient alpha documentation</title>
+    <title>ibmcloudsql.sql_magic &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -28,7 +28,7 @@
     
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">SQLClient</a></h1>
+<h1 class="logo"><a href="../../index.html">ibmcloudsql</a></h1>
 
 
 
@@ -40,13 +40,13 @@
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../utilities.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../cos.html">Cloud Object Storage (COS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQL Magic</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQL Query</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../modules.html">ibmcloudsql</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../includeme.html">Github Repository</a></li>
 </ul>
 
 <div class="relations">
@@ -260,19 +260,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PARQUET&quot;</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;JSON&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="SQLMagic.print_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
-    <span class="k">def</span> <span class="nf">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">)</span></div>
+<div class="viewcode-block" id="SQLMagic.print_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql">[docs]</a>    <span class="k">def</span> <span class="nf">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_sql</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="SQLMagic.get_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.get_sql">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
     <span class="k">def</span> <span class="nf">get_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return the current sql string&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">format_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SQLMagic.reset_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.reset_">[docs]</a>    <span class="k">def</span> <span class="nf">reset_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;reset and returns the current sql string&quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sql</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_stored_location</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_with_clause</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="o">=</span> <span class="kc">False</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">res</span></div>
 
 <div class="viewcode-block" id="SQLMagic.with_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.with_">[docs]</a>    <span class="k">def</span> <span class="nf">with_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
         <span class="k">if</span> <span class="s2">&quot;WITH&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">:</span>
@@ -301,6 +305,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; FROM &quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="n">table</span>
         <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
+            <span class="c1"># NOTE: it&#39;s ok for not using &#39;AS&#39;</span>
+            <span class="c1"># self._sql_stmt += &quot; AS &quot; + alias.strip()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">alias</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span></div>
@@ -328,6 +334,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
+<div class="viewcode-block" id="SQLMagic.join_cos_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_cos_">[docs]</a>    <span class="k">def</span> <span class="nf">join_cos_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">cos_url</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">join_table_</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SQLMagic.join_table_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_table_">[docs]</a>    <span class="k">def</span> <span class="nf">join_table_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;INNER&quot;</span><span class="p">,</span> <span class="s2">&quot;CROSS&quot;</span><span class="p">,</span> <span class="s2">&quot;OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT SEMI&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RIGHT&quot;</span><span class="p">,</span> <span class="s2">&quot;RIGHT OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;FULL&quot;</span><span class="p">,</span> <span class="s2">&quot;FULL OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;ANTI&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT ANTI&quot;</span><span class="p">]</span>
+        <span class="kn">import</span> <span class="nn">re</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39; +&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Wrong &#39;type&#39;, use a value in &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">alias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">type</span> <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span> <span class="o">+</span> <span class="n">table</span> <span class="o">+</span> <span class="s2">&quot; ON &quot;</span> <span class="o">+</span> <span class="n">condition</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">type</span> <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span> <span class="o">+</span> <span class="n">table</span> <span class="o">+</span> <span class="s2">&quot; AS &quot;</span> <span class="o">+</span> <span class="n">alias</span> <span class="o">+</span> <span class="s2">&quot; ON &quot;</span> <span class="o">+</span> <span class="n">condition</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 <div class="viewcode-block" id="SQLMagic.order_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.order_by_">[docs]</a>    <span class="k">def</span> <span class="nf">order_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parameters</span>
@@ -345,7 +370,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">columns</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.store_at_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.store_at_">[docs]</a>    <span class="k">def</span> <span class="nf">store_at_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLMagic.store_at_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.store_at_">[docs]</a>    <span class="k">def</span> <span class="nf">store_at_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_stored_location</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; INTO &quot;</span> <span class="o">+</span> <span class="n">cos_url</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_has_stored_location</span> <span class="o">=</span> <span class="kc">True</span>

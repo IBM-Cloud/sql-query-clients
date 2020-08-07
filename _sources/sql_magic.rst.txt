@@ -1,6 +1,6 @@
 .. _sql-magic-label:
 
-SQL Magic
+SQLMagic Class
 ================================================
 
 :mod:`ibmcloudsql.sql_magic` provides the following three classes:
@@ -55,4 +55,72 @@ A :class:`.SQLMagic` class is also a :class:`.TimeSeriesSchema` class.
 * :meth:`.partition_rows_`: provides number of rows per object
 * :meth:`.partition_by_`: provides the string of tuple of column names for HIVE catalog partitioning 
 * :meth:`.format_`: applies transformation needed to map user-friendly time series queries into library-friendly time series queries
+* :meth:`.join_cos_`: JOIN statement using COS URL
+* :meth:`.join_table_`: JOIN statement using table name
+
+Example: we can generate the SQL string using SQLMagic APIs
+
+.. code-block:: python
+    :linenos:
+
+    sqlmagic = ibmcloudsql.SQLMagic()
+    (sqlClient
+     .with_("humidity_location_table",
+              (sqlmagic.select_("location")
+                       .from_view_("select count(*) as count, location from dht where humidity > 70.0 group by location")
+                       .where_("count > 1000 and count < 2000")
+              ).reset_()
+           )
+     .with_("pm_location_table",
+              (sqlmagic.select_("location")
+                       .from_view_("select count(*) as count, location from sds group by location")
+                       .where_("count > 1000 and count < 2000")
+              ).reset_()
+           )
+     .select_("humidity_location_table.location")
+     .from_table_("humidity_location_table")
+     .join_table_("pm_location_table", type="inner", condition="humidity_location_table.location=pm_location_table.location")
+     .store_at_(targeturl)
+     )
+    result = sqlClient.run()
+
+This is the typically way to generate the SQL similar to the one above
+
+..  code-block:: python
+    :linenos:
+
+    stmt = """
+        WITH
+            humidity_location_table AS (
+            -- 1. Select locations from DHT where humidity is >70% and the length is data is between 1000 and 2000
+                SELECT location from (
+                    SELECT
+                        COUNT(*) AS count,
+                        location
+                    FROM DHT
+                    WHERE humidity > 70.0
+                    GROUP BY location
+                )
+                WHERE count > 1000 AND count < 2000
+            ),
+            pm_location_table AS (
+            -- 2. Select locations from PM where length is data is between 1000 and 2000
+               SELECT location from (
+                SELECT
+                  COUNT(*) AS count,
+                  location
+                FROM SDS
+                GROUP BY location
+              )
+              WHERE count > 1000 AND count < 2000
+            )
+            -- 3. Select those locations that are present in both PM and DHT tables
+            SELECT
+                humidity_location_table.location
+            FROM humidity_location_table
+            INNER JOIN pm_location_table
+            ON humidity_location_table.location=pm_location_table.location
+            INTO {}
+    """.format(targeturl)
+    result = sqlClient.execute_sql(stmt)
 

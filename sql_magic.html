@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>SQL Magic &#8212; SQLClient alpha documentation</title>
+    <title>SQLMagic Class &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -17,8 +17,8 @@
     <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SQL Query" href="sql_query.html" />
-    <link rel="prev" title="Cloud Object Storage (COS)" href="cos.html" />
+    <link rel="next" title="IBMCloudAccess Class" href="utilities.html" />
+    <link rel="prev" title="COSClient Class" href="cos.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -30,7 +30,7 @@
     
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">SQLClient</a></h1>
+<h1 class="logo"><a href="index.html">ibmcloudsql</a></h1>
 
 
 
@@ -42,26 +42,26 @@
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cos.html">Cloud Object Storage (COS)</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">SQL Magic</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SQLMagic Class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-transform-input">Time series transform input</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-schema">Time series schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-schema-sql-magic">Time series schema SQL Magic</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQL Query</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">Github Repository</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="cos.html" title="previous chapter">Cloud Object Storage (COS)</a></li>
-      <li>Next: <a href="sql_query.html" title="next chapter">SQL Query</a></li>
+      <li>Previous: <a href="cos.html" title="previous chapter">COSClient Class</a></li>
+      <li>Next: <a href="utilities.html" title="next chapter">IBMCloudAccess Class</a></li>
   </ul></li>
 </ul>
 </div>
@@ -91,8 +91,8 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="sql-magic">
-<span id="sql-magic-label"></span><h1>SQL Magic<a class="headerlink" href="#sql-magic" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="sqlmagic-class">
+<span id="sql-magic-label"></span><h1>SQLMagic Class<a class="headerlink" href="#sqlmagic-class" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_magic" title="ibmcloudsql.sql_magic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.sql_magic</span></code></a> provides the following three classes:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesTransformInput</span></code></a> class: provides utilities for mapping user-friendly APIs to library-friendly APIs</p></li>
@@ -142,7 +142,121 @@
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_rows_" title="ibmcloudsql.sql_magic.SQLMagic.partition_rows_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_rows_()</span></code></a>: provides number of rows per object</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_by_" title="ibmcloudsql.sql_magic.SQLMagic.partition_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_by_()</span></code></a>: provides the string of tuple of column names for HIVE catalog partitioning</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_" title="ibmcloudsql.sql_magic.SQLMagic.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">format_()</span></code></a>: applies transformation needed to map user-friendly time series queries into library-friendly time series queries</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_cos_" title="ibmcloudsql.sql_magic.SQLMagic.join_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_cos_()</span></code></a>: JOIN statement using COS URL</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_table_" title="ibmcloudsql.sql_magic.SQLMagic.join_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_table_()</span></code></a>: JOIN statement using table name</p></li>
 </ul>
+<p>Example: we can generate the SQL string using SQLMagic APIs</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">sqlmagic</span> <span class="o">=</span> <span class="n">ibmcloudsql</span><span class="o">.</span><span class="n">SQLMagic</span><span class="p">()</span>
+<span class="p">(</span><span class="n">sqlClient</span>
+ <span class="o">.</span><span class="n">with_</span><span class="p">(</span><span class="s2">&quot;humidity_location_table&quot;</span><span class="p">,</span>
+          <span class="p">(</span><span class="n">sqlmagic</span><span class="o">.</span><span class="n">select_</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">from_view_</span><span class="p">(</span><span class="s2">&quot;select count(*) as count, location from dht where humidity &gt; 70.0 group by location&quot;</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">where_</span><span class="p">(</span><span class="s2">&quot;count &gt; 1000 and count &lt; 2000&quot;</span><span class="p">)</span>
+          <span class="p">)</span><span class="o">.</span><span class="n">reset_</span><span class="p">()</span>
+       <span class="p">)</span>
+ <span class="o">.</span><span class="n">with_</span><span class="p">(</span><span class="s2">&quot;pm_location_table&quot;</span><span class="p">,</span>
+          <span class="p">(</span><span class="n">sqlmagic</span><span class="o">.</span><span class="n">select_</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">from_view_</span><span class="p">(</span><span class="s2">&quot;select count(*) as count, location from sds group by location&quot;</span><span class="p">)</span>
+                   <span class="o">.</span><span class="n">where_</span><span class="p">(</span><span class="s2">&quot;count &gt; 1000 and count &lt; 2000&quot;</span><span class="p">)</span>
+          <span class="p">)</span><span class="o">.</span><span class="n">reset_</span><span class="p">()</span>
+       <span class="p">)</span>
+ <span class="o">.</span><span class="n">select_</span><span class="p">(</span><span class="s2">&quot;humidity_location_table.location&quot;</span><span class="p">)</span>
+ <span class="o">.</span><span class="n">from_table_</span><span class="p">(</span><span class="s2">&quot;humidity_location_table&quot;</span><span class="p">)</span>
+ <span class="o">.</span><span class="n">join_table_</span><span class="p">(</span><span class="s2">&quot;pm_location_table&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;humidity_location_table.location=pm_location_table.location&quot;</span><span class="p">)</span>
+ <span class="o">.</span><span class="n">store_at_</span><span class="p">(</span><span class="n">targeturl</span><span class="p">)</span>
+ <span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">sqlClient</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>This is the typically way to generate the SQL similar to the one above</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    WITH</span>
+<span class="s2">        humidity_location_table AS (</span>
+<span class="s2">        -- 1. Select locations from DHT where humidity is &gt;70</span><span class="si">% a</span><span class="s2">nd the length is data is between 1000 and 2000</span>
+<span class="s2">            SELECT location from (</span>
+<span class="s2">                SELECT</span>
+<span class="s2">                    COUNT(*) AS count,</span>
+<span class="s2">                    location</span>
+<span class="s2">                FROM DHT</span>
+<span class="s2">                WHERE humidity &gt; 70.0</span>
+<span class="s2">                GROUP BY location</span>
+<span class="s2">            )</span>
+<span class="s2">            WHERE count &gt; 1000 AND count &lt; 2000</span>
+<span class="s2">        ),</span>
+<span class="s2">        pm_location_table AS (</span>
+<span class="s2">        -- 2. Select locations from PM where length is data is between 1000 and 2000</span>
+<span class="s2">           SELECT location from (</span>
+<span class="s2">            SELECT</span>
+<span class="s2">              COUNT(*) AS count,</span>
+<span class="s2">              location</span>
+<span class="s2">            FROM SDS</span>
+<span class="s2">            GROUP BY location</span>
+<span class="s2">          )</span>
+<span class="s2">          WHERE count &gt; 1000 AND count &lt; 2000</span>
+<span class="s2">        )</span>
+<span class="s2">        -- 3. Select those locations that are present in both PM and DHT tables</span>
+<span class="s2">        SELECT</span>
+<span class="s2">            humidity_location_table.location</span>
+<span class="s2">        FROM humidity_location_table</span>
+<span class="s2">        INNER JOIN pm_location_table</span>
+<span class="s2">        ON humidity_location_table.location=pm_location_table.location</span>
+<span class="s2">        INTO </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">targeturl</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">sqlClient</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
 </div>
 </div>
 

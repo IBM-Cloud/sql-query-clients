@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Welcome to SQLClient’s documentation! &#8212; SQLClient alpha documentation</title>
+    <title>ibmcloudsql Python SDK documentation &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -17,7 +17,7 @@
     <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="README" href="includeme.html" />
+    <link rel="next" title="Introduction" href="intro.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -29,7 +29,7 @@
     
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="#">SQLClient</a></h1>
+<h1 class="logo"><a href="#">ibmcloudsql</a></h1>
 
 
 
@@ -41,20 +41,20 @@
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cos.html">Cloud Object Storage (COS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQL Magic</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQL Query</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">Github Repository</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="includeme.html" title="next chapter">README</a></li>
+      <li>Next: <a href="intro.html" title="next chapter">Introduction</a></li>
   </ul></li>
 </ul>
 </div>
@@ -84,31 +84,17 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="welcome-to-sqlclient-s-documentation">
-<h1>Welcome to SQLClient’s documentation!<a class="headerlink" href="#welcome-to-sqlclient-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="ibmcloudsql-python-sdk-documentation">
+<h1>ibmcloudsql Python SDK documentation<a class="headerlink" href="#ibmcloudsql-python-sdk-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="includeme.html">README</a></li>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="intro.html#ibmcloudsql">ibmcloudsql</a></li>
 <li class="toctree-l2"><a class="reference internal" href="intro.html#install">install</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cos.html">Cloud Object Storage (COS)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cos.html#parsed-url">Parsed URL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cos.html#project-lib">Project Lib</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cos.html#cos-client">COS Client</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQL Magic</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-transform-input">Time series transform input</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-schema">Time series schema</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-schema-sql-magic">Time series schema SQL Magic</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQL Query</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sql_query.html#help">Help</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sql_query.html#submit-sql-jobs">Submit SQL jobs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sql_query.html#work-with-query-results">Work with query results</a></li>
@@ -122,11 +108,24 @@
 <li class="toctree-l2"><a class="reference internal" href="sql_query.html#references">References</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">ibmcloudsql</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#parsed-url">Parsed URL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#project-lib">Project Lib</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cos.html#cos-client">COS Client</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-transform-input">Time series transform input</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-schema">Time series schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sql_magic.html#time-series-schema-sql-magic">Time series schema SQL Magic</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="ibmcloudsql.html">ibmcloudsql package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#submodules">Submodules</a></li>
 <li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.SQLQuery">SQL Query module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.catalog_table">CatalogTable module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.catalog_table">Catalog/Table module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.cos">Cloud Object Storage module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.exceptions">Exceptions module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_magic">Magic module</a></li>
@@ -136,6 +135,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="includeme.html">Github Repository</a></li>
 </ul>
 </div>
 </div>
