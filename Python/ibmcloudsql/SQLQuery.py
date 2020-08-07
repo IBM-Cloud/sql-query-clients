@@ -1341,7 +1341,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             return None
         else:
             df = self.run_sql(sql_stmt)
-            if df.name[0] == "_corrupt_record":
+            if (df.name[0] == "_corrupt_record") or \
+                ('�]�]L�' in df.name[0] and 'PAR1' in df.name[0]):
                 msg = "ERROR: Revise 'type' value, underlying data format maybe different"
                 raise ValueError(msg)
             return df
