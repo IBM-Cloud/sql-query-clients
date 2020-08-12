@@ -1012,7 +1012,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             job_list = response.json()
             job_list_df = pd.DataFrame(columns=['job_id', 'status', 'user_id', 'statement', 'resultset_location',
                                                 'submit_time', 'end_time', 'rows_read', 'rows_returned', 'bytes_read',
-                                                'error', 'error_message'])
+                                                'objects_skipped', 'objects_qualified', 'error', 'error_message'])
             for job in job_list['jobs']:
                 response = requests.get(
                     "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
@@ -1027,6 +1027,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     rows_read = None
                     rows_returned = None
                     bytes_read = None
+                    objects_skipped = None
+                    objects_qualified = None
                     end_time = ""
                     if 'error' in job_details:
                         error = job_details['error']
@@ -1040,6 +1042,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                         rows_returned = job_details['rows_returned']
                     if 'bytes_read' in job_details:
                         bytes_read = job_details['bytes_read']
+                    if 'objects_skipped' in job_details:
+                        objects_skipped = job_details['objects_skipped']
+                    if 'objects_qualified' in job_details:
+                        objects_qualified = job_details['objects_qualified']
                     resultset_loc = np.NaN
                     if 'resultset_location' in job_details:
                         resultset_loc = job_details['resultset_location']
@@ -1053,6 +1059,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                                                        'rows_read': rows_read,
                                                        'rows_returned': rows_returned,
                                                        'bytes_read': bytes_read,
+                                                       'objects_skipped': objects_skipped,
+                                                       'objects_qualified': objects_qualified,
                                                        'error': error,
                                                        'error_message': error_message,
                                                        }], ignore_index=True, sort=False)
