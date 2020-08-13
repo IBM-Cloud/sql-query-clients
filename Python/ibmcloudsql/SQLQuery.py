@@ -128,6 +128,9 @@ def check_saved_jobs_decorator(f):
                     self.write_project_lib_data()
         else:
             # use local file
+            if prefix is None:
+                msg = "Please pass in file name"
+                raise ValueError(msg)
             try:
                 with open(prefix) as json_data:
                     self._data =  json.load(json_data)
@@ -480,9 +483,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Each SQL Query instance is limited by the number of sql queries that it
         can handle at a time.  This can be a problem when you
         launch many SQL Query jobs, as such limitation may prevent you to
-        complete all of them in one session. The time for one session is
-        often limited when when using SQL Query client via Watson Studio, i.e. you
-        will lost session without any interaction with the notebook after tens of minutes.
+        complete all of them in one session. The `maxtries` options when creating
+        the SQL Query client object allows
+        you to re-send the job, which is still limited to one session.
+        The time for one session is often limited when when using
+        SQL Query client via Watson Studio, i.e. you
+        will lose the session after having no interaction with the notebook for
+        a period of time.
 
         This API provides the capability to put the information of each
         launched jobs in a `file_name` stored either
