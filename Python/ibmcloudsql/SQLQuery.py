@@ -31,9 +31,9 @@ import pyarrow
 import os
 import tempfile
 try:
-    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
+    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException
 except Exception:
-    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException
+    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException
 try:
     from .cos import COSClient
 except Exception:
@@ -91,8 +91,10 @@ def check_saved_jobs_decorator(f):
         # refine query
         sql_stmt = format_sql(sql_stmt)
 
+        status_no_job_id = "not_launched"
         run_as_usual = True
         if self.project_lib is not None:
+            # Use Watson Studio
             # handle here
             if self.project_lib.data is None:
                 self.read_project_lib_data(file_name=prefix)
@@ -123,15 +125,77 @@ def check_saved_jobs_decorator(f):
                         raise e
                     if job_result["status"] == "failed":
                         run_as_usual = True
+                    self.write_project_lib_data()
+        else:
+            # use local file
+            try:
+                with open(prefix) as json_data:
+                    self._data =  json.load(json_data)
+                if sql_stmt in self._data:
+                    run_as_usual = False
+                    job_id = self._data[sql_stmt]["job_id"]
+                    if self._data[sql_stmt]["status"] == "completed":
+                        print("Job {} completed".format(job_id))
+                    else:
+                        if self._data[sql_stmt]["status"] != status_no_job_id:
+                            # query the status
+                            job_result = self.get_job(job_id)
+                            self._data[sql_stmt]["job_info"] = job_result
+                            try:
+                                self._data[sql_stmt]["status"] = job_result[
+                                    "status"]
+                            except KeyError as e:
+                                import pprint
+                                pprint.pprint(job_result)
+                                raise e
+                            if job_result["status"] == "failed":
+                                run_as_usual = True
+                            with open(prefix, "w") as outfile:
+                                json.dump(self._data, outfile)
+                        else:
+                            run_as_usual = True
+            except FileNotFoundError:
+                self._data = {}
 
         if run_as_usual:
-            job_id = f(*args, **kwargs)
-            if self.project_lib is not None:
-                self.project_lib.data[sql_stmt] = {
+            e_ = None
+            job_id = ""
+            status = "queued"
+            try:
+                job_id = f(*args, **kwargs)
+                result = {
                     "job_id": job_id,
-                    "status": "running"
+                    "status": status
                 }
-                self.write_project_lib_data()
+                if self.project_lib is not None:
+                    self.project_lib.data[sql_stmt] = result
+                    self.write_project_lib_data()
+                else:
+                    # use local file
+                    self._data[sql_stmt] = result
+                    with open(prefix, "w") as outfile:
+                        json.dump(self._data, outfile)
+            except Exception as e:
+                e_ = e
+                status = status_no_job_id
+
+            if e_ is not None:
+                if self.project_lib is not None:
+                    self.project_lib.data[sql_stmt] = {
+                        "job_id": job_id,
+                        "status": status
+                    }
+                    self.write_project_lib_data()
+                else:
+                    # use local file
+                    self._data[sql_stmt] = {
+                        "job_id": job_id,
+                        "status": status
+                    }
+                    with open(prefix, "w") as outfile:
+                        json.dump(self._data, outfile)
+            if e_ is not None:
+                raise e_
         return job_id
 
     return wrapped
@@ -413,16 +477,21 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     @check_saved_jobs_decorator
     def submit_and_track_sql(self, sql_stmt, pagesize=None, file_name=None):
         """
-        When using SQL Query client via Watson Studio, you are limited to the
-        session time provided by the system. This may be a problem when you
+        Each SQL Query instance is limited by the number of sql queries that it
+        can handle at a time.  This can be a problem when you
         launch many SQL Query jobs, as such limitation may prevent you to
-        complete all of them in one session.
+        complete all of them in one session. The time for one session is
+        often limited when when using SQL Query client via Watson Studio, i.e. you
+        will lost session without any interaction with the notebook after tens of minutes.
 
         This API provides the capability to put the information of each
-        launched jobs in a `file_name` stored as an asset in the Watson
-        Studio's Project. Whenever you launch a `sql_stmt` via this API, and
-        you also provide the `file_name`, the SQL Query client will check the
-        content of such file name to see if the given `sql_stmt` has been
+        launched jobs in a `file_name` stored either
+
+        * as an asset in the Watson Studio's Project.
+        * as a regular file in the local machine.
+
+        The SQL Query client will check the content of such file name to see
+        if the given `sql_stmt` has been
         launched, and if so, whether it is completed or not. If not
         completed, then it relaunches the job, and update the content in this
         file. Otherwise, it skips the `sql_stmt`.
@@ -442,18 +511,19 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         pagesize: int, optional
             the page size
         file_name: str, optional
-            If it is used, it will looks into the ProjectLib for an asset file name $file_name.json and compare the full sql statement if it has been used.
-            If yes, and the result is successful, there is no need to rerun it.
+            The file name should be a JSON file, i.e. $file_name.json.
+            You need to provide the file name if
+
+            * (1) you use Watson studio notebook and you haven't provided it in :meth:`.connect_project_lib`,
+            * (2) you use local notebook, and you want to use a local file to track it
+
+            You don't need to provide the file name if you're using Watson studio, and the file name has been provided via :meth:`.connect_project_lib`.
 
         Note
         ----
-            To use this API, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.
+            To use this API in Watson Studio, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.
 
             This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.
-
-        Todo
-        ------
-            If SQL Query client is used from a local machine, the `file_name` can be a file on the user's local machine.
 
         """
         return self.submit_sql(
