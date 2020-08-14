@@ -15,13 +15,28 @@
 # ------------------------------------------------------------------------------
 
 from setuptools import setup
+import codecs
+import os.path
 
 def readme():
     with open('README.rst') as f:
         return f.read()
 
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
 setup(name='ibmcloudsql',
-      version='0.4.5',
+      version=get_version("ibmcloudsql/__init__.py"),
       python_requires='>=2.7, <4',
       install_requires=['pandas','requests','ibm-cos-sdk-core','ibm-cos-sdk','numpy',
                         'pyarrow==0.15.1', 'backoff==1.10.0', 'sqlparse'],
@@ -40,3 +55,4 @@ setup(name='ibmcloudsql',
       keywords='sql cloud object_storage IBM',
       packages=['ibmcloudsql']
      )
+

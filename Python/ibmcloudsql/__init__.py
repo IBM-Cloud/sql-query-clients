@@ -14,6 +14,8 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
+__version__ = '0.4.6'
+
 from .SQLQuery import SQLQuery
 from .exceptions import RateLimitedException
 from .sql_magic import SQLMagic

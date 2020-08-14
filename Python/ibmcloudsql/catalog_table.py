@@ -201,7 +201,7 @@ class HiveMetastore():
             # from IPython.display import display
             df = self.show_tables()
             try:
-                found = df[df['tableName'].str.contains(table_name)]
+                found = df[df['tableName'].str.contains(table_name.strip().lower())]
             except Exception:
                 # not found
                 found = []
@@ -294,7 +294,7 @@ class HiveMetastore():
 
         df = self.show_tables()
         try:
-            found = df[df['tableName'].str.contains(table_name)]
+            found = df[df['tableName'].str.contains(table_name.strip().lower())]
         except Exception:
             # not found
             found = []
