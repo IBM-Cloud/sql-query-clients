@@ -80,6 +80,9 @@ class IBMCloudAccess():
             {'User-Agent': self.user_agent})
 
     def configure(self, cloud_apikey=None):
+        """
+        Update Cloud API key
+        """
         if cloud_apikey is None:
             self.apikey = getpass.getpass(
                 'Enter IBM Cloud API Key (leave empty to use previous one): '
@@ -97,6 +100,10 @@ class IBMCloudAccess():
 
     def logon(self, force=False):
         """
+        Establish a connection to IBM Cloud
+
+        Note
+        ----
             An AIM token is needed for any operations to IBM cloud services (e.g. COS)
             A new AIM token is created after 300 seconds.
             A token is valid for 3600 seconds
