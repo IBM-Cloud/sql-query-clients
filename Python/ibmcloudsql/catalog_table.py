@@ -1,6 +1,10 @@
 import time
 import logging
 logger = logging.getLogger(__name__)
+try:
+    from .cos import ParsedUrl
+except Exception:
+    from cos import ParsedUrl
 
 class HiveMetastore():
     def __init__(self, target_url):
@@ -25,10 +29,18 @@ class HiveMetastore():
         SHOW TABLES
         INTO {cos_out} STORED AS CSV
         """
+        if not ParsedUrl().is_valid_cos_url(target_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self._target_url = target_url
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
 
     def configure(self, target_url):
+        """ Update the configuration
+        """
+        if not ParsedUrl().is_valid_cos_url(target_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self._target_url = target_url
 
     @property
@@ -36,10 +48,13 @@ class HiveMetastore():
         return self._target_url
     @target_url.setter
     def target_url(self, target_url):
+        if not ParsedUrl().is_valid_cos_url(target_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self._target_url = target_url
 
     # Extended functionality
-    def show_tables(self, tartget_cos_url=None, pattern=None):
+    def show_tables(self, target_cos_url=None, pattern=None):
         """List the available Hive Metastore
 
         Parameters
@@ -53,8 +68,13 @@ class HiveMetastore():
         --------
         DataFrame
         """
-        if tartget_cos_url is None:
+        if target_cos_url is None:
             cos_out = self.target_url
+        else:
+            cos_out = target_cos_url
+            if not ParsedUrl().is_valid_cos_url(cos_out):
+                msg = "Not a valid COS URL"
+                raise ValueError(msg)
         sql_stmt_show = self.sql_stmt_show_temmplate.format(
             like="LIKE '{}'".format(pattern) if pattern else "",
             cos_out=cos_out)
@@ -167,6 +187,10 @@ class HiveMetastore():
             none if job "failed"
             otherwise returns
         """
+        if cos_url:
+            if not ParsedUrl().is_valid_cos_url(cos_url):
+                msg = "Not a valid COS URL"
+                raise ValueError(msg)
         def create_table_async(
                                     table_name,
                                     cos_url=None,
@@ -241,7 +265,7 @@ class HiveMetastore():
         return None
 
     def _format_schema(self, schema):
-        """format the schema string to ensure it is enclosed by ( and )"""
+        """Format the schema string to ensure it is enclosed by ( and )"""
         schema = schema.strip()
         if schema[0] == '(' or schema[-1] == ')':
             if schema[0] != '(' or schema[-1] != ')':
@@ -291,6 +315,10 @@ class HiveMetastore():
 
         if cos_url is None:
             cos_url = self.cos_in_url_partitioned
+        else:
+            if not ParsedUrl().is_valid_cos_url(cos_url):
+                msg = "Not a valid COS URL"
+                raise ValueError(msg)
 
         df = self.show_tables()
         try:
@@ -348,6 +376,19 @@ class HiveMetastore():
         self.run_sql(sql_stmt)
 
     def describe_table(self, table_name):
+        """ Return the schema of table
+
+        Parameters
+        ----------
+        table_name: str
+            Name of the HIVE catalog table
+
+        Return
+        ------
+        DataFrame
+            3 columns: col_name (object), data_type (object), comment (float64)
+
+        """
         if self.target_url is None:
             msg = "Need to define target COS URL"
             raise ValueError(msg)
@@ -355,4 +396,4 @@ class HiveMetastore():
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
             table_name=table_name, cos_out=self.target_url)
-        return self.execute_sql(sql_stmt, get_result=True)
+        return self.run_sql(sql_stmt)
