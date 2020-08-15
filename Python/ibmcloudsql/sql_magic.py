@@ -55,13 +55,17 @@ def print_sql(sql_stmt):
     print(format_sql(sql_stmt))
 
 class TimeSeriesTransformInput():
+    """
+    This class contains methods that supports the transformation of a user-friendly arguments in time-series functions
+    to IBM CloudSQL compatible values.
+    """
     @classmethod
     def transform_sql(cls, f):
         """
         Generate SQL string
 
-        Note
-        ----
+        Notes
+        -----
         Syntax: https://cloud.ibm.com/docs/sql-query
         """
         @wraps(f)
@@ -75,22 +79,26 @@ class TimeSeriesTransformInput():
     @classmethod
     def ts_segment_by_time(cls, sql_stmt):
         """
-        Revise user-friendly TS_SEGMENT function into library-friendly TS_SEGMENT function
+        Revise arguments of TS_SEGMENT function to comply with IBM CloudSQL
 
-        Note
-        ----
-        Using either: `per_hour`
+        Notes
+        -----
+        The TS_SEGMENT supported by IBM CloudSQL accepts value in number, which is not user-friendly
+        for units like hour, days, minutes. SQLMagic alllows constructing SQL query string using
+        the below values.
+
+        1. values: `per_hour`, `hour`, `per_day`, `day`, `per_week`, `week`
 
         .. code-block:: console
 
             ts_segment_by_time(ts, per_hour, per_hour)
             ts_segment_by_time(ts, hour, hour)
 
-        or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations
+        2. or values: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations
             P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W
 
-        Example
-        -------
+        Examples
+        --------
 
         .. code-block:: python
 
@@ -153,6 +161,10 @@ class TimeSeriesTransformInput():
         return sql_stmt
 
 class TimeSeriesSchema():
+    """
+    The class tracks the columns that is useful in time-series handling.
+    Currently, it tracks column names whose values are in UNIX time format
+    """
     def __init__(self):
         # the list of column in unix-tme format
         """9999999999999 (13 digits) means Sat Nov 20 2286 17:46:39 UTC
@@ -174,6 +186,10 @@ class TimeSeriesSchema():
 
 
 class SQLMagic(TimeSeriesSchema):
+    """
+    The class supports constructing a full SQL query statement
+
+    """
 
     def __init__(self):
         super().__init__()
@@ -285,6 +301,13 @@ class SQLMagic(TimeSeriesSchema):
     def join_table_(self, table, condition, type="inner", alias=None):
         """
         [type] JOIN <table> [AS alias] ON <condition>
+
+        NOTE: [type] is a value in the list below
+
+        .. code-block:: python
+
+            ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
+            "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
         """
         self.supported_join_types = ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
                 "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]

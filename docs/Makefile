@@ -38,7 +38,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) sou
 setup:
 	conda create -n sphinx python=3.6 
 	conda activate sphinx
-	pip install m2r recommonmark sphinx==2.4.4 --force-reinstall
+	pip install numpydoc m2r recommonmark sphinx==2.4.4 --force-reinstall
 	echo Make sure you're in 'sphinx' virtual environment each time you build the docs
 
 latexpdf:
