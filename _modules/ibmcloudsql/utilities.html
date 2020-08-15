@@ -143,7 +143,8 @@
 
 
 <div class="viewcode-block" id="IBMCloudAccess"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess">[docs]</a><span class="k">class</span> <span class="nc">IBMCloudAccess</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Provide APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">client_info</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">cloud_apikey</span>
@@ -167,6 +168,9 @@
             <span class="p">{</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
 
 <div class="viewcode-block" id="IBMCloudAccess.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update Cloud API key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">cloud_apikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
                 <span class="s1">&#39;Enter IBM Cloud API Key (leave empty to use previous one): &#39;</span>
@@ -184,6 +188,10 @@
 
 <div class="viewcode-block" id="IBMCloudAccess.logon"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.logon">[docs]</a>    <span class="k">def</span> <span class="nf">logon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Establish a connection to IBM Cloud</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
 <span class="sd">            An AIM token is needed for any operations to IBM cloud services (e.g. COS)</span>
 <span class="sd">            A new AIM token is created after 300 seconds.</span>
 <span class="sd">            A token is valid for 3600 seconds</span>

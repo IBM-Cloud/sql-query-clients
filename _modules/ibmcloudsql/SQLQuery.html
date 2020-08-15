@@ -117,10 +117,11 @@
 <span class="kn">import</span> <span class="nn">pyarrow</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">packaging</span> <span class="kn">import</span> <span class="n">version</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span>
+    <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span><span class="p">,</span> <span class="n">SqlQueryInvalidPlanException</span><span class="p">,</span> <span class="n">SqlQueryFailException</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span>
+    <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">RateLimitedException</span><span class="p">,</span> <span class="n">CosUrlNotFoundException</span><span class="p">,</span> <span class="n">SqlQueryCrnInvalidFormatException</span><span class="p">,</span> <span class="n">SqlQueryInvalidPlanException</span><span class="p">,</span> <span class="n">SqlQueryFailException</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.cos</span> <span class="kn">import</span> <span class="n">COSClient</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -178,8 +179,10 @@
         <span class="c1"># refine query</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">format_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
 
+        <span class="n">status_no_job_id</span> <span class="o">=</span> <span class="s2">&quot;not_launched&quot;</span>
         <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Use Watson Studio</span>
             <span class="c1"># handle here</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">read_project_lib_data</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
@@ -198,27 +201,95 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
                     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job </span><span class="si">{}</span><span class="s2"> completed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># query the status</span>
-                    <span class="n">job_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;job_info&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span><span class="p">[</span>
-                            <span class="s2">&quot;status&quot;</span><span class="p">]</span>
-                    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                        <span class="kn">import</span> <span class="nn">pprint</span>
-                        <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">job_result</span><span class="p">)</span>
-                        <span class="k">raise</span> <span class="n">e</span>
-                    <span class="k">if</span> <span class="n">job_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status_no_job_id</span><span class="p">:</span>
+                        <span class="c1"># query the status</span>
+                        <span class="n">job_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;job_info&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span><span class="p">[</span>
+                                <span class="s2">&quot;status&quot;</span><span class="p">]</span>
+                        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="kn">import</span> <span class="nn">pprint</span>
+                            <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">job_result</span><span class="p">)</span>
+                            <span class="k">raise</span> <span class="n">e</span>
+                        <span class="k">if</span> <span class="n">job_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
+                            <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">write_project_lib_data</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
                         <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># use local file</span>
+            <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Please pass in file name&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_data</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span>  <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">json_data</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sql_stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
+                    <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job </span><span class="si">{}</span><span class="s2"> completed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status_no_job_id</span><span class="p">:</span>
+                            <span class="c1"># query the status</span>
+                            <span class="n">job_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;job_info&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_result</span><span class="p">[</span>
+                                    <span class="s2">&quot;status&quot;</span><span class="p">]</span>
+                            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                                <span class="kn">import</span> <span class="nn">pprint</span>
+                                <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">job_result</span><span class="p">)</span>
+                                <span class="k">raise</span> <span class="n">e</span>
+                            <span class="k">if</span> <span class="n">job_result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
+                                <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+                                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">run_as_usual</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">if</span> <span class="n">run_as_usual</span><span class="p">:</span>
-            <span class="n">job_id</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">e_</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">job_id</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;queued&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">job_id</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
-                    <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;running&quot;</span>
+                    <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span>
                 <span class="p">}</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">write_project_lib_data</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">write_project_lib_data</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># use local file</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">e_</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="n">status_no_job_id</span>
+
+            <span class="k">if</span> <span class="n">e_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">project_lib</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+                        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span>
+                    <span class="p">}</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">write_project_lib_data</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># use local file</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">sql_stmt</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;job_id&quot;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+                        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span>
+                    <span class="p">}</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">e_</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e_</span>
         <span class="k">return</span> <span class="n">job_id</span>
 
     <span class="k">return</span> <span class="n">wrapped</span></div>
@@ -255,6 +326,9 @@
         <span class="n">SQLMagic</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">HiveMetastore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_cos_url</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">target_cos_url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_cos_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="n">instance_crn</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="n">target_cos_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">export_cos_url</span> <span class="o">=</span> <span class="n">target_cos_url</span>
@@ -287,7 +361,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs_tracking</span>
 
 <div class="viewcode-block" id="SQLQuery.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instance_crn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cos_out_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; use this to update the configuration</span>
+        <span class="sd">&quot;&quot;&quot; Update the configuration</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">COSClient</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apikey</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">instance_crn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -298,11 +372,18 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span> <span class="o">=</span> <span class="n">instance_crn</span>
         <span class="k">if</span> <span class="n">cos_out_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Enter target URI for SQL results: &#39;</span><span class="p">)</span>
+                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Enter target URI for SQL results: &#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
+                        <span class="k">break</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
-                    <span class="s1">&#39;Enter target URI for SQL results (leave empty to use &#39;</span> <span class="o">+</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span>
+                <span class="n">old_cos_url</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span>
+                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span>
+                        <span class="s1">&#39;Enter target URI for SQL results (leave empty to use &#39;</span> <span class="o">+</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">old_cos_url</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
+                        <span class="k">break</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cos_out_url</span> <span class="o">=</span> <span class="n">cos_out_url</span>
         <span class="n">HiveMetastore</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span><span class="p">)</span>
@@ -398,8 +479,8 @@
 <span class="sd">        SyntaxError</span>
 <span class="sd">            for both KeyError or HTTPError</span>
 
-<span class="sd">        Example</span>
-<span class="sd">        -------</span>
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
 
 <span class="sd">        .. code-block:: console</span>
 
@@ -500,16 +581,25 @@
 <div class="viewcode-block" id="SQLQuery.submit_and_track_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql">[docs]</a>    <span class="nd">@check_saved_jobs_decorator</span>
     <span class="k">def</span> <span class="nf">submit_and_track_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        When using SQL Query client via Watson Studio, you are limited to the</span>
-<span class="sd">        session time provided by the system. This may be a problem when you</span>
+<span class="sd">        Each SQL Query instance is limited by the number of sql queries that it</span>
+<span class="sd">        can handle at a time.  This can be a problem when you</span>
 <span class="sd">        launch many SQL Query jobs, as such limitation may prevent you to</span>
-<span class="sd">        complete all of them in one session.</span>
+<span class="sd">        complete all of them in one session. The `maxtries` options when creating</span>
+<span class="sd">        the SQL Query client object allows</span>
+<span class="sd">        you to re-send the job, which is still limited to one session.</span>
+<span class="sd">        The time for one session is often limited when when using</span>
+<span class="sd">        SQL Query client via Watson Studio, i.e. you</span>
+<span class="sd">        will lose the session after having no interaction with the notebook for</span>
+<span class="sd">        a period of time.</span>
 
 <span class="sd">        This API provides the capability to put the information of each</span>
-<span class="sd">        launched jobs in a `file_name` stored as an asset in the Watson</span>
-<span class="sd">        Studio&#39;s Project. Whenever you launch a `sql_stmt` via this API, and</span>
-<span class="sd">        you also provide the `file_name`, the SQL Query client will check the</span>
-<span class="sd">        content of such file name to see if the given `sql_stmt` has been</span>
+<span class="sd">        launched jobs in a `file_name` stored either</span>
+
+<span class="sd">        * as an asset in the Watson Studio&#39;s Project.</span>
+<span class="sd">        * as a regular file in the local machine.</span>
+
+<span class="sd">        The SQL Query client will check the content of such file name to see</span>
+<span class="sd">        if the given `sql_stmt` has been</span>
 <span class="sd">        launched, and if so, whether it is completed or not. If not</span>
 <span class="sd">        completed, then it relaunches the job, and update the content in this</span>
 <span class="sd">        file. Otherwise, it skips the `sql_stmt`.</span>
@@ -529,18 +619,19 @@
 <span class="sd">        pagesize: int, optional</span>
 <span class="sd">            the page size</span>
 <span class="sd">        file_name: str, optional</span>
-<span class="sd">            If it is used, it will looks into the ProjectLib for an asset file name $file_name.json and compare the full sql statement if it has been used.</span>
-<span class="sd">            If yes, and the result is successful, there is no need to rerun it.</span>
+<span class="sd">            The file name should be a JSON file, i.e. $file_name.json.</span>
+<span class="sd">            You need to provide the file name if</span>
 
-<span class="sd">        Note</span>
-<span class="sd">        ----</span>
-<span class="sd">            To use this API, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.</span>
+<span class="sd">            * (1) you use Watson studio notebook and you haven&#39;t provided it in :meth:`.connect_project_lib`,</span>
+<span class="sd">            * (2) you use local notebook, and you want to use a local file to track it</span>
+
+<span class="sd">            You don&#39;t need to provide the file name if you&#39;re using Watson studio, and the file name has been provided via :meth:`.connect_project_lib`.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">            To use this API in Watson Studio, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.</span>
 
 <span class="sd">            This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.</span>
-
-<span class="sd">        Todo</span>
-<span class="sd">        ------</span>
-<span class="sd">            If SQL Query client is used from a local machine, the `file_name` can be a file on the user&#39;s local machine.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span>
@@ -552,7 +643,7 @@
 <span class="sd">        It&#39;s possible that the job&#39;s failed because of Spark&#39;s internal error.</span>
 <span class="sd">        So &quot;unknown&quot; is added for such cases.</span>
 
-<span class="sd">        Return</span>
+<span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            &#39;failed&#39;, &#39;completed&#39;, or &#39;unknown&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -591,6 +682,8 @@
 
 <div class="viewcode-block" id="SQLQuery.get_result"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_result">[docs]</a>    <span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">,</span> <span class="n">pagenumber</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the queried data from the given job-id</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        jobId: int</span>
@@ -605,12 +698,15 @@
 <span class="sd">            The dataframe holding the queried data from a completed job</span>
 
 
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+
 <span class="sd">        .. code-block:: console</span>
 
-<span class="sd">            curl -XGET \</span>
-<span class="sd">                --url &quot;https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=&lt;YOUR_SQL_QUERY_CRN&gt;&quot; \</span>
-<span class="sd">                -H &quot;Accept: application/json&quot; \</span>
-<span class="sd">                -H &quot;Authorization: Bearer &lt;YOUR_BEARER_TOKEN&gt;&quot;  \</span>
+<span class="sd">            curl -XGET \\</span>
+<span class="sd">                --url &quot;https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=&lt;YOUR_SQL_QUERY_CRN&gt;&quot; \\</span>
+<span class="sd">                -H &quot;Accept: application/json&quot; \\</span>
+<span class="sd">                -H &quot;Authorization: Bearer &lt;YOUR_BEARER_TOKEN&gt;&quot;  \\</span>
 <span class="sd">                -H &quot;Content-Type: application/json&quot;</span>
 
 <span class="sd">            \&quot;\&quot;\&quot;</span>
@@ -926,8 +1022,10 @@
 
 <div class="viewcode-block" id="SQLQuery.delete_result"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.delete_result">[docs]</a>    <span class="k">def</span> <span class="nf">delete_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete the COS objects created by a given job-id</span>
+
 <span class="sd">        Returns</span>
-<span class="sd">        ------</span>
+<span class="sd">        -------</span>
 <span class="sd">        dataframe</span>
 <span class="sd">            A dataframe, with 3 rows, and one field name &quot;Deleted Object&quot;</span>
 
@@ -941,8 +1039,8 @@
 <span class="sd">            cos://&lt;cos-name&gt;/bucket_name/jobid=&lt;JOB-ID-NUMBER&gt;/_SUCCESS</span>
 <span class="sd">            cos://&lt;cos-name&gt;/bucket_name/jobid=&lt;JOB-ID-NUMBER&gt;/[parquet|csv|json]</span>
 
-<span class="sd">        Note</span>
-<span class="sd">        ----</span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
 
 <span class="sd">        * The last entry holds the real data, and the last word also indicates the data format</span>
 <span class="sd">        * &#39;JOBPREFIX NONE&#39;  would avoid having &#39;jobid=JOB-ID-NAME&#39; in the URL</span>
@@ -980,13 +1078,24 @@
 
 <div class="viewcode-block" id="SQLQuery.get_job"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_job">[docs]</a>    <span class="k">def</span> <span class="nf">get_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobId</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the details of the job-id</span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        dict</span>
 <span class="sd">            a dict of job details (see keys below)</span>
 
-<span class="sd">        Note</span>
-<span class="sd">        ----</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            when jobId is not correct</span>
+<span class="sd">        HTTPError</span>
+<span class="sd">            when RestAPI request fails</span>
+<span class="sd">        JSONDEcodeError</span>
+<span class="sd">            when RestAPI returns a non-JSON compliant result</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -1003,7 +1112,7 @@
 <span class="sd">            &#39;end_time&#39;: &#39;2020-03-06T21:58:26.274Z&#39;,</span>
 <span class="sd">            &#39;user_id&#39;: &#39;username@us.ibm.com&#39;</span>
 
-<span class="sd">        Example</span>
+<span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
 <span class="sd">        .. code-block:: python</span>
@@ -1040,6 +1149,10 @@
 
             <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid job_id: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
         <span class="n">job_id</span> <span class="o">=</span> <span class="n">jobId</span>
         <span class="k">if</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs_tracking</span> <span class="ow">and</span> \
             <span class="bp">self</span><span class="o">.</span><span class="n">jobs_tracking</span><span class="p">[</span><span class="n">job_id</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;running&quot;</span><span class="p">:</span>
@@ -1062,8 +1175,8 @@
 <span class="sd">        dataframe</span>
 <span class="sd">            a pd.DataFrame with fields - total 30 rows, corresponding to the 30 most recent jobs</span>
 
-<span class="sd">        Example</span>
-<span class="sd">        -------</span>
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
 <span class="sd">        .. code-block:: console</span>
 
 <span class="sd">            job_id</span>
@@ -1084,8 +1197,8 @@
 <span class="sd">            job_id	status	user_id	statement	resultset_location	submit_time	end_time	rows_read	rows_returned	bytes_read	error	error_message</span>
 <span class="sd">            8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	completed	tmhoangt@us.ibm.com	SELECT o.OrderID, c.CompanyName, e.FirstName, e.LastName FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET o, cos://us-geo/sql/employees.parquet STORED AS PARQUET e, cos://us-geo/sql/customers.parquet STORED AS PARQUET c WHERE e.EmployeeID = o.EmployeeID AND c.CustomerID = o.CustomerID AND o.ShippedDate &gt; o.RequiredDate AND o.OrderDate &gt; &quot;1998-01-01&quot; ORDER BY c.CompanyName	cos://s3.us-south.cloud-object-storage.appdomain.cloud/tuan-sql-result/jobid=8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	2020-02-21T16:19:03.638Z	2020-02-21T16:19:13.691Z	1760	29	41499	None	None</span>
 
-<span class="sd">        Note</span>
-<span class="sd">        ----</span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
 
 <span class="sd">        * get_jobs() is used by export_job_history(cos_out_url) which is used to save such data</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1099,7 +1212,7 @@
             <span class="n">job_list</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
             <span class="n">job_list_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;statement&#39;</span><span class="p">,</span> <span class="s1">&#39;resultset_location&#39;</span><span class="p">,</span>
                                                 <span class="s1">&#39;submit_time&#39;</span><span class="p">,</span> <span class="s1">&#39;end_time&#39;</span><span class="p">,</span> <span class="s1">&#39;rows_read&#39;</span><span class="p">,</span> <span class="s1">&#39;rows_returned&#39;</span><span class="p">,</span> <span class="s1">&#39;bytes_read&#39;</span><span class="p">,</span>
-                                                <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
+                                                <span class="s1">&#39;objects_skipped&#39;</span><span class="p">,</span> <span class="s1">&#39;objects_qualified&#39;</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">job_list</span><span class="p">[</span><span class="s1">&#39;jobs&#39;</span><span class="p">]:</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                     <span class="s2">&quot;https://api.sql-query.cloud.ibm.com/v2/sql_jobs/</span><span class="si">{}</span><span class="s2">?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">],</span>
@@ -1114,6 +1227,8 @@
                     <span class="n">rows_read</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="n">rows_returned</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="n">bytes_read</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">objects_skipped</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">objects_qualified</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="n">end_time</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
                     <span class="k">if</span> <span class="s1">&#39;error&#39;</span> <span class="ow">in</span> <span class="n">job_details</span><span class="p">:</span>
                         <span class="n">error</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span>
@@ -1127,6 +1242,10 @@
                         <span class="n">rows_returned</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;rows_returned&#39;</span><span class="p">]</span>
                     <span class="k">if</span> <span class="s1">&#39;bytes_read&#39;</span> <span class="ow">in</span> <span class="n">job_details</span><span class="p">:</span>
                         <span class="n">bytes_read</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;bytes_read&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s1">&#39;objects_skipped&#39;</span> <span class="ow">in</span> <span class="n">job_details</span><span class="p">:</span>
+                        <span class="n">objects_skipped</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;objects_skipped&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s1">&#39;objects_qualified&#39;</span> <span class="ow">in</span> <span class="n">job_details</span><span class="p">:</span>
+                        <span class="n">objects_qualified</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;objects_qualified&#39;</span><span class="p">]</span>
                     <span class="n">resultset_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
                     <span class="k">if</span> <span class="s1">&#39;resultset_location&#39;</span> <span class="ow">in</span> <span class="n">job_details</span><span class="p">:</span>
                         <span class="n">resultset_loc</span> <span class="o">=</span> <span class="n">job_details</span><span class="p">[</span><span class="s1">&#39;resultset_location&#39;</span><span class="p">]</span>
@@ -1140,6 +1259,8 @@
                                                        <span class="s1">&#39;rows_read&#39;</span><span class="p">:</span> <span class="n">rows_read</span><span class="p">,</span>
                                                        <span class="s1">&#39;rows_returned&#39;</span><span class="p">:</span> <span class="n">rows_returned</span><span class="p">,</span>
                                                        <span class="s1">&#39;bytes_read&#39;</span><span class="p">:</span> <span class="n">bytes_read</span><span class="p">,</span>
+                                                       <span class="s1">&#39;objects_skipped&#39;</span><span class="p">:</span> <span class="n">objects_skipped</span><span class="p">,</span>
+                                                       <span class="s1">&#39;objects_qualified&#39;</span><span class="p">:</span> <span class="n">objects_qualified</span><span class="p">,</span>
                                                        <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">error</span><span class="p">,</span>
                                                        <span class="s1">&#39;error_message&#39;</span><span class="p">:</span> <span class="n">error_message</span><span class="p">,</span>
                                                        <span class="p">}],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1153,7 +1274,7 @@
 
 <div class="viewcode-block" id="SQLQuery.get_jobs_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_with_status">[docs]</a>    <span class="nd">@validate_job_status</span>
     <span class="k">def</span> <span class="nf">get_jobs_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id_list</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Among those given, return the list of job_id that have the given status</span>
+        <span class="sd">&quot;&quot;&quot; Return the list of job_id, among those provided, that have the given status</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1176,7 +1297,7 @@
 
 <div class="viewcode-block" id="SQLQuery.get_jobs_count_with_status"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_jobs_count_with_status">[docs]</a>    <span class="nd">@validate_job_status</span>
     <span class="k">def</span> <span class="nf">get_jobs_count_with_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; return the number of jobs in the SQL Query server for the given `status`</span>
+        <span class="sd">&quot;&quot;&quot; Return the number of jobs in the SQL Query server for the given `status`</span>
 
 <span class="sd">        It has the limitation as described in :meth:`.get_jobs`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1191,11 +1312,12 @@
 <div class="viewcode-block" id="SQLQuery.execute_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">[docs]</a>    <span class="k">def</span> <span class="nf">execute_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">pagesize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extend the behavior of :meth:`.run_sql`.</span>
-<span class="sd">        I.e. it is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:</span>
+<span class="sd">        It is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:</span>
 
-<span class="sd">        1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.</span>
+<span class="sd">        1. returning of data (Pandas dataframe) is optional (controlled by `get_result` parameter): to help avoiding Python runtime memory overload.</span>
 <span class="sd">            This is also useful when you run SQL statements such as DDLs that don&#39;t produce results at all.</span>
-<span class="sd">        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.</span>
+<span class="sd">        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the one returned by `submit_sql`</span>
+<span class="sd">        3. raise an exception for a failed job</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        --------------</span>
@@ -1214,6 +1336,13 @@
 <span class="sd">        namedtuple [`data`, `job_id`]</span>
 <span class="sd">            `get_result` = True, then behavior like :meth:`.run_sql` which materializes the returned data as type</span>
 <span class="sd">             pd.DataFrame in memory. The default behavior is opposite, to avoid unintended overload of memory.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            when information about a failed job is missing (job_status, job_id, error, error_message)</span>
+<span class="sd">        SqlQueryFailException</span>
+<span class="sd">            when the sql query fails, e.g. time out on the server side</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">Container</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;RunSql&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;job_id&#39;</span><span class="p">])</span>
@@ -1239,7 +1368,7 @@
                     <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
                     <span class="n">error</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">],</span>
                     <span class="n">msg</span><span class="o">=</span><span class="n">details</span><span class="p">[</span><span class="s1">&#39;error_message&#39;</span><span class="p">])</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">SqlQueryFailException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">details</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="n">e</span>
@@ -1261,6 +1390,16 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">            pd.DataFrame with the query results.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        CosUrlNotFoundException</span>
+<span class="sd">            the COS URL is not valid</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            the returned error message does not have job_id, error, or error_message</span>
+<span class="sd">        Exception</span>
+<span class="sd">            unexpected exception</span>
+
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
@@ -1338,10 +1477,18 @@
 <span class="sd">        cos_url : str</span>
 <span class="sd">            A COS URL with prefix, i.e. cos://&lt;cos-name&gt;/&lt;bucket&gt;/&lt;prefix&gt;,</span>
 <span class="sd">            where the data will be stored</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            if COS URL is invalid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">cos_url</span><span class="p">:</span>
             <span class="c1"># Default export location is target COS URL set at __init__</span>
             <span class="c1"># But we&#39;ll overwrite that with the provided export URL</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">export_cos_url</span> <span class="o">=</span> <span class="n">cos_url</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">export_cos_url</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No configured export COS URL.&#39;</span><span class="p">)</span>
@@ -1381,7 +1528,7 @@
             <span class="n">tmpfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
             <span class="n">tempfilename</span> <span class="o">=</span> <span class="n">tmpfile</span><span class="o">.</span><span class="n">name</span>
             <span class="n">new_jobs_df</span> <span class="o">=</span> <span class="n">terminated_job_history_df</span><span class="p">[</span><span class="n">terminated_job_history_df</span><span class="p">[</span><span class="s1">&#39;end_time&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">newest_exported_job_end_time</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">):</span>
                 <span class="n">new_jobs_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyarrow&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">tempfilename</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;snappy&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_jobs_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyarrow&quot;</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">tempfilename</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;snappy&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1394,7 +1541,7 @@
 
 <div class="viewcode-block" id="SQLQuery.get_schema_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_schema_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the schema information</span>
+<span class="sd">        Return the schema of COS URL</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1409,15 +1556,24 @@
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        DataFrame</span>
+<span class="sd">            3 columns: name (object), nullable (bool), type (object)</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            in either scenarios: (1) target COS URL is not set, (2) invalid type, (3) invalid COS URL</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">supported_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;JSON&quot;</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;PARQUET&quot;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Need to pass target COS URL to SQL Client object&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Need to pass target COS URL when creating SQL Client object&quot;</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_types</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Expected &#39;type&#39; value: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">supported_types</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        SELECT * FROM DESCRIBE(</span><span class="si">{cos_in}</span><span class="s2"> STORED AS </span><span class="si">{type}</span><span class="s2">)</span>
@@ -1435,19 +1591,18 @@
             <span class="k">return</span> <span class="n">df</span></div>
 
 <div class="viewcode-block" id="SQLQuery.analyze"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Provides some insights about the data layout from the current SQL statement</span>
+        <span class="sd">&quot;&quot;&quot;Provide some insights about the data layout from the current SQL statement</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        -------------</span>
 <span class="sd">        job_id : str</span>
 <span class="sd">            The job ID</span>
 
-<span class="sd">        todo</span>
-<span class="sd">        ------</span>
+<span class="sd">        .. todo::</span>
 
-<span class="sd">        1. new sql only when max_obj_size &gt; 300MB</span>
-<span class="sd">        2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON</span>
-<span class="sd">        3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)</span>
+<span class="sd">            1. new sql only when max_obj_size &gt; 300MB</span>
+<span class="sd">            2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON</span>
+<span class="sd">            3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">BestPracticeContainer</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;SqlBestPractice&#39;</span><span class="p">,</span>
                                            <span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="s1">&#39;max_objs&#39;</span><span class="p">])</span>
@@ -1638,6 +1793,12 @@
 <span class="sd">        str</span>
 <span class="sd">            The COS_URL where the data with 3 fields (key, time_stamp, observation)</span>
 <span class="sd">            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ISO8601Error</span>
+<span class="sd">            granularity input is not a valid ISO 8601-compliant value</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tmp_cos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_cos_url</span>
         <span class="k">if</span> <span class="n">num_objects</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num_rows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

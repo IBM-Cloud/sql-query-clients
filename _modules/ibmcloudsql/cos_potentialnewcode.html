@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>ibmcloudsql.cos &#8212; ibmcloudsql alpha documentation</title>
+    <title>ibmcloudsql.cos_potentialnewcode &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -84,7 +84,7 @@
 
           <div class="body" role="main">
             
-  <h1>Source code for ibmcloudsql.cos</h1><div class="highlight"><pre>
+  <h1>Source code for ibmcloudsql.cos_potentialnewcode</h1><div class="highlight"><pre>
 <span></span><span class="c1"># ------------------------------------------------------------------------------</span>
 <span class="c1"># Copyright IBM Corp. 2020</span>
 <span class="c1">#</span>
@@ -129,7 +129,7 @@
 <span class="c1"># ------------------------------------------------------------------------------</span>
 <span class="c1"># Helper class to interact with IBM Watson Studio projects</span>
 <span class="c1"># ------------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="ProjectLib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib">[docs]</a><span class="k">class</span> <span class="nc">ProjectLib</span><span class="p">():</span>
+<div class="viewcode-block" id="ProjectLib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ProjectLib">[docs]</a><span class="k">class</span> <span class="nc">ProjectLib</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is used by SQLClient/COSClient via :py:meth:`read` and :py:meth:`write` methods</span>
 
@@ -147,8 +147,8 @@
 <span class="sd">    file_type: str, optional</span>
 <span class="sd">        The file format of `file_name`</span>
 
-<span class="sd">    .. todo::</span>
-
+<span class="sd">    todo</span>
+<span class="sd">    -----</span>
 <span class="sd">        NOTE: Currently support only one file</span>
 
 <span class="sd">        To support many files, we can switch to using dict such as self._data_out[file_name]</span>
@@ -179,7 +179,16 @@
         <span class="sd">&quot;&quot;&quot; Project: the project-lib object&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span>
 
-<div class="viewcode-block" id="ProjectLib.read"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="ProjectLib.file_exist"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ProjectLib.file_exist">[docs]</a>    <span class="k">def</span> <span class="nf">file_exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+        <span class="n">file_is_found</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">filename_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">get_files</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">filename_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">file_name</span><span class="p">:</span>
+                <span class="n">file_is_found</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">file_is_found</span></div>
+
+<div class="viewcode-block" id="ProjectLib.read"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ProjectLib.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read from project-lib&#39;s file into file-like object</span>
 
@@ -225,7 +234,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_data_out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_out</span></div>
 
-<div class="viewcode-block" id="ProjectLib.write"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ProjectLib.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="ProjectLib.write"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ProjectLib.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write the file-like data back to project-lib&#39;s file</span>
 
@@ -236,12 +245,12 @@
 <span class="sd">        file_type: str, optional</span>
 <span class="sd">            The type of file, &quot;json&quot; or &quot;csv&quot;</span>
 
-<span class="sd">        Returns</span>
+<span class="sd">        Result</span>
 <span class="sd">        ------</span>
 <span class="sd">        dict</span>
 
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -273,7 +282,7 @@
 <span class="c1"># ---------------------------------------------------------------------------------------------</span>
 <span class="c1"># Helper class to do client-side mapping of COS endpoints to aliases supported in SQL Query</span>
 <span class="c1"># ---------------------------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="ParsedUrl"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl">[docs]</a><span class="k">class</span> <span class="nc">ParsedUrl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ParsedUrl"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl">[docs]</a><span class="k">class</span> <span class="nc">ParsedUrl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Use this class to extract information from COS URL</span>
 
 <span class="sd">        `cos://&lt;cos-name&gt;/&lt;bucket&gt;/&lt;prefix&gt;/`</span>
@@ -313,82 +322,48 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="ParsedUrl.get_exact_url"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.get_exact_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_exact_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert COS URL from using alias to exact URL&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ParsedUrl.get_exact_url"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl.get_exact_url">[docs]</a>    <span class="k">def</span> <span class="nf">get_exact_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;convert COS URL from using alias to exact URL&quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_alias_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">x</span></div>
 
-<div class="viewcode-block" id="ParsedUrl.get_endpoint"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.get_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">get_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the endpoint string from COS URL&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ParsedUrl.get_endpoint"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl.get_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">get_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_alias_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span></div>
 
-<div class="viewcode-block" id="ParsedUrl.get_bucket"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.get_bucket">[docs]</a>    <span class="k">def</span> <span class="nf">get_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the bucket name from COS URL&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ParsedUrl.get_bucket"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl.get_bucket">[docs]</a>    <span class="k">def</span> <span class="nf">get_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">3</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span></div>
 
-<div class="viewcode-block" id="ParsedUrl.get_prefix"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.get_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">get_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the prefix part from COS URL&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ParsedUrl.get_prefix"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl.get_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">get_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">cos_url</span><span class="p">[</span><span class="n">cos_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fourth_slash</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span></div>
 
-<div class="viewcode-block" id="ParsedUrl.analyze_cos_url"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.analyze_cos_url">[docs]</a>    <span class="k">def</span> <span class="nf">analyze_cos_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return a namedtuple containing the 3 fields</span>
+<div class="viewcode-block" id="ParsedUrl.analyze_cos_url"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.ParsedUrl.analyze_cos_url">[docs]</a>    <span class="k">def</span> <span class="nf">analyze_cos_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; return a namedtuple containing the 3 fields</span>
 
 <span class="sd">        * bucket</span>
 <span class="sd">        * endpoint</span>
 <span class="sd">        * prefix</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        cos_url : str</span>
-<span class="sd">            COS URL</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">nt</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;COSURL&quot;</span><span class="p">,</span> <span class="s2">&quot;endpoint bucket prefix&quot;</span><span class="p">)</span>
         <span class="n">mycontainer</span> <span class="o">=</span> <span class="n">nt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_endpoint</span><span class="p">(</span><span class="n">cos_url</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">cos_url</span><span class="p">),</span>
                          <span class="bp">self</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">mycontainer</span></div>
-
-<div class="viewcode-block" id="ParsedUrl.is_valid_cos_url"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.is_valid_cos_url">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid_cos_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Validate if a string is COS URL</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        ------</span>
-<span class="sd">        bool</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">origin</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
-        <span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;cos://&quot;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span>
-        <span class="k">if</span> <span class="s1">&#39;/&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cos_url</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
-            <span class="n">cos_url</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
-        <span class="k">if</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_endpoint</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_alias_mapping</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="k">return</span> <span class="kc">True</span></div></div>
+        <span class="k">return</span> <span class="n">mycontainer</span></div></div>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Helper class to query information or manipulate data as objects on COS</span>
 <span class="c1"># which can also be used from SQL Query</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="COSClient"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient">[docs]</a><span class="k">class</span> <span class="nc">COSClient</span><span class="p">(</span><span class="n">ParsedUrl</span><span class="p">,</span> <span class="n">IBMCloudAccess</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient">[docs]</a><span class="k">class</span> <span class="nc">COSClient</span><span class="p">(</span><span class="n">ParsedUrl</span><span class="p">,</span> <span class="n">IBMCloudAccess</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This class handles the interaction with IBM COS storage</span>
-
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    cloud_apikey : str, optional</span>
@@ -416,9 +391,6 @@
                                 <span class="n">cloud_apikey</span><span class="o">=</span><span class="n">cloud_apikey</span><span class="p">,</span>
                                 <span class="n">client_info</span><span class="o">=</span><span class="n">client_info</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span>
         <span class="c1"># a dict holding all retrieved bucket&#39;s information</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buckets_info</span> <span class="o">=</span> <span class="p">{}</span>
@@ -446,7 +418,7 @@
 
         <span class="k">return</span> <span class="n">_get_default_s3_client</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
 
-<div class="viewcode-block" id="COSClient.list_cos_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.list_cos_objects">[docs]</a>    <span class="k">def</span> <span class="nf">list_cos_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.list_cos_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.list_cos_objects">[docs]</a>    <span class="k">def</span> <span class="nf">list_cos_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        List all objects in the current COS URL.</span>
 
@@ -460,7 +432,7 @@
 <span class="sd">        pd.DataFrame</span>
 <span class="sd">            The following columns (&quot;Object&quot;, &quot;Size&quot;, &quot;StorageClass&quot;)</span>
 
-<span class="sd">        Notes</span>
+<span class="sd">        Note</span>
 <span class="sd">        ------</span>
 <span class="sd">        Having a trailing slash (/) makes a difference in the returned result, as an asterisk is added at the end. So,</span>
 <span class="sd">        &quot;/prefix&quot; would consider things like &quot;/prefix_unexpected/value&quot; and &quot;/prefix/expected_value&quot;; while</span>
@@ -471,15 +443,7 @@
 <span class="sd">            Only &quot;list_objects&#39; work for IBM COS, not &#39;list_objects_v2&#39;</span>
 
 <span class="sd">            `IBM-COS-SDK &lt;https://ibm.github.io/ibm-cos-sdk-python/reference/services/s3.html#S3.Client.list_objects_v2&gt;`_</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        -------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            if COS URL is invalid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
@@ -507,18 +471,10 @@
             <span class="c1"># result = pd.DataFrame(columns=[&#39;Object&#39;, &#39;LastModified&#39;, &#39;Size&#39;, &#39;StorageClass&#39;])</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="COSClient.delete_empty_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_empty_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_empty_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.delete_empty_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.delete_empty_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_empty_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete zero-size objects. Reference to :meth:`.list_cos_objects` for further details.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        -------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            if COS URL is invalid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">result_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cos_objects</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
@@ -529,12 +485,12 @@
                 <span class="n">cos_client</span><span class="o">.</span><span class="n">delete_object</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span>
                                          <span class="n">Key</span><span class="o">=</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Object</span><span class="p">[</span><span class="n">row</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="COSClient.delete_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Delete all objects stored at the given COS URL</span>
+<div class="viewcode-block" id="COSClient.delete_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.delete_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;delete all objects stored at the given COS URL</span>
 
 <span class="sd">        https://&lt;cos-url&gt;/&lt;bucket&gt;?prefix=&lt;prefix-path&gt;</span>
 
-<span class="sd">        Notes</span>
+<span class="sd">        Note</span>
 <span class="sd">        ------</span>
 
 <span class="sd">        Reference: `AWS doc &lt;https://awsdocs.s3.amazonaws.com/S3/latest/s3-qrc.pdf&gt;`_</span>
@@ -572,15 +528,7 @@
 
 <span class="sd">        As the entity tag (ETag) is a hash of the object, we can use it to reliably check whether the object has changed - better</span>
 <span class="sd">        than just file size and modification date. Sample code to handle `request.response &lt;https://sdbrett.com/BrettsITBlog/2017/03/python-parsing-api-xml-response-data/&gt;`_</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        -------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            if COS URL is invalid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;COS URL: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
@@ -651,9 +599,6 @@
 <span class="sd">        Arguments:</span>
 <span class="sd">            cos_url {str} -- The COS URL</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
@@ -680,17 +625,8 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">result</span>
 
-<div class="viewcode-block" id="COSClient.get_bucket_info"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_bucket_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_bucket_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the information of the given bucket</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        -------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            if invalid COS URL</span>
-
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
-
+<div class="viewcode-block" id="COSClient.get_bucket_info"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.get_bucket_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_bucket_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        .. code-block:: console</span>
 
 <span class="sd">            curl https://config.cloud-object-storage.cloud.ibm.com/v1/b/my-bucket \</span>
@@ -711,13 +647,10 @@
 <span class="sd">            &quot;bytes_used&quot;: 28198745752445144</span>
 <span class="sd">            }</span>
 
-<span class="sd">        .. todo::</span>
-
+<span class="sd">        todo</span>
+<span class="sd">        ----</span>
 <span class="sd">            https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">cos_config.resource_configuration_v1</span> <span class="kn">import</span> <span class="n">ResourceConfigurationV1</span>
         <span class="n">bucket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
 
@@ -749,17 +682,12 @@
         <span class="c1">#     break</span>
         <span class="c1"># time.sleep(2)</span>
 
-    <span class="k">def</span> <span class="nf">_update_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.update_bucket"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.update_bucket">[docs]</a>    <span class="k">def</span> <span class="nf">update_bucket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update the bucket given by COS URL</span>
-
-<span class="sd">        .. todo::</span>
-
+<span class="sd">        todo</span>
+<span class="sd">        ----</span>
 <span class="sd">           revise this</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">cos_config.resource_configuration_v1</span> <span class="kn">import</span> <span class="n">ResourceConfigurationV1</span>
 
         <span class="n">api_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span>
@@ -769,9 +697,9 @@
 
         <span class="n">client</span><span class="o">.</span><span class="n">update_bucket_config</span><span class="p">(</span>
             <span class="n">bucket</span><span class="p">,</span>
-            <span class="n">firewall</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allowed_ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;10.142.175.0/22&quot;</span><span class="p">,</span> <span class="s2">&quot;10.198.243.79&quot;</span><span class="p">]})</span>
+            <span class="n">firewall</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;allowed_ip&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;10.142.175.0/22&quot;</span><span class="p">,</span> <span class="s2">&quot;10.198.243.79&quot;</span><span class="p">]})</span></div>
 
-<div class="viewcode-block" id="COSClient.get_cos_summary"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.get_cos_summary">[docs]</a>    <span class="k">def</span> <span class="nf">get_cos_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.get_cos_summary"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.get_cos_summary">[docs]</a>    <span class="k">def</span> <span class="nf">get_cos_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return information for the given COR URL (may include bucket + prefix)</span>
 
@@ -850,7 +778,7 @@
     <span class="c1"># -----------------</span>
     <span class="c1"># The methods below are for interacting with a file stored as an asset in a Watson Studio&#39;s Project.</span>
     <span class="c1"># -----------------</span>
-<div class="viewcode-block" id="COSClient.connect_project_lib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib">[docs]</a>    <span class="k">def</span> <span class="nf">connect_project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.connect_project_lib"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.connect_project_lib">[docs]</a>    <span class="k">def</span> <span class="nf">connect_project_lib</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Connect to an IBM Watson Studio Project&#39;s COS bucket for its own assets</span>
 
@@ -861,26 +789,38 @@
 
 <span class="sd">        file_name: str, optional</span>
 <span class="sd">            The name of the file in ProjectLib&#39;s COS bucket where data will be read/stored</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool: True if it can connect to the ProjectLib and file exists</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_project</span> <span class="o">=</span> <span class="n">ProjectLib</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">file_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">read_project_lib_data</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="COSClient.read_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.read_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">read_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read the content from the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
+<div class="viewcode-block" id="COSClient.read_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.read_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">read_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;read the content from the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        file_name: str, optional</span>
 <span class="sd">            If not specified, use the one defined from the beginning</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool: True if file existed, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Please connect to your ProjectLib object with `connect_project_lib` API&quot;</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span></div>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">file_exist</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_project</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
 
-<div class="viewcode-block" id="COSClient.write_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.write_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">write_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Write the content to the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
+<div class="viewcode-block" id="COSClient.write_project_lib_data"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos_potentialnewcode.COSClient.write_project_lib_data">[docs]</a>    <span class="k">def</span> <span class="nf">write_project_lib_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;write the content to the given file (via ProjectLib in IBM Watson Studio&#39;s COS bucket)</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
