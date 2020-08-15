@@ -60,8 +60,8 @@ class ProjectLib():
     file_type: str, optional
         The file format of `file_name`
 
-    todo
-    -----
+    .. todo::
+
         NOTE: Currently support only one file
 
         To support many files, we can switch to using dict such as self._data_out[file_name]
@@ -149,12 +149,12 @@ class ProjectLib():
         file_type: str, optional
             The type of file, "json" or "csv"
 
-        Result
+        Returns
         ------
         dict
 
-        Example
-        -------
+        Examples
+        --------
 
         .. code-block:: python
 
@@ -272,7 +272,7 @@ class ParsedUrl(object):
     def is_valid_cos_url(self, cos_url):
         """ Validate if a string is COS URL
 
-        Return
+        Returns
         ------
         bool
         """
@@ -300,6 +300,8 @@ class ParsedUrl(object):
 # ---------------------------------------------------------------------------
 class COSClient(ParsedUrl, IBMCloudAccess):
     """
+    This class handles the interaction with IBM COS storage
+
     Parameters
     ----------
     cloud_apikey : str, optional
@@ -371,7 +373,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         pd.DataFrame
             The following columns ("Object", "Size", "StorageClass")
 
-        Note
+        Notes
         ------
         Having a trailing slash (/) makes a difference in the returned result, as an asterisk is added at the end. So,
         "/prefix" would consider things like "/prefix_unexpected/value" and "/prefix/expected_value"; while
@@ -445,7 +447,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         https://<cos-url>/<bucket>?prefix=<prefix-path>
 
-        Note
+        Notes
         ------
 
         Reference: `AWS doc <https://awsdocs.s3.amazonaws.com/S3/latest/s3-qrc.pdf>`_
@@ -599,8 +601,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         ValueError
             if invalid COS URL
 
-        Example
-        -------
+        Examples
+        --------
 
         .. code-block:: console
 
@@ -622,8 +624,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             "bytes_used": 28198745752445144
             }
 
-        todo
-        ----
+        .. todo::
+
             https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python
         """
         if not self.is_valid_cos_url(cos_url):
@@ -664,8 +666,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
         Update the bucket given by COS URL
 
-        todo
-        ----
+        .. todo::
+
            revise this
         """
         if not self.is_valid_cos_url(cos_url):

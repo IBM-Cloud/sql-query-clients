@@ -392,8 +392,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         SyntaxError
             for both KeyError or HTTPError
 
-        Example
-        -------
+        Examples
+        --------
 
         .. code-block:: console
 
@@ -540,8 +540,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
             You don't need to provide the file name if you're using Watson studio, and the file name has been provided via :meth:`.connect_project_lib`.
 
-        Note
-        ----
+        Notes
+        -----
             To use this API in Watson Studio, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.
 
             This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.
@@ -556,7 +556,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         It's possible that the job's failed because of Spark's internal error.
         So "unknown" is added for such cases.
 
-        Return
+        Returns
         -------
             'failed', 'completed', or 'unknown'
         """
@@ -611,12 +611,15 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             The dataframe holding the queried data from a completed job
 
 
+        Examples
+        --------
+
         .. code-block:: console
 
-            curl -XGET \
-                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \
+            curl -XGET \\
+                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
+                -H "Accept: application/json" \\
+                -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \\
                 -H "Content-Type: application/json"
 
             \"\"\"
@@ -949,8 +952,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             cos://<cos-name>/bucket_name/jobid=<JOB-ID-NUMBER>/_SUCCESS
             cos://<cos-name>/bucket_name/jobid=<JOB-ID-NUMBER>/[parquet|csv|json]
 
-        Note
-        ----
+        Notes
+        -----
 
         * The last entry holds the real data, and the last word also indicates the data format
         * 'JOBPREFIX NONE'  would avoid having 'jobid=JOB-ID-NAME' in the URL
@@ -1004,8 +1007,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         JSONDEcodeError
             when RestAPI returns a non-JSON compliant result
 
-        Note
-        ----
+        Notes
+        -----
 
         .. code-block:: python
 
@@ -1022,7 +1025,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             'end_time': '2020-03-06T21:58:26.274Z',
             'user_id': 'username@us.ibm.com'
 
-        Example
+        Examples
         --------
 
         .. code-block:: python
@@ -1085,8 +1088,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         dataframe
             a pd.DataFrame with fields - total 30 rows, corresponding to the 30 most recent jobs
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: console
 
             job_id
@@ -1107,8 +1110,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             job_id	status	user_id	statement	resultset_location	submit_time	end_time	rows_read	rows_returned	bytes_read	error	error_message
             8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	completed	tmhoangt@us.ibm.com	SELECT o.OrderID, c.CompanyName, e.FirstName, e.LastName FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET o, cos://us-geo/sql/employees.parquet STORED AS PARQUET e, cos://us-geo/sql/customers.parquet STORED AS PARQUET c WHERE e.EmployeeID = o.EmployeeID AND c.CustomerID = o.CustomerID AND o.ShippedDate > o.RequiredDate AND o.OrderDate > "1998-01-01" ORDER BY c.CompanyName	cos://s3.us-south.cloud-object-storage.appdomain.cloud/tuan-sql-result/jobid=8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	2020-02-21T16:19:03.638Z	2020-02-21T16:19:13.691Z	1760	29	41499	None	None
 
-        Note
-        ----
+        Notes
+        -----
 
         * get_jobs() is used by export_job_history(cos_out_url) which is used to save such data
         """
@@ -1508,12 +1511,11 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         job_id : str
             The job ID
 
-        todo
-        ------
+        .. todo::
 
-        1. new sql only when max_obj_size > 300MB
-        2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON
-        3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)
+            1. new sql only when max_obj_size > 300MB
+            2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON
+            3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)
         """
         BestPracticeContainer = namedtuple('SqlBestPractice',
                                            ['size', 'max_objs'])

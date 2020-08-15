@@ -7,6 +7,9 @@ except Exception:
     from cos import ParsedUrl
 
 class HiveMetastore():
+    """
+    This class supports the handling HIVE catalog table
+    """
     def __init__(self, target_url):
         self.current_table_name = None
         # keep tracks of what tables are availables
@@ -383,7 +386,7 @@ class HiveMetastore():
         table_name: str
             Name of the HIVE catalog table
 
-        Return
+        Returns
         ------
         DataFrame
             3 columns: col_name (object), data_type (object), comment (float64)

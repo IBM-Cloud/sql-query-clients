@@ -56,7 +56,8 @@ def static_vars(**kwargs):
 
 
 class IBMCloudAccess():
-    """Provide APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query
+    """
+    This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query
     """
     def __init__(self, cloud_apikey="", client_info=""):
         self.apikey = cloud_apikey
@@ -102,8 +103,8 @@ class IBMCloudAccess():
         """
         Establish a connection to IBM Cloud
 
-        Note
-        ----
+        Notes
+        -----
             An AIM token is needed for any operations to IBM cloud services (e.g. COS)
             A new AIM token is created after 300 seconds.
             A token is valid for 3600 seconds
