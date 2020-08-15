@@ -227,22 +227,25 @@ class ParsedUrl(object):
         self.prefix = None
 
     def get_exact_url(self, cos_url):
-        """convert COS URL from using alias to exact URL"""
+        """Convert COS URL from using alias to exact URL"""
         key = cos_url.split("/")[2]
         x = cos_url.replace(key, self.endpoint_alias_mapping.get(key, key), 1)
         return x
 
     def get_endpoint(self, cos_url):
+        """ Return the endpoint string from COS URL"""
         self.endpoint = cos_url.split("/")[2]
         self.endpoint = self.endpoint_alias_mapping.get(
             self.endpoint, self.endpoint)
         return self.endpoint
 
     def get_bucket(self, cos_url):
+        """ Return the bucket name from COS URL"""
         self.bucket = cos_url.split("/")[3]
         return self.bucket
 
     def get_prefix(self, cos_url):
+        """ Return the prefix part from COS URL"""
         self.prefix = cos_url[cos_url.replace('/', 'X', 3).find('/') + 1:]
         if len(self.prefix) > 0 and self.prefix[-1] == '*':
             self.prefix = self.prefix[:-1]
@@ -250,16 +253,45 @@ class ParsedUrl(object):
         return self.prefix
 
     def analyze_cos_url(self, cos_url):
-        """ return a namedtuple containing the 3 fields
+        """ Return a namedtuple containing the 3 fields
 
         * bucket
         * endpoint
         * prefix
+
+        Parameters
+        ----------
+        cos_url : str
+            COS URL
         """
         nt = namedtuple("COSURL", "endpoint bucket prefix")
         mycontainer = nt(self.get_endpoint(cos_url), self.get_bucket(cos_url),
                          self.get_prefix(cos_url))
         return mycontainer
+
+    def is_valid_cos_url(self, cos_url):
+        """ Validate if a string is COS URL
+
+        Return
+        ------
+        bool
+        """
+        origin = str(cos_url)
+        cos_url = cos_url.strip()
+        if not cos_url.startswith("cos://"):
+            return False
+
+        cos_url = cos_url[6:]
+        if '/' not in cos_url:
+            return False
+        if cos_url[-1] != '/':
+            cos_url += '/'
+        if cos_url.count('/') < 2:
+            return False
+        if not self.get_endpoint(origin) in self.endpoint_alias_mapping.values():
+            return False
+
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +327,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                                 cloud_apikey=cloud_apikey,
                                 client_info=client_info)
 
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self.cos_url = cos_url
         # a dict holding all retrieved bucket's information
         self.buckets_info = {}
@@ -347,7 +382,15 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             Only "list_objects' work for IBM COS, not 'list_objects_v2'
 
             `IBM-COS-SDK <https://ibm.github.io/ibm-cos-sdk-python/reference/services/s3.html#S3.Client.list_objects_v2>`_
+
+        Raises
+        -------
+        ValueError
+            if COS URL is invalid
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self.logon()
 
         cos_url = self.get_exact_url(cos_url)
@@ -378,7 +421,15 @@ class COSClient(ParsedUrl, IBMCloudAccess):
     def delete_empty_objects(self, cos_url):
         """
         Delete zero-size objects. Reference to :meth:`.list_cos_objects` for further details.
+
+        Raises
+        -------
+        ValueError
+            if COS URL is invalid
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         result_objects = self.list_cos_objects(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
         cos_client = self._get_default_cos_client(url_parsed.endpoint)
@@ -390,7 +441,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                                          Key=result_objects.Object[row])
 
     def delete_objects(self, cos_url, dry_run=False):
-        """delete all objects stored at the given COS URL
+        """Delete all objects stored at the given COS URL
 
         https://<cos-url>/<bucket>?prefix=<prefix-path>
 
@@ -432,7 +483,15 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         As the entity tag (ETag) is a hash of the object, we can use it to reliably check whether the object has changed - better
         than just file size and modification date. Sample code to handle `request.response <https://sdbrett.com/BrettsITBlog/2017/03/python-parsing-api-xml-response-data/>`_
+
+        Raises
+        -------
+        ValueError
+            if COS URL is invalid
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self.logon()
 
         print("COS URL: {}\n".format(cos_url))
@@ -503,6 +562,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         Arguments:
             cos_url {str} -- The COS URL
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self.logon()
 
         cos_url = self.get_exact_url(cos_url)
@@ -530,7 +592,16 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         return result
 
     def get_bucket_info(self, cos_url):
-        """
+        """ Return the information of the given bucket
+
+        Raises
+        -------
+        ValueError
+            if invalid COS URL
+
+        Example
+        -------
+
         .. code-block:: console
 
             curl https://config.cloud-object-storage.cloud.ibm.com/v1/b/my-bucket \
@@ -555,6 +626,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         ----
             https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         from cos_config.resource_configuration_v1 import ResourceConfigurationV1
         bucket = self.get_bucket(cos_url)
 
@@ -586,12 +660,17 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         #     break
         # time.sleep(2)
 
-    def update_bucket(self, cos_url):
+    def _update_bucket(self, cos_url):
         """
+        Update the bucket given by COS URL
+
         todo
         ----
            revise this
         """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         from cos_config.resource_configuration_v1 import ResourceConfigurationV1
 
         api_key = self.apikey
@@ -699,7 +778,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             self.read_project_lib_data(file_name)
 
     def read_project_lib_data(self, file_name=None):
-        """read the content from the given file (via ProjectLib in IBM Watson Studio's COS bucket)
+        """Read the content from the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------
@@ -712,7 +791,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             self._project.read(file_name)
 
     def write_project_lib_data(self, file_name=None):
-        """write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
+        """Write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------

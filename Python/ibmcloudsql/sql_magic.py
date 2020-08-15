@@ -57,6 +57,13 @@ def print_sql(sql_stmt):
 class TimeSeriesTransformInput():
     @classmethod
     def transform_sql(cls, f):
+        """
+        Generate SQL string
+
+        Note
+        ----
+        Syntax: https://cloud.ibm.com/docs/sql-query
+        """
         @wraps(f)
         def wrapped(*args, **kwargs):
             self = args[0]
@@ -68,8 +75,10 @@ class TimeSeriesTransformInput():
     @classmethod
     def ts_segment_by_time(cls, sql_stmt):
         """
-        Help to transform from user-friendly query into library-friendly query
+        Revise user-friendly TS_SEGMENT function into library-friendly TS_SEGMENT function
 
+        Note
+        ----
         Using either: `per_hour`
 
         .. code-block:: console
@@ -80,7 +89,8 @@ class TimeSeriesTransformInput():
         or: using  ISO 8601 https://en.wikipedia.org/wiki/ISO_8601#Durations
             P[n]Y[n]M[n]DT[n]H[n]M[n]S or P[n]W
 
-        Example:
+        Example
+        -------
 
         .. code-block:: python
 
@@ -155,9 +165,11 @@ class TimeSeriesSchema():
 
     @property
     def columns_in_unixtime(self ):
+        """Return the name of columns whose values are in UNIX timestamp"""
         return self._unixtime_columns
     @columns_in_unixtime.setter
     def columns_in_unixtime(self, column_list):
+        """Assign the name of columns whose values are in UNIX timestamp"""
         self._unixtime_columns = column_list
 
 
@@ -174,15 +186,16 @@ class SQLMagic(TimeSeriesSchema):
         self._has_from_clause = False
 
     def print_sql(self):
+        """print() sql string"""
         print_sql(self.get_sql())
 
     @TimeSeriesTransformInput.transform_sql
     def get_sql(self):
-        """return the current sql string"""
+        """Return the current sql string"""
         return format_sql(self._sql_stmt)
 
     def reset_(self):
-        """reset and returns the current sql string"""
+        """Reset and returns the current sql string"""
         res = self.get_sql()
         self._sql_stmt = ""
         self._has_stored_location = False
@@ -192,6 +205,7 @@ class SQLMagic(TimeSeriesSchema):
         return res
 
     def with_(self, table_name, sql_stmt):
+        """WITH <table> AS <sql> [, <table AS <sql>]"""
         if "WITH" not in self._sql_stmt:
             self._sql_stmt = self._sql_stmt + " WITH " + table_name + " AS (" + sql_stmt  + "\n) "
             self._has_with_clause = True
@@ -201,6 +215,8 @@ class SQLMagic(TimeSeriesSchema):
 
     def select_(self,  columns):
         """
+        SELECT <columns>
+
         Parameters
         ---------------
         columns: str
@@ -212,6 +228,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def from_table_(self, table, alias=None):
+        """
+        FROM <table> [AS alias] [, <table> [AS alias]]
+        """
         if self._has_from_clause:
             self._sql_stmt += ", "
         else:
@@ -225,6 +244,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def from_cos_(self, cos_url, format_type="parquet", alias=None):
+        """
+        FROM <cos-url> AS type [AS alias] [, <cos-url> AS type [AS alias]]
+        """
         if self._has_from_clause:
             self._sql_stmt += ", "
         else:
@@ -236,10 +258,16 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def from_view_(self, sql_stmt):
+        """
+        FROM (<sql>)
+        """
         self._sql_stmt = self._sql_stmt + " FROM  ( \n" + sql_stmt + " \n) "
         return self
 
     def where_(self, condition):
+        """
+        WHERE <condition> [, <condition>]
+        """
         if "WHERE" not in self._sql_stmt:
             self._sql_stmt = self._sql_stmt + " WHERE " + condition
         else:
@@ -248,10 +276,16 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def join_cos_(self, cos_url, condition, type="inner", alias=None):
+        """
+        [type] JOIN <cos-url> [AS alias]
+        """
         table = cos_url
         return self.join_table_(table, condition, type=type, alias=alias)
 
     def join_table_(self, table, condition, type="inner", alias=None):
+        """
+        [type] JOIN <table> [AS alias] ON <condition>
+        """
         self.supported_join_types = ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
                 "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
         import re
@@ -268,6 +302,8 @@ class SQLMagic(TimeSeriesSchema):
 
     def order_by_(self, columns):
         """
+        ORDER BY <columns>
+
         Parameters
         ---------------
         condition: str
@@ -277,6 +313,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def group_by_(self, columns):
+        """
+        GROUP BY <columns>
+        """
         if "GROUP BY" not in self._sql_stmt:
             self._sql_stmt = self._sql_stmt + " GROUP BY " + columns
         else:
@@ -284,6 +323,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def store_at_(self, cos_url, format_type="CSV"):
+        """
+        INTO <cos-url> STORED AS <type>
+        """
         if self._has_stored_location is False:
             self._sql_stmt = self._sql_stmt + " INTO " + cos_url
             self._has_stored_location = True
@@ -304,6 +346,9 @@ class SQLMagic(TimeSeriesSchema):
     #     return self
 
     def partition_by_(self, columns):
+        """
+        PARTITIONED BY <columns>
+        """
         if " PARTITION " not in self._sql_stmt and " PARTITIONED " not in self._sql_stmt:
             self._sql_stmt += " PARTITIONED BY " + str(columns)
         else:
@@ -311,6 +356,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def partition_objects_(self, num_objects):
+        """
+        PARTITIONED INTO <num>  OBJECTS
+        """
         if "PARTITION" not in self._sql_stmt:
             self._sql_stmt = self._sql_stmt + " PARTITIONED INTO " + str(num_objects) + " OBJECTS"
         else:
@@ -318,6 +366,9 @@ class SQLMagic(TimeSeriesSchema):
         return self
 
     def partition_rows_(self, num_rows):
+        """
+        PARTITIONED INTO <num> ROWS
+        """
         if "PARTITION" not in self._sql_stmt:
             self._sql_stmt = self._sql_stmt + " PARTITIONED INTO " + str(num_rows) + " ROWS"
         else:
@@ -326,6 +377,6 @@ class SQLMagic(TimeSeriesSchema):
 
     @TimeSeriesTransformInput.transform_sql
     def format_(self):
-        """Perform string replacement needed so that the final result is a SQL statement that is accepted by Spark SQL
+        """Perform string replacement needed so that the final result is a SQL statement that is accepted by IBM Spark SQL
         """
         return self
