@@ -30,10 +30,11 @@ from datetime import datetime
 import pyarrow
 import os
 import tempfile
+from packaging import version
 try:
-    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException
+    from exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException, SqlQueryFailException
 except Exception:
-    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException
+    from .exceptions import RateLimitedException, CosUrlNotFoundException, SqlQueryCrnInvalidFormatException, SqlQueryInvalidPlanException, SqlQueryFailException
 try:
     from .cos import COSClient
 except Exception:
@@ -113,19 +114,22 @@ def check_saved_jobs_decorator(f):
                 if self.project_lib.data[sql_stmt]["status"] == "completed":
                     print("Job {} completed".format(job_id))
                 else:
-                    # query the status
-                    job_result = self.get_job(job_id)
-                    self.project_lib.data[sql_stmt]["job_info"] = job_result
-                    try:
-                        self.project_lib.data[sql_stmt]["status"] = job_result[
-                            "status"]
-                    except KeyError as e:
-                        import pprint
-                        pprint.pprint(job_result)
-                        raise e
-                    if job_result["status"] == "failed":
+                    if self.project_lib.data[sql_stmt]["status"] != status_no_job_id:
+                        # query the status
+                        job_result = self.get_job(job_id)
+                        self.project_lib.data[sql_stmt]["job_info"] = job_result
+                        try:
+                            self.project_lib.data[sql_stmt]["status"] = job_result[
+                                "status"]
+                        except KeyError as e:
+                            import pprint
+                            pprint.pprint(job_result)
+                            raise e
+                        if job_result["status"] == "failed":
+                            run_as_usual = True
+                        self.write_project_lib_data()
+                    else:
                         run_as_usual = True
-                    self.write_project_lib_data()
         else:
             # use local file
             if prefix is None:
@@ -235,6 +239,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         SQLMagic.__init__(self)
         HiveMetastore.__init__(self, target_cos_url)
 
+        if target_cos_url is not None and not self.is_valid_cos_url(target_cos_url):
+            msg = "Not a valid COS URL"
+            raise ValueError(msg)
         self.instance_crn = instance_crn
         self.target_cos_url = target_cos_url
         self.export_cos_url = target_cos_url
@@ -267,7 +274,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return self.jobs_tracking
 
     def configure(self, apikey=None, instance_crn=None, cos_out_url=None):
-        """ use this to update the configuration
+        """ Update the configuration
         """
         COSClient.configure(self, apikey)
         if instance_crn is None:
@@ -278,11 +285,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             self.instance_crn = instance_crn
         if cos_out_url is None:
             if self.target_cos_url is None or self.target_cos_url == '':
-                self.target_cos_url = input('Enter target URI for SQL results: ')
+                while True:
+                    self.target_cos_url = input('Enter target URI for SQL results: ')
+                    if self.is_valid_cos_url(cos_url):
+                        break
             else:
-                self.target_cos_url = input(
-                    'Enter target URI for SQL results (leave empty to use ' +
-                    self.target_cos_url + '): ') or self.target_cos_url
+                old_cos_url = str(self.target_cos_url)
+                while True:
+                    self.target_cos_url = input(
+                        'Enter target URI for SQL results (leave empty to use ' +
+                        self.target_cos_url + '): ') or old_cos_url
+                    if self.is_valid_cos_url(cos_url):
+                        break
         else:
             self.cos_out_url = cos_out_url
         HiveMetastore.configure(self, self.target_cos_url)
@@ -378,8 +392,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         SyntaxError
             for both KeyError or HTTPError
 
-        Example
-        -------
+        Examples
+        --------
 
         .. code-block:: console
 
@@ -526,8 +540,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
             You don't need to provide the file name if you're using Watson studio, and the file name has been provided via :meth:`.connect_project_lib`.
 
-        Note
-        ----
+        Notes
+        -----
             To use this API in Watson Studio, the SQL Query client must already connected to the ProjectLib object via :meth:`.connect_project_lib` method.
 
             This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.
@@ -542,7 +556,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         It's possible that the job's failed because of Spark's internal error.
         So "unknown" is added for such cases.
 
-        Return
+        Returns
         -------
             'failed', 'completed', or 'unknown'
         """
@@ -581,6 +595,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def get_result(self, jobId, pagenumber=None):
         """
+        Return the queried data from the given job-id
+
         Parameters
         ----------
         jobId: int
@@ -595,12 +611,15 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             The dataframe holding the queried data from a completed job
 
 
+        Examples
+        --------
+
         .. code-block:: console
 
-            curl -XGET \
-                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \
-                -H "Accept: application/json" \
-                -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \
+            curl -XGET \\
+                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
+                -H "Accept: application/json" \\
+                -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \\
                 -H "Content-Type: application/json"
 
             \"\"\"
@@ -916,8 +935,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def delete_result(self, jobId):
         """
+        Delete the COS objects created by a given job-id
+
         Returns
-        ------
+        -------
         dataframe
             A dataframe, with 3 rows, and one field name "Deleted Object"
 
@@ -931,8 +952,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             cos://<cos-name>/bucket_name/jobid=<JOB-ID-NUMBER>/_SUCCESS
             cos://<cos-name>/bucket_name/jobid=<JOB-ID-NUMBER>/[parquet|csv|json]
 
-        Note
-        ----
+        Notes
+        -----
 
         * The last entry holds the real data, and the last word also indicates the data format
         * 'JOBPREFIX NONE'  would avoid having 'jobid=JOB-ID-NAME' in the URL
@@ -970,13 +991,24 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def get_job(self, jobId):
         """
+        Return the details of the job-id
+
         Returns
         -------
         dict
             a dict of job details (see keys below)
 
-        Note
-        ----
+        Raises
+        ----------
+        ValueError
+            when jobId is not correct
+        HTTPError
+            when RestAPI request fails
+        JSONDEcodeError
+            when RestAPI returns a non-JSON compliant result
+
+        Notes
+        -----
 
         .. code-block:: python
 
@@ -993,7 +1025,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             'end_time': '2020-03-06T21:58:26.274Z',
             'user_id': 'username@us.ibm.com'
 
-        Example
+        Examples
         --------
 
         .. code-block:: python
@@ -1030,6 +1062,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
             return response.json()
 
+        if len(jobId) == 0:
+            msg = "Invalid job_id: {}".format(jobId)
+            raise ValueError(msg)
+
         job_id = jobId
         if job_id in self.jobs_tracking and \
             self.jobs_tracking[job_id].get("status") != "running":
@@ -1052,8 +1088,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         dataframe
             a pd.DataFrame with fields - total 30 rows, corresponding to the 30 most recent jobs
 
-        Example
-        -------
+        Examples
+        --------
         .. code-block:: console
 
             job_id
@@ -1074,8 +1110,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             job_id	status	user_id	statement	resultset_location	submit_time	end_time	rows_read	rows_returned	bytes_read	error	error_message
             8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	completed	tmhoangt@us.ibm.com	SELECT o.OrderID, c.CompanyName, e.FirstName, e.LastName FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET o, cos://us-geo/sql/employees.parquet STORED AS PARQUET e, cos://us-geo/sql/customers.parquet STORED AS PARQUET c WHERE e.EmployeeID = o.EmployeeID AND c.CustomerID = o.CustomerID AND o.ShippedDate > o.RequiredDate AND o.OrderDate > "1998-01-01" ORDER BY c.CompanyName	cos://s3.us-south.cloud-object-storage.appdomain.cloud/tuan-sql-result/jobid=8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8	2020-02-21T16:19:03.638Z	2020-02-21T16:19:13.691Z	1760	29	41499	None	None
 
-        Note
-        ----
+        Notes
+        -----
 
         * get_jobs() is used by export_job_history(cos_out_url) which is used to save such data
         """
@@ -1151,7 +1187,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     @validate_job_status
     def get_jobs_with_status(self, job_id_list, status):
-        """ Among those given, return the list of job_id that have the given status
+        """ Return the list of job_id, among those provided, that have the given status
 
         Parameters
         ----------
@@ -1174,7 +1210,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     @validate_job_status
     def get_jobs_count_with_status(self, status):
-        """ return the number of jobs in the SQL Query server for the given `status`
+        """ Return the number of jobs in the SQL Query server for the given `status`
 
         It has the limitation as described in :meth:`.get_jobs`
         """
@@ -1189,11 +1225,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     def execute_sql(self, sql_stmt, pagesize=None, get_result=False):
         """
         Extend the behavior of :meth:`.run_sql`.
-        I.e. it is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:
+        It is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:
 
-        1. Returning of data as Pandas dataframe is optional (get_result parameter) to help avoiding Python runtime memory overload.
+        1. returning of data (Pandas dataframe) is optional (controlled by `get_result` parameter): to help avoiding Python runtime memory overload.
             This is also useful when you run SQL statements such as DDLs that don't produce results at all.
-        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the extra part.
+        2. returns a namedtuple, in that result.data is the one returned by `run_sql`, while result.job_id is the one returned by `submit_sql`
+        3. raise an exception for a failed job
 
         Parameters
         --------------
@@ -1212,6 +1249,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         namedtuple [`data`, `job_id`]
             `get_result` = True, then behavior like :meth:`.run_sql` which materializes the returned data as type
              pd.DataFrame in memory. The default behavior is opposite, to avoid unintended overload of memory.
+
+        Raises
+        ------
+        KeyError
+            when information about a failed job is missing (job_status, job_id, error, error_message)
+        SqlQueryFailException
+            when the sql query fails, e.g. time out on the server side
 
         """
         Container = namedtuple('RunSql', ['data', 'job_id'])
@@ -1237,7 +1281,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     job_id=job_id,
                     error=details['error'],
                     msg=details['error_message'])
-                raise Exception(error_message)
+                raise SqlQueryFailException(error_message)
             except KeyError as e:
                 pprint.pprint(details)
                 raise e
@@ -1259,6 +1303,16 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Returns
         -------
             pd.DataFrame with the query results.
+
+        Raises
+        ------
+        CosUrlNotFoundException
+            the COS URL is not valid
+        KeyError
+            the returned error message does not have job_id, error, or error_message
+        Exception
+            unexpected exception
+
 
         """
         self.logon()
@@ -1336,10 +1390,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         cos_url : str
             A COS URL with prefix, i.e. cos://<cos-name>/<bucket>/<prefix>,
             where the data will be stored
+
+        Raises
+        ------
+        ValueError
+            if COS URL is invalid
         """
         if cos_url:
             # Default export location is target COS URL set at __init__
             # But we'll overwrite that with the provided export URL
+            if not self.is_valid_cos_url(cos_url):
+                msg = "Not a valid COS URL"
+                raise ValueError(msg)
             self.export_cos_url = cos_url
         elif not self.export_cos_url:
             raise ValueError('No configured export COS URL.')
@@ -1379,7 +1441,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             tmpfile = tempfile.NamedTemporaryFile()
             tempfilename = tmpfile.name
             new_jobs_df = terminated_job_history_df[terminated_job_history_df['end_time'] > newest_exported_job_end_time]
-            if sys.version_info >= (3, 0):
+            if version.parse(pd.__version__) >= version.parse("1.0.0"):
                 new_jobs_df.to_parquet(engine="pyarrow", path=tempfilename, compression="snappy", index=False)
             else:
                 new_jobs_df.to_parquet(engine="pyarrow", fname=tempfilename, compression="snappy", index=False)
@@ -1392,7 +1454,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def get_schema_data(self, cos_url, type="json", dry_run=False):
         """
-        Return the schema information
+        Return the schema of COS URL
 
         Parameters
         ----------
@@ -1407,15 +1469,24 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         Returns
         -------
         DataFrame
+            3 columns: name (object), nullable (bool), type (object)
+
+        Raises
+        -------
+        ValueError
+            in either scenarios: (1) target COS URL is not set, (2) invalid type, (3) invalid COS URL
 
         """
         supported_types = ["JSON", "CSV", "PARQUET"]
 
         if self.target_cos_url is None:
-            msg = "Need to pass target COS URL to SQL Client object"
+            msg = "Need to pass target COS URL when creating SQL Client object"
             raise ValueError(msg)
         if type.upper() not in supported_types:
             msg = "Expected 'type' value: " + str(supported_types)
+            raise ValueError(msg)
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL"
             raise ValueError(msg)
         sql_stmt = """
         SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
@@ -1433,19 +1504,18 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             return df
 
     def analyze(self, job_id):
-        """Provides some insights about the data layout from the current SQL statement
+        """Provide some insights about the data layout from the current SQL statement
 
         Parameters
         -------------
         job_id : str
             The job ID
 
-        todo
-        ------
+        .. todo::
 
-        1. new sql only when max_obj_size > 300MB
-        2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON
-        3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)
+            1. new sql only when max_obj_size > 300MB
+            2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON
+            3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)
         """
         BestPracticeContainer = namedtuple('SqlBestPractice',
                                            ['size', 'max_objs'])
@@ -1636,6 +1706,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         str
             The COS_URL where the data with 3 fields (key, time_stamp, observation)
             and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
+
+        Raises
+        ------
+        ISO8601Error
+            granularity input is not a valid ISO 8601-compliant value
+
         """
         tmp_cos = self.target_cos_url
         if num_objects is None and num_rows is None:
