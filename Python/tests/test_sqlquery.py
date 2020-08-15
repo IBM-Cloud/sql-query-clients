@@ -8,7 +8,8 @@ from ibmcloudsql import SQLQuery, RateLimitedException
 
 @pytest.fixture
 def sqlquery_client():
-    sql_client = SQLQuery('mock-api-key', 'mock-crn', client_info='ibmcloudsql test')
+    cos_url = "cos://us-south/cos-access-ts/test/"
+    sql_client = SQLQuery('mock-api-key', 'mock-crn', cos_url, client_info='ibmcloudsql test')
 
     # TODO mock method .logon() instead of hacking
     # disable authentication step for 300s

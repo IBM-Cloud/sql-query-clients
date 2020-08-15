@@ -37,7 +37,8 @@ def test_analyze_cos_url(parsedurl_instance, cos_url):
 
 @pytest.fixture
 def cos_instance():
-    cos_instance = cos.COSClient('mock-api-key', 'mock-crn', client_info='ibmcloudsql test')
+    cos_url = "cos://us-south/cos-access-ts/test/"
+    cos_instance = cos.COSClient('mock-api-key', cos_url, client_info='ibmcloudsql test')
 
     # TODO mock method .logon() instead of hacking
     # disable authentication step for 300s
