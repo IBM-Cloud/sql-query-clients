@@ -79,7 +79,7 @@ for jobId in jobidArray:
     sqlClient.wait_for_job(jobId)
 
 print("Running test rate limiting with retry:")
-sqlClientRetry = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test', max_tries = 5)
+sqlClientRetry = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test', max_tries = 5)
 sqlClientRetry.logon()
 jobidArray = []
 for x in range(test_credentials.instance_rate_limit + 1):
@@ -221,7 +221,7 @@ objects_df = sqlClient.list_cos_objects(test_credentials.result_location)
 print(objects_df.head(100))
 
 print("Test with target URL as separate parameter")
-sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, test_credentials.result_location, client_info='ibmcloudsql test')
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10")
 sqlClient.wait_for_job(jobId)
@@ -235,7 +235,7 @@ jobhist_location = test_credentials.result_location + "my_job_history/"
 sqlClient.export_job_history(jobhist_location,
     export_file_prefix = "job_export=", export_file_suffix = "/data.parquet")
 
-sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test')
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
 
 print("Running query on exported history")
@@ -247,7 +247,7 @@ print(jobhist_df[['job_id','status']])
 
 print("Running EU test with individual method invocation and Parquet target:")
 try:
-    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, client_info='ibmcloudsql test')
+    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credential.result_location, client_info='ibmcloudsql test')
     sqlClient_eu.logon()
     jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
     sqlClient_eu.wait_for_job(jobId)

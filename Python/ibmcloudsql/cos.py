@@ -192,6 +192,11 @@ class ParsedUrl(object):
         `cos://<cos-name>/<bucket>/<prefix>/`
     """
     def __init__(self):
+        """
+
+        Endpoints to change:
+        https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-migrate-data-center
+        """
         self.endpoint_alias_mapping = {
             "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
             "us": "s3-api.us-geo.objectstorage.softlayer.net",
@@ -222,6 +227,33 @@ class ParsedUrl(object):
             "sao01": "s3.sao01.objectstorage.softlayer.net",
             "seo01": "s3.seo01.objectstorage.softlayer.net"
         }
+        # https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-endpoints
+        self._dedicated_endpoints = [
+                "s3.us-south.cloud-object-storage.appdomain.cloud",
+                "s3.us-east.cloud-object-storage.appdomain.cloud",
+                "s3.eu-gb.cloud-object-storage.appdomain.cloud",
+                "s3.eu-de.cloud-object-storage.appdomain.cloud",
+                "s3.au-syd.cloud-object-storage.appdomain.cloud",
+                "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+                # cross-region
+                "s3.us.cloud-object-storage.appdomain.cloud",
+                "s3.eu.cloud-object-storage.appdomain.cloud",
+                "s3.ap.cloud-object-storage.appdomain.cloud",
+                # single DC
+                "s3.ams03.cloud-object-storage.appdomain.cloud",
+                "s3.che01.cloud-object-storage.appdomain.cloud",
+                "s3.hkg02.cloud-object-storage.appdomain.cloud",
+                "s3.mex01.cloud-object-storage.appdomain.cloud",
+                "s3.mil01.cloud-object-storage.appdomain.cloud",
+                "s3.mon01.cloud-object-storage.appdomain.cloud",
+                "s3.osl01.cloud-object-storage.appdomain.cloud",
+                "s3.par01.cloud-object-storage.appdomain.cloud",
+                "s3.sjc04.cloud-object-storage.appdomain.cloud",
+                "s3.sao01.cloud-object-storage.appdomain.cloud",
+                "s3.seo01.cloud-object-storage.appdomain.cloud",
+                "s3.sng01.cloud-object-storage.appdomain.cloud",
+                "s3.tor01.cloud-object-storage.appdomain.cloud"
+                ]
         self.endpoint = None
         self.bucket = None
         self.prefix = None
@@ -288,7 +320,9 @@ class ParsedUrl(object):
             cos_url += '/'
         if cos_url.count('/') < 2:
             return False
-        if not self.get_endpoint(origin) in self.endpoint_alias_mapping.values():
+        endpoint = self.get_endpoint(origin)
+        if not endpoint in self.endpoint_alias_mapping.values() and \
+        not endpoint in self._dedicated_endpoints:
             return False
 
         return True
@@ -329,9 +363,10 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                                 cloud_apikey=cloud_apikey,
                                 client_info=client_info)
 
-        if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
-            raise ValueError(msg)
+        if cos_url is not None and len(cos_url) > 0:
+            if not self.is_valid_cos_url(cos_url):
+                msg = "Not a valid COS URL: {}".format(cos_url)
+                raise ValueError(msg)
         self.cos_url = cos_url
         # a dict holding all retrieved bucket's information
         self.buckets_info = {}
@@ -391,7 +426,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             if COS URL is invalid
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         self.logon()
 
@@ -430,7 +465,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             if COS URL is invalid
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         result_objects = self.list_cos_objects(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
@@ -492,7 +527,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             if COS URL is invalid
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         self.logon()
 
@@ -565,7 +600,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             cos_url {str} -- The COS URL
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         self.logon()
 
@@ -629,7 +664,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         from cos_config.resource_configuration_v1 import ResourceConfigurationV1
         bucket = self.get_bucket(cos_url)
@@ -671,7 +706,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
            revise this
         """
         if not self.is_valid_cos_url(cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         from cos_config.resource_configuration_v1 import ResourceConfigurationV1
 
