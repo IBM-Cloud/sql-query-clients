@@ -32,8 +32,11 @@ class HiveMetastore():
         SHOW TABLES
         INTO {cos_out} STORED AS CSV
         """
-        if not ParsedUrl().is_valid_cos_url(target_url):
+        if target_url is None or \
+            not ParsedUrl().is_valid_cos_url(target_url):
             msg = "Not a valid COS URL"
+            if target_url is not None:
+                msg = "Not a valid COS URL: {}".format(target_url)
             raise ValueError(msg)
         self._target_url = target_url
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
