@@ -22,7 +22,7 @@ sqlClient.sql_ui_link()
 print("Running test with checking malformed sql string:")
 try:
     sqlClient.run_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} ".format(test_credentials.result_location))
-except Exception as e:
+except SyntaxError as e:
     print("Expect a failure:")
     print(e)
 
