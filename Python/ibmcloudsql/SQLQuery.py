@@ -237,16 +237,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                            cloud_apikey=api_key,
                            cos_url=target_cos_url,
                            client_info=client_info)
-        SQLMagic.__init__(self)
-        try:
-            HiveMetastore.__init__(self, target_cos_url)
-        except ValueError as e:
-            print("fix `target_cos_url`")
-            raise e
-
         if target_cos_url is not None and not self.is_valid_cos_url(target_cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL {}".format(target_cos_url)
             raise ValueError(msg)
+        SQLMagic.__init__(self)
+        if target_cos_url is not None:
+            HiveMetastore.__init__(self, target_cos_url)
+
         self.instance_crn = instance_crn
         self.target_cos_url = target_cos_url
         self.export_cos_url = target_cos_url

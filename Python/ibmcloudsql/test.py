@@ -14,6 +14,8 @@ pd.set_option('display.max_columns', 20)
 if test_credentials.result_location[-1] != "/":
     test_credentials.result_location += "/"
 
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test') # maintain backward compatible
+
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
 sqlClient.sql_ui_link()
