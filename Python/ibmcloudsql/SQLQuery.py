@@ -60,6 +60,7 @@ from pprint import pformat
 from collections import namedtuple
 import inspect
 import sqlparse
+import re
 
 from enum import Enum
 
@@ -123,7 +124,7 @@ def check_saved_jobs_decorator(f):
                                 "status"]
                         except KeyError as e:
                             import pprint
-                            pprint.pprint(job_result)
+                            pprint.pprint(job_id, "\n", job_result)
                             raise e
                         if job_result["status"] == "failed":
                             run_as_usual = True
@@ -236,16 +237,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                            cloud_apikey=api_key,
                            cos_url=target_cos_url,
                            client_info=client_info)
-        SQLMagic.__init__(self)
-        try:
-            HiveMetastore.__init__(self, target_cos_url)
-        except ValueError as e:
-            print("fix `target_cos_url`")
-            raise e
-
         if target_cos_url is not None and not self.is_valid_cos_url(target_cos_url):
-            msg = "Not a valid COS URL"
+            msg = "Not a valid COS URL {}".format(target_cos_url)
             raise ValueError(msg)
+        SQLMagic.__init__(self)
+        if target_cos_url is not None:
+            HiveMetastore.__init__(self, target_cos_url)
+
         self.instance_crn = instance_crn
         self.target_cos_url = target_cos_url
         self.export_cos_url = target_cos_url
@@ -973,7 +971,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         if "resultset_location" not in job_details:
             return None
-        result_location = job_details['resultset_location'].replace("cos", "https", 1)
+        result_location = job_details['resultset_location']
         url_parsed = self.analyze_cos_url(result_location)
         bucket_name = url_parsed.bucket
         bucket_objects_df = self.list_cos_objects(result_location)[['Object']]
@@ -1507,7 +1505,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 raise ValueError(msg)
             return df
 
-    def analyze(self, job_id):
+    def analyze(self, job_id, print_msg=True):
         """Provide some insights about the data layout from the current SQL statement
 
         Parameters
@@ -1515,17 +1513,30 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         job_id : str
             The job ID
 
+        print_msg: bool, optional
+            Default is True: print out the hints to the console
+
         .. todo::
 
             1. new sql only when max_obj_size > 300MB
             2. check if STORED AS is used, if not suggested adding to sql with PARQUET or JSON
             3. add PARITIONED ... not at the end, but right after STORED AS (which can be missing in original SQL)
         """
+        def INTO_is_present(sql_text):
+            """ check if INTO keyword is present in the SQL query"""
+            return (" INTO " in sql_text.upper()) or (
+                "\nINTO " in sql_text.upper())
         BestPracticeContainer = namedtuple('SqlBestPractice',
                                            ['size', 'max_objs'])
         best_practice = BestPracticeContainer("128 MB", 50)
 
         result = self.get_job(job_id)
+        # TODO : make use of 'resultset_location' and 'resultset_format'
+        if not INTO_is_present(result['statement']):
+            cos_out = result['resultset_location']
+            if "jobid=" in result['resultset_location']:
+                cos_out = cos_out[:cos_out.rfind("jobid=")]
+            result['statement'] += " INTO " + cos_out + " STORED AS " + result['resultset_format']
         if result['status'] != 'completed':
             msg = "Job {job_id} is {status} - no more insights".format(
                 job_id=job_id, status=result['status'])
@@ -1590,7 +1601,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         mappings = {
             "num_objs":
             min(best_practice.max_objs,
-                query.total_volume / float(best_practice.size.split(" ")[0]))
+                int(query.total_volume / float(best_practice.size.split(" ")[0])))
         }
 
         msg_03 = "Current SQL:\n {sql}\n".format(sql=result["statement"])
@@ -1607,9 +1618,14 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 sql_stmt = pre + post
             else:
                 url = re.search(r'INTO (cos)://[^\s]*', sql_stmt)
-                loc = url.span(0)[1]
-                sql_stmt = sql_stmt[:loc] + ' STORED AS  ' + storage.upper(
-                ) + sql_stmt[loc + 1:]
+                if url:
+                    loc = url.span(0)[1]
+                    sql_stmt = sql_stmt[:loc] + ' STORED AS  ' + storage.upper(
+                    ) + sql_stmt[loc + 1:]
+                else:
+                    # no explicit INTO
+                    msg = "Error: needs INTO <cos-url> clause"
+                    raise Exception(msg)
             return sql_stmt
 
         def msg_partition_into():
@@ -1648,14 +1664,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 # new_sql = new_sql + " PARTITIONED EVERY {num_rows} ROWS".format(
                 #    **mappings, num_rows=num_rows)
                 new_sql = format_sql(revise_storage(new_sql, "parquet"))
-                import re
                 url = re.search(
                     r'INTO (cos)://[^\s]*[\s]+STORED[\s]+AS[\s]+PARQUET',
                     new_sql)
                 loc = url.span(0)[1]
                 new_sql = new_sql[:
                                   loc] + " PARTITIONED EVERY {num_rows} ROWS".format(
-                                      **mappings) + new_sql[loc + 1:]
+                                      **mappings, num_rows=num_rows) + new_sql[loc + 1:]
             result["rows_returned"]
             msg_05[1] = "Suggested SQL:\n {sql}\n".format(sql=new_sql)
             return msg_05
@@ -1666,6 +1681,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         my_list.extend(msg_04)
         my_list.extend(msg_05)
         msg = os.linesep.join(my_list)
+
+        if print_msg:
+            print(msg)
 
         return msg
 

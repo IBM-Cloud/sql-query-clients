@@ -14,6 +14,8 @@ pd.set_option('display.max_columns', 20)
 if test_credentials.result_location[-1] != "/":
     test_credentials.result_location += "/"
 
+sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, client_info='ibmcloudsql test') # maintain backward compatible
+
 sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
 sqlClient.logon()
 sqlClient.sql_ui_link()
@@ -116,6 +118,10 @@ try:
     sqlClient.rename_exact_result(jobId)
 except ValueError as e:
     print(e)
+
+print("Running test with delete_result:")
+res = sqlClient.delete_result(jobId)
+print(res)
 
 print("Running test with paginated parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location), 2)

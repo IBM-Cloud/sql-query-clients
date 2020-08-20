@@ -14,7 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
-__version__ = '0.4.7'
+__version__ = '0.4.8'
 
 from .SQLQuery import SQLQuery
 from .exceptions import RateLimitedException
