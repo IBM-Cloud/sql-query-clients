@@ -484,11 +484,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     'pagesize parameter ({}) is not valid.'.format(pagesize))
         elif self.target_cos_url and not INTO_is_present(sql_text):
             sqlData.update({'resultset_target': self.target_cos_url})
-        elif INTO_is_present(sql_text):
-            x = sql_text[sql_text.upper().rfind("INTO "):]
-            if "cos://" in x.lower() and not "stored as" in x.lower():
-                msg = "Error: add `STORED AS` into statement\n  {}".format(sql_text)
-                raise SyntaxError(msg)
 
         max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
