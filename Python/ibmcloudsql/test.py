@@ -18,6 +18,14 @@ sqlClient = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.insta
 sqlClient.logon()
 sqlClient.sql_ui_link()
 
+
+print("Running test with checking malformed sql string:")
+try:
+    sqlClient.run_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} ".format(test_credentials.result_location))
+except Exception as e:
+    print("Expect a failure:")
+    print(e)
+
 print("Running test with individual method invocation and Parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location))
 sqlClient.wait_for_job(jobId)
@@ -116,6 +124,10 @@ try:
     sqlClient.rename_exact_result(jobId)
 except ValueError as e:
     print(e)
+
+print("Running test with delete_result:")
+res = sqlClient.delete_result(jobId)
+print(res)
 
 print("Running test with paginated parquet target:")
 jobId = sqlClient.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.result_location), 2)
