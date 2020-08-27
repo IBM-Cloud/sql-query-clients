@@ -1,0 +1,24 @@
+name: Node.js CI
+
+on: 
+  push:
+    paths:
+    - 'Node/**'
+  pull_request:
+    paths:
+    - 'Node/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Node
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 8.x
+    - run: npm install
+    - run: npm audit
+    - run: npm test

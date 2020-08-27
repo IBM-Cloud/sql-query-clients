@@ -7,7 +7,7 @@
     "test": "mocha"
   },
   "engines": {
-    "node": ">=6.0"
+    "node": ">=8.0"
   },
   "keywords": [
     "IBM sql-query",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "jshint": "^2.9.5",
-    "mocha": "^5.0.5"
+    "mocha": "^7.2.0"
   },
   "dependencies": {
     "csvtojson": "^1.1.9",
