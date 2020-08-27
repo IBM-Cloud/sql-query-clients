@@ -1,0 +1,27 @@
+name: Python CI
+
+on: 
+  push:
+    paths:
+    - 'Python/**'
+  pull_request:
+    paths:
+    - 'Python/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PIPENV_PYUP_API_KEY: ""
+    defaults:
+      run:
+        working-directory: Python
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - run: pip install pipenv
+    - run: pipenv sync --dev
+    - run: pipenv check
+    - run: PYTHONPATH=. pipenv run ci
