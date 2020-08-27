@@ -20,4 +20,5 @@ jobs:
       with:
         node-version: 8.x
     - run: npm install
+    - run: npm audit
     - run: npm test

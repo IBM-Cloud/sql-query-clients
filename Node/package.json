@@ -7,7 +7,7 @@
     "test": "mocha"
   },
   "engines": {
-    "node": ">=6.0"
+    "node": ">=8.0"
   },
   "keywords": [
     "IBM sql-query",
