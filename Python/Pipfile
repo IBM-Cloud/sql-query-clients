@@ -9,15 +9,7 @@ pytest = ">=2.8.0"
 pytest-cov = "*"
 
 [packages]
-ibm-cos-sdk-core = ">=2.0.0"
-ibm-cos-sdk = ">=2.4.4"
-numpy = "*"
-pandas = "*"
-pyarrow = "==0.15.1"
-requests = ">= 2.2.0"
-backoff = "==1.10.0"
-sqlparse = "*"
-responses = "*"
+"ibmcloudsql" = {path = ".", editable = true}
 
 [scripts]
 ci = "pytest"
