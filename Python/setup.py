@@ -40,7 +40,7 @@ setup(name='ibmcloudsql',
       python_requires='>=2.7, <4',
       install_requires=['pandas','requests>= 2.2.0','ibm-cos-sdk-core>=2.0.0',
                         'ibm-cos-sdk>=2.4.4','numpy','pyarrow==0.15.1',
-                        'backoff==1.10.0', 'sqlparse'],
+                        'backoff==1.10.0', 'sqlparse', 'packaging'],
       description='Python client for interacting with IBM Cloud SQL Query service',
       url='https://github.com/IBM-Cloud/sql-query-clients',
       author='IBM Corp.',
@@ -56,4 +56,3 @@ setup(name='ibmcloudsql',
       keywords='sql cloud object_storage IBM',
       packages=['ibmcloudsql']
      )
-
