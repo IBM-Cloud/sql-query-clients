@@ -234,6 +234,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 max_concurrent_jobs=4,
                 max_tries=1):
         staging_env = instance_crn.startswith("crn:v1:staging")
+        if staging_env:
+            self.api_hostname="api.sql-query.test.cloud.ibm.com"
+        else:
+            self.api_hostname = "api.sql-query.cloud.ibm.com"
         COSClient.__init__(self,
                            cloud_apikey=api_key,
                            cos_url=target_cos_url,
@@ -321,7 +325,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         try:
             response = requests.post(
-                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://{}/v2/sql_jobs?instance_crn={}".format(self.api_hostname, self.instance_crn),
                 headers=self.request_headers,
                 json=json_data)
 
@@ -569,7 +573,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
             while True:
                 response = requests.get(
-                    "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(self.api_hostname, jobId, self.instance_crn),
                     headers=self.request_headers,
                 )
 
@@ -1055,7 +1059,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
             try:
                 response = requests.get(
-                    "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(self.api_hostname, jobId, self.instance_crn),
                     headers=self.request_headers,
                 )
             except HTTPError as e:
@@ -1122,7 +1126,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.logon()
 
         response = requests.get(
-            "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+            "https://{}/v2/sql_jobs?instance_crn={}".format(self.api_hostname, self.instance_crn),
             headers=self.request_headers,
             )
         if response.status_code == 200 or response.status_code == 201:
@@ -1132,8 +1136,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                                                 'objects_skipped', 'objects_qualified', 'error', 'error_message'])
             for job in job_list['jobs']:
                 response = requests.get(
-                    "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(job['job_id'],
-                                                                                                self.instance_crn),
+                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(self.api_hostname, job['job_id'],
+                                                                       self.instance_crn),
                     headers=self.request_headers,
                     )
                 if response.status_code == 200 or response.status_code == 201:
@@ -1377,10 +1381,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.logon()
 
         if sys.version_info >= (3, 0):
-            result = "https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
+            result = "https://{}/sqlquery/?instance_crn={}".format(self.api_hostname,
                 urllib.parse.unquote(self.instance_crn))
         else:
-            result = "https://sql-query.cloud.ibm.com/sqlquery/?instance_crn={}".format(
+            result = "https://{}/sqlquery/?instance_crn={}".format(self.api_hostname,
                 urllib.unquote(self.instance_crn).decode('utf8'))
         print(result)
         return result
