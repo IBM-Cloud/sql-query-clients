@@ -15,7 +15,7 @@ def cos_url():
 
 def test_get_endpoint(parsedurl_instance, cos_url):
     x = parsedurl_instance.get_endpoint(cos_url)
-    assert(x == "s3.us-south.objectstorage.softlayer.net")
+    assert(x == "s3.us-south.cloud-object-storage.appdomain.cloud")
 
 def test_get_bucket(parsedurl_instance, cos_url):
     x = parsedurl_instance.get_bucket(cos_url)
@@ -27,13 +27,13 @@ def test_get_prefix(parsedurl_instance, cos_url):
 
 def test_get_exact_url(parsedurl_instance, cos_url):
     x = parsedurl_instance.get_exact_url(cos_url)
-    assert(x == "cos://s3.us-south.objectstorage.softlayer.net/cos-access-ts/test/Location=us-south/DC=rgfra02/Year=2019/Month=10/D")
+    assert(x == "cos://s3.us-south.cloud-object-storage.appdomain.cloud/cos-access-ts/test/Location=us-south/DC=rgfra02/Year=2019/Month=10/D")
 
 def test_analyze_cos_url(parsedurl_instance, cos_url):
     x = parsedurl_instance.analyze_cos_url(cos_url)
     assert(x.prefix == "test/Location=us-south/DC=rgfra02/Year=2019/Month=10/D")
     assert(x.bucket == "cos-access-ts")
-    assert(x.endpoint == "s3.us-south.objectstorage.softlayer.net")
+    assert(x.endpoint == "s3.us-south.cloud-object-storage.appdomain.cloud")
 
 @pytest.fixture
 def cos_instance():
