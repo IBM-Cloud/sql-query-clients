@@ -233,10 +233,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
     def __init__(self, api_key, instance_crn, target_cos_url=None, client_info='',
                 max_concurrent_jobs=4,
                 max_tries=1):
+        staging_env = instance_crn.startswith("crn:v1:staging")
         COSClient.__init__(self,
                            cloud_apikey=api_key,
                            cos_url=target_cos_url,
-                           client_info=client_info)
+                           client_info=client_info,
+                           staging=staging_env)
         if target_cos_url is not None and not self.is_valid_cos_url(target_cos_url):
             msg = "Not a valid COS URL {}".format(target_cos_url)
             raise ValueError(msg)

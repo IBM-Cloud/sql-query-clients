@@ -198,34 +198,51 @@ class ParsedUrl(object):
         https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-migrate-data-center
         """
         self.endpoint_alias_mapping = {
-            "us-geo": "s3-api.us-geo.objectstorage.softlayer.net",
-            "us": "s3-api.us-geo.objectstorage.softlayer.net",
-            "dal-us-geo": "s3-api.dal-us-geo.objectstorage.softlayer.net",
-            "wdc-us-geo": "s3-api.wdc-us-geo.objectstorage.softlayer.net",
-            "sjc-us-geo": "s3-api.sjc-us-geo.objectstorage.softlayer.net",
-            "eu-geo": "s3.eu-geo.objectstorage.softlayer.net",
-            "eu": "s3.eu-geo.objectstorage.softlayer.net",
-            "ams-eu-geo": "s3.ams-eu-geo.objectstorage.softlayer.net",
-            "fra-eu-geo": "s3.fra-eu-geo.objectstorage.softlayer.net",
-            "mil-eu-geo": "s3.mil-eu-geo.objectstorage.softlayer.net",
-            "us-south": "s3.us-south.objectstorage.softlayer.net",
-            "us-east": "s3.us-east.objectstorage.softlayer.net",
-            "jp-tok": "s3.jp-tok.objectstorage.softlayer.net",
-            "ap-geo": "s3.ap-geo.objectstorage.softlayer.net",
-            "ap": "s3.ap-geo.objectstorage.softlayer.net",
-            "tok-ap-geo": "s3.tok-ap-geo.objectstorage.softlayer.net",
-            "seo-ap-geo": "s3.seo-ap-geo.objectstorage.softlayer.net",
-            "hkg-ap-geo": "s3.hkg-ap-geo.objectstorage.softlayer.net",
-            "eu-de": "s3.eu-de.objectstorage.softlayer.net",
-            "eu-gb": "s3.eu-gb.objectstorage.softlayer.net",
-            "ams03": "s3.ams03.objectstorage.softlayer.net",
-            "che01": "s3.che01.objectstorage.softlayer.net",
-            "mel01": "s3.mel01.objectstorage.softlayer.net",
-            "tor01": "s3.tor01.objectstorage.softlayer.net",
-            "mon01": "s3.mon01.objectstorage.softlayer.net",
-            "osl01": "s3.osl01.objectstorage.softlayer.net",
-            "sao01": "s3.sao01.objectstorage.softlayer.net",
-            "seo01": "s3.seo01.objectstorage.softlayer.net"
+            "us-geo": "s3.us.cloud-object-storage.appdomain.cloud",
+            "us": "s3.us.cloud-object-storage.appdomain.cloud",
+            "dal-us-geo": "s3.dal.us.cloud-object-storage.appdomain.cloud",
+            "dal": "s3.dal.us.cloud-object-storage.appdomain.cloud",
+            "wdc-us-geo": "s3.wdc.us.cloud-object-storage.appdomain.cloud",
+            "wdc": "s3.wdc.us.cloud-object-storage.appdomain.cloud",
+            "sjc-us-geo": "s3.sjc.us.cloud-object-storage.appdomain.cloud",
+            "sjc": "s3.sjc.us.cloud-object-storage.appdomain.cloud",
+            "eu-geo": "s3.eu.cloud-object-storage.appdomain.cloud",
+            "eu": "s3.eu.cloud-object-storage.appdomain.cloud",
+            "ams-eu-geo": "s3.ams.eu.cloud-object-storage.appdomain.cloud",
+            "ams": "s3.ams.eu.cloud-object-storage.appdomain.cloud",
+            "fra-eu-geo": "s3.fra.eu.cloud-object-storage.appdomain.cloud",
+            "fra": "s3.fra.eu.cloud-object-storage.appdomain.cloud",
+            "mil-eu-geo": "s3.mil.eu.cloud-object-storage.appdomain.cloud",
+            "mil": "s3.mil.eu.cloud-object-storage.appdomain.cloud",
+            "us-south": "s3.us-south.cloud-object-storage.appdomain.cloud",
+            "us-east": "s3.us-east.cloud-object-storage.appdomain.cloud",
+            "jp-tok": "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+            "ap-geo": "s3.ap.cloud-object-storage.appdomain.cloud",
+            "ap": "s3.ap.cloud-object-storage.appdomain.cloud",
+            "tok-ap-geo": "s3.tok.ap.cloud-object-storage.appdomain.cloud",
+            "tok": "s3.tok.ap.cloud-object-storage.appdomain.cloud",
+            "seo-ap-geo": "s3.seo.ap.cloud-object-storage.appdomain.cloud",
+            "seo": "s3.seo.ap.cloud-object-storage.appdomain.cloud",
+            "hkg-ap-geo": "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
+            "hkg": "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
+            "eu-de": "s3.eu-de.cloud-object-storage.appdomain.cloud",
+            "eu-gb": "s3.eu-gb.cloud-object-storage.appdomain.cloud",
+            "ams03": "s3.ams03.cloud-object-storage.appdomain.cloud",
+            "che01": "s3.che01.cloud-object-storage.appdomain.cloud",
+            "hkg02": "s3.hkg02.cloud-object-storage.appdomain.cloud",
+            "mel01": "s3.mel01.cloud-object-storage.appdomain.cloud",
+            "mex01": "s3.mex01.cloud-object-storage.appdomain.cloud",
+            "mil01": "s3.mil01.cloud-object-storage.appdomain.cloud",
+            "tor01": "s3.tor01.cloud-object-storage.appdomain.cloud",
+            "mon01": "s3.mon01.cloud-object-storage.appdomain.cloud",
+            "osl01": "s3.osl01.cloud-object-storage.appdomain.cloud",
+            "par01": "s3.par01.cloud-object-storage.appdomain.cloud",
+            "sao01": "s3.sao01.cloud-object-storage.appdomain.cloud",
+            "seo01": "s3.seo01.cloud-object-storage.appdomain.cloud",
+            "sjc04": "s3.sjc04.cloud-object-storage.appdomain.cloud",
+            "sng01": "s3.sng01.cloud-object-storage.appdomain.cloud",
+            "au-syd": "s3.au-syd.cloud-object-storage.appdomain.cloud",
+            "us-west": "s3.us-west.cloud-object-storage.test.appdomain.cloud"
         }
         # https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-endpoints
         self._dedicated_endpoints = [
@@ -235,6 +252,7 @@ class ParsedUrl(object):
                 "s3.eu-de.cloud-object-storage.appdomain.cloud",
                 "s3.au-syd.cloud-object-storage.appdomain.cloud",
                 "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+                "s3.us-west.cloud-object-storage.test.appdomain.cloud",
                 # cross-region
                 "s3.us.cloud-object-storage.appdomain.cloud",
                 "s3.eu.cloud-object-storage.appdomain.cloud",
@@ -357,11 +375,12 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         * https://ibm.github.io/ibm-cos-sdk-python/
         * https://cloud.ibm.com/docs/services/cloud-object-storage/iam?topic=cloud-object-storage-service-credentials
     """
-    def __init__(self, cloud_apikey="", cos_url="", client_info="COS Client"):
+    def __init__(self, cloud_apikey="", cos_url="", client_info="COS Client", staging=False):
         ParsedUrl.__init__(self)
         IBMCloudAccess.__init__(self,
                                 cloud_apikey=cloud_apikey,
-                                client_info=client_info)
+                                client_info=client_info,
+                                staging=staging)
 
         if cos_url is not None and len(cos_url) > 0:
             if not self.is_valid_cos_url(cos_url):

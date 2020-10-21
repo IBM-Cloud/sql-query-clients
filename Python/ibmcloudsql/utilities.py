@@ -59,8 +59,9 @@ class IBMCloudAccess():
     """
     This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query
     """
-    def __init__(self, cloud_apikey="", client_info=""):
+    def __init__(self, cloud_apikey="", client_info="", staging=False):
         self.apikey = cloud_apikey
+        self.staging=staging
         if client_info == '':
             self.user_agent = 'IBMCloudAccess'
         else:
@@ -96,7 +97,10 @@ class IBMCloudAccess():
 
     def _get_default_session(self):
         # setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key
-        ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey, )
+        if self.staging:
+            ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey, ibm_auth_endpoint='https://iam.test.cloud.ibm.com/identity/token')
+        else:
+            ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey)
         return ibm_boto3._get_default_session()
 
     def logon(self, force=False):
