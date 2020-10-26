@@ -4,7 +4,7 @@
 # We use the -br parameter so that it is a blocking call and the function results
 # get displayed on the console afterwards:
 ibmcloud fn action invoke -br --result sqlcloudfunction \
- --param sql "SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 3 INTO cos://s3.us-south.objectstorage.softlayer.net/sqltempregional/" \
+ --param sql "SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 3 INTO cos://us-south/sqltempregional/" \
 | python -m json.tool
 
 # List the recent cloud function executions (a.k.a. activations):
