@@ -236,8 +236,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         staging_env = instance_crn.startswith("crn:v1:staging")
         if staging_env:
             self.api_hostname="api.sql-query.test.cloud.ibm.com"
+            self.ui_hostname = "sql-query.test.cloud.ibm.com"
         else:
             self.api_hostname = "api.sql-query.cloud.ibm.com"
+            self.ui_hostname = "sql-query.cloud.ibm.com"
         COSClient.__init__(self,
                            cloud_apikey=api_key,
                            cos_url=target_cos_url,
@@ -1381,10 +1383,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.logon()
 
         if sys.version_info >= (3, 0):
-            result = "https://{}/sqlquery/?instance_crn={}".format(self.api_hostname,
+            result = "https://{}/sqlquery/?instance_crn={}".format(self.ui_hostname,
                 urllib.parse.unquote(self.instance_crn))
         else:
-            result = "https://{}/sqlquery/?instance_crn={}".format(self.api_hostname,
+            result = "https://{}/sqlquery/?instance_crn={}".format(self.ui_hostname,
                 urllib.unquote(self.instance_crn).decode('utf8'))
         print(result)
         return result
