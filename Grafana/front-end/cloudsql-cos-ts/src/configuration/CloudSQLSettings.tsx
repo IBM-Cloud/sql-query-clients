@@ -19,7 +19,6 @@ import { LegacyForms, useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import defaults from 'lodash/defaults';
-
 const { FormField, Switch, Select } = LegacyForms;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
