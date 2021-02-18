@@ -1,0 +1,57 @@
+
+```
+conda activate cloud_cos_sql
+conda env export -n cloud_cos_sql| cut -f 1 -d '=' | grep -v "prefix"  > requirements.txt
+```
+
+Use Dockerfile (python:3-alpine) is better as it has a much smaller footprint.  Delete the `prefix` field, if present.
+```
+python:3-alpine   45MB
+
+```
+
+Build your image
+
+```
+docker build -t grafana_cloudsql_cos_ts/aiops . -f Dockerfile.stages
+
+docker build -t grafana_cloudsql_cos_ts/aiops .
+
+```
+
+Save the image into zip file, and copy to another machine
+```
+
+sudo docker save -o <path/to/image-name.tar> <image-name>
+
+```
+Copy to local machine and load into a new image
+```
+scp tmhoangt@cloud_gpu:/home/tmhoangt/webapps/aiops/grafana_webapp.tar .
+
+docker load -i grafana_webapp.tar
+//zcat <docker image name>.tar.gz | docker load
+```
+
+Create a new image that can be uploaded to the private registry
+```
+
+```
+
+Push your Docker image into JFrog Artifactory
+
+```
+//https://docs.docker.com/engine/reference/commandline/login/#provide-a-password-using-stdin
+
+cat jfrog_api.txt | docker login -u tmhoangt@us.ibm.com res-edge-ai-team-sdk-docker-local.artifactory.swg-devops.com --password-stdin
+
+```
+
+Now deploy a backend app to IBM Code Engine
+
+```
+
+ibmcloud code-engine application create --name backend --image ibmcom/backend --cluster-local
+ibmcloud ce application create --name maas-app --image res-hcls-mcm-brain-docker-local.artifactory.swg-devops.com/maas/app:latest --concurrency 1 --cpu 1 --max-scale 250 --registry-secret artifactory
+
+```

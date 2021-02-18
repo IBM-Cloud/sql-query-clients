@@ -13,46 +13,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
-
-from setuptools import setup
 import codecs
 import os.path
 
+from setuptools import setup
+
+
 def readme():
-    with open('README.rst') as f:
+    with open("README.rst") as f:
         return f.read()
+
 
 def read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+    with codecs.open(os.path.join(here, rel_path), "r") as fp:
         return fp.read()
+
 
 def get_version(rel_path):
     for line in read(rel_path).splitlines():
-        if line.startswith('__version__'):
+        if line.startswith("__version__"):
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
     else:
         raise RuntimeError("Unable to find version string.")
 
-setup(name='ibmcloudsql',
-      version=get_version("ibmcloudsql/__init__.py"),
-      python_requires='>=2.7, <4',
-      install_requires=['pandas','requests>= 2.2.0','ibm-cos-sdk-core>=2.0.0',
-                        'ibm-cos-sdk>=2.4.4','numpy','pyarrow',
-                        'backoff==1.10.0', 'sqlparse', 'packaging'],
-      description='Python client for interacting with IBM Cloud SQL Query service',
-      url='https://github.com/IBM-Cloud/sql-query-clients',
-      author='IBM Corp.',
-      author_email='torsten@de.ibm.com',
-      license='Apache 2.0',
-      classifiers=[
-        'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.7',
-        'Topic :: Database',
-      ],
-      keywords='sql cloud object_storage IBM',
-      packages=['ibmcloudsql']
-     )
+
+setup(
+    name="ibmcloudsql",
+    version=get_version("ibmcloudsql/__init__.py"),
+    python_requires=">=2.7, <4",
+    install_requires=[
+        "pandas",
+        "requests>= 2.2.0",
+        "ibm-cos-sdk-core>=2.7.0",
+        "ibm-cos-sdk>=2.7.0",
+        "numpy",
+        "pyarrow==0.15.1",
+        "backoff==1.10.0",
+        "sqlparse",
+        "packaging",
+        "pre-commit",
+    ],
+    description="Python client for interacting with IBM Cloud SQL Query service",
+    url="https://github.com/IBM-Cloud/sql-query-clients",
+    author="IBM Corp.",
+    author_email="torsten@de.ibm.com",
+    license="Apache 2.0",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: Database",
+    ],
+    keywords="sql cloud object_storage IBM",
+    packages=["ibmcloudsql"],
+)
