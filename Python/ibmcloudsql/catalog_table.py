@@ -1,21 +1,26 @@
-import time
 import logging
+import time
+
 logger = logging.getLogger(__name__)
 try:
     from .cos import ParsedUrl
+    from .exceptions import SqlQueryDropTableException, SqlQueryFailException
 except Exception:
     from cos import ParsedUrl
+    from exceptions import SqlQueryDropTableException, SqlQueryFailException
 
-class HiveMetastore():
+
+class HiveMetastore:
     """
     This class supports the handling HIVE catalog table
     """
+
     def __init__(self, target_url):
         self.current_table_name = None
         # keep tracks of what tables are availables
         self.partitioned_tables = set()
         self.regular_tables = set()
-        self.sql_stmt_show_temmplate = """
+        self.sql_stmt_show_template = """
         SHOW TABLES {like}
         INTO {cos_out} STORED AS CSV
         """
@@ -28,12 +33,7 @@ class HiveMetastore():
         USING {format_type}
         LOCATION {cos_in}
         """
-        self.sql_stmt_show_temmplate = """
-        SHOW TABLES
-        INTO {cos_out} STORED AS CSV
-        """
-        if target_url is None or \
-            not ParsedUrl().is_valid_cos_url(target_url):
+        if target_url is None or not ParsedUrl().is_valid_cos_url(target_url):
             msg = "Not a valid COS URL"
             if target_url is not None:
                 msg = "Not a valid COS URL: {}".format(target_url)
@@ -42,8 +42,7 @@ class HiveMetastore():
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
 
     def configure(self, target_url):
-        """ Update the configuration
-        """
+        """Update the configuration"""
         if not ParsedUrl().is_valid_cos_url(target_url):
             msg = "Not a valid COS URL"
             raise ValueError(msg)
@@ -52,6 +51,7 @@ class HiveMetastore():
     @property
     def target_url(self):
         return self._target_url
+
     @target_url.setter
     def target_url(self, target_url):
         if not ParsedUrl().is_valid_cos_url(target_url):
@@ -68,11 +68,17 @@ class HiveMetastore():
         target_cos_url: string, optional
             The COR URL where the information about the tables are stored
         pattern: str, optional
-            If provided, this should be a pattern being used in name matching, e.g. '*cus*', which finds all tables with the name has 'cus'
+            If provided, this should be a pattern being used in name matching,
+            e.g. '*cus*', which finds all tables with the name has 'cus'
 
         Returns
         --------
-        DataFrame
+        DataFrame or None
+            return `None` if there is an error.
+
+        Raises
+        -------
+
         """
         if target_cos_url is None:
             cos_out = self.target_url
@@ -81,21 +87,15 @@ class HiveMetastore():
             if not ParsedUrl().is_valid_cos_url(cos_out):
                 msg = "Not a valid COS URL"
                 raise ValueError(msg)
-        sql_stmt_show = self.sql_stmt_show_temmplate.format(
-            like="LIKE '{}'".format(pattern) if pattern else "",
-            cos_out=cos_out)
+        sql_stmt_show = self.sql_stmt_show_template.format(
+            like="LIKE '{}'".format(pattern) if pattern else "", cos_out=cos_out
+        )
         df = None
         try:
-            job_id = self.submit_sql(sql_stmt_show)
-            sql_status = self.wait_for_job(job_id)
-            if sql_status == "failed":
-                logger.debug(sql_stmt_show)
-            elif sql_status == "completed":
-                df = self.get_result(job_id)
-            else:
-                pass
-        except Exception:
+            df, job_id = self.execute_sql(sql_stmt_show, get_result=True)
+        except (SqlQueryFailException, KeyError) as e:
             logger.info("Fail at SHOW TABLE")
+            raise e
         return df
 
     def drop_all_tables(self):
@@ -144,7 +144,11 @@ class HiveMetastore():
 
         Returns
         -------
-            none
+        str:
+            a job status
+        Raises
+        -------
+        SqlQueryFailException
         """
         if table_name is None and self.current_table_name is None:
             print("ERROR: please provide table_name")
@@ -152,21 +156,32 @@ class HiveMetastore():
             table_name = self.current_table_name
             self.current_table_name = None
         sql_stmt_drop = """
-        DROP TABLE {table_name}""".format(table_name=table_name)
-        try:
-            _, job_id = self.execute_sql(sql_stmt_drop)
-            logger.debug("Job_id ({stmt}): {job_id}".format(stmt=sql_stmt_drop,
-                                                            job_id=job_id))
-        except Exception:
-            # There is a bug - the DROP TABLE statement does not need a returned COS URI - but it seems the Python API looks for that
-            pass
+        DROP TABLE {table_name}""".format(
+            table_name=table_name
+        )
+        _, job_id = self.execute_sql(sql_stmt_drop)
+        logger.debug(
+            "Job_id ({stmt}): {job_id}".format(stmt=sql_stmt_drop, job_id=job_id)
+        )
+        job_status = self.wait_for_job(job_id)
+        if job_status != "completed":
+            return job_status
         try:
             self.partitioned_tables.remove(table_name)
             self.regular_tables.remove(table_name)
         except KeyError:
             pass
+        return "completed"
 
-    def create_table(self, table_name, cos_url=None, format_type="CSV", force_recreate=False, blocking=True, schema=None):
+    def create_table(
+        self,
+        table_name,
+        cos_url=None,
+        format_type="CSV",
+        force_recreate=False,
+        blocking=True,
+        schema=None,
+    ):
         """Create a table for data on COS
 
         Parameters
@@ -192,17 +207,29 @@ class HiveMetastore():
         -------
             none if job "failed"
             otherwise returns
+        Raises
+        -------
+        ValueError:
+            when the argument is invalid for `cos_url` (invalid format or there is no such location),
+            format_type (invalid value)
+
+
+        SqlQueryDropTableException
+            when it cannot remove the given table name
+
         """
         if cos_url:
             if not ParsedUrl().is_valid_cos_url(cos_url):
                 msg = "Not a valid COS URL"
                 raise ValueError(msg)
+
         def create_table_async(
-                                    table_name,
-                                    cos_url=None,
-                                    format_type="CSV",
-                                    force_recreate=False,
-                                    schema=None):
+            table_name,
+            cos_url=None,
+            format_type="CSV",
+            force_recreate=False,
+            schema=None,
+        ):
             """
             the async version of `create_table`
 
@@ -231,7 +258,7 @@ class HiveMetastore():
             # from IPython.display import display
             df = self.show_tables()
             try:
-                found = df[df['tableName'].str.contains(table_name.strip().lower())]
+                found = df[df["tableName"].str.contains(table_name.strip().lower())]
             except Exception:
                 # not found
                 found = []
@@ -239,12 +266,15 @@ class HiveMetastore():
             # if logger.getEffectiveLevel() == logging.DEBUG:
             #     display(df)
             if len(found) > 0 and force_recreate:
-                self.drop_table(table_name)
+                job_status = self.drop_table(table_name)
+                if job_status != "completed":
+                    raise SqlQueryDropTableException(table_name)
             self.regular_tables.add(table_name)
             if len(found) == 0 or force_recreate:
                 if schema is None:
                     sql_stmt_create = self.sql_stmt_create_template.format(
-                        table_name=table_name, cos_in=cos_url, format_type=format_type)
+                        table_name=table_name, cos_in=cos_url, format_type=format_type
+                    )
                 else:
                     # explit selection of scheme -> need to tell "PARTITIONED BY"
                     schema = self._format_schema(schema)
@@ -252,16 +282,25 @@ class HiveMetastore():
                     CREATE TABLE {table_name} {schema}
                     USING {format_type}
                     LOCATION {cos_in}
-                    """.format(table_name=table_name, cos_in=cos_url, format_type=format_type, schema=schema)
+                    """.format(
+                        table_name=table_name,
+                        cos_in=cos_url,
+                        format_type=format_type,
+                        schema=schema,
+                    )
 
                 logger.debug(sql_stmt_create)
                 job_id = self.submit_sql(sql_stmt_create)
                 return job_id
             return None
 
-        job_id = create_table_async(table_name,
-                                    cos_url, format_type=format_type,
-                                    force_recreate=force_recreate, schema=schema)
+        job_id = create_table_async(
+            table_name,
+            cos_url,
+            format_type=format_type,
+            force_recreate=force_recreate,
+            schema=schema,
+        )
         if job_id is not None and blocking is True:
             job_status = self.wait_for_job(job_id)
             if job_status == "completed":
@@ -273,15 +312,22 @@ class HiveMetastore():
     def _format_schema(self, schema):
         """Format the schema string to ensure it is enclosed by ( and )"""
         schema = schema.strip()
-        if schema[0] == '(' or schema[-1] == ')':
-            if schema[0] != '(' or schema[-1] != ')':
+        if schema[0] == "(" or schema[-1] == ")":
+            if schema[0] != "(" or schema[-1] != ")":
                 print("schema wrong format, should be: (name type, name type)")
-                assert(0)
+                assert 0
         else:
-            schema = '(' + schema + ')'
+            schema = "(" + schema + ")"
         return schema
 
-    def create_partitioned_table(self, table_name, cos_url=None, format_type="CSV", force_recreate=False, schema=None):
+    def create_partitioned_table(
+        self,
+        table_name,
+        cos_url=None,
+        format_type="CSV",
+        force_recreate=False,
+        schema=None,
+    ):
         """
         Create a partitioned table for data on COS. The data needs to be organized in the form that
         match HIVE metastore criteria, e.g.
@@ -291,7 +337,8 @@ class HiveMetastore():
             <COS-URL>/field_1=value1_1/field_2=value_2_1/object_file
             <COS-URL>/field_1=value1_2/field_2=value_2_1/object_file
 
-        NOTE: Each time the data is updated, we need to call `recover_table_partitions` on the created partitioned table.
+        NOTE: Each time the data is updated, we need to call `recover_table_partitions`
+        on the created partitioned table.
 
         Parameters
         --------------
@@ -316,6 +363,17 @@ class HiveMetastore():
         Returns
         ----------
 
+        Raises
+        -------
+        ValueError:
+            when the argument is invalid for `cos_url` (invalid format or there is no such location),
+            format_type (invalid value)
+
+
+        SqlQueryFailException:
+            when it cannot remove the given table name
+
+
         """
         self.current_table_name = table_name
 
@@ -328,14 +386,25 @@ class HiveMetastore():
 
         df = self.show_tables()
         try:
-            found = df[df['tableName'].str.contains(table_name.strip().lower())]
+            found = df[df["tableName"].str.contains(table_name.strip().lower())]
         except Exception:
             # not found
             found = []
         if len(found) > 0 and force_recreate:
-            self.drop_table(table_name)
+            job_status = self.drop_table(table_name)
+            if job_status != "completed":
+                raise SqlQueryFailException(table_name, " table name removed failed")
         self.partitioned_tables.add(table_name)
-        assert(format_type.upper() in self.supported_format_types)
+        if format_type.upper() not in self.supported_format_types:
+            raise ValueError(
+                "Please fix `format_type` to be in {}".format(
+                    str(self.supported_format_types)
+                )
+            )
+
+        if self.list_cos_objects(cos_url).empty:
+            raise ValueError("Please fix - the path {} does not exist".format(cos_url))
+
         if len(found) == 0 or force_recreate:
             if schema is None:
                 # auto-detection of scheme
@@ -345,7 +414,8 @@ class HiveMetastore():
                 LOCATION {cos_in}
                 """
                 sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(
-                    table_name=table_name, cos_in=cos_url, format_type=format_type)
+                    table_name=table_name, cos_in=cos_url, format_type=format_type
+                )
             else:
                 # explit selection of scheme -> need to tell "PARTITIONED BY"
                 schema = self._format_schema(schema)
@@ -354,7 +424,12 @@ class HiveMetastore():
                 USING {format_type}
                 PARTITIONED BY (country)
                 LOCATION {cos_in}
-                """.format(table_name=table_name, cos_in=cos_url, format_type=format_type, schema=schema)
+                """.format(
+                    table_name=table_name,
+                    cos_in=cos_url,
+                    format_type=format_type,
+                    schema=schema,
+                )
             logger.debug(sql_stmt_create_partitioned)
             self.run_sql(sql_stmt_create_partitioned)
             time.sleep(2)
@@ -370,19 +445,15 @@ class HiveMetastore():
                 The partitioned table name
         """
         self.current_table_name = table_name
-        # if table_name not in self.partitioned_tables:
-        #     logger.error("Table %s is not a partitioned table" % (table_name))
-        #     logger.error(".... [ %s ]" %
-        #                  " ".join(list({k: 1
-        #                                 for k in self.partitioned_tables})))
-        #     assert (0)
 
         sql_stmt = """ALTER TABLE {table_name} RECOVER PARTITIONS
-        """.format(table_name=table_name)
+        """.format(
+            table_name=table_name
+        )
         self.run_sql(sql_stmt)
 
     def describe_table(self, table_name):
-        """ Return the schema of table
+        """Return the schema of table
 
         Parameters
         ----------
@@ -391,7 +462,7 @@ class HiveMetastore():
 
         Returns
         ------
-        DataFrame
+        DataFrame or None [if failed - table not found]
             3 columns: col_name (object), data_type (object), comment (float64)
 
         """
@@ -401,5 +472,9 @@ class HiveMetastore():
 
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
-            table_name=table_name, cos_out=self.target_url)
-        return self.run_sql(sql_stmt)
+            table_name=table_name, cos_out=self.target_url
+        )
+        try:
+            return self.run_sql(sql_stmt)
+        except Exception:
+            return None

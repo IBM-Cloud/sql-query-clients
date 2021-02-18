@@ -14,26 +14,32 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
+
 class RateLimitedException(Exception):
     """The error when number of requests exceeds the capacity"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
             super().__init__(msg)
         self.original_exception = original_exception
+
 
 class InternalError502Exception(Exception):
     """The error when SQL Query returns a 502 internal error"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
             super().__init__(msg)
         self.original_exception = original_exception
+
 
 class CosUrlNotFoundException(Exception):
     """The error when the Cloud-Object Storage (COS) URL being used is invalid or not accessible"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
@@ -41,27 +47,44 @@ class CosUrlNotFoundException(Exception):
             super().__init__(msg)
         self.original_exception = original_exception
 
-class SqlQueryCrnInvalidFormatException(Exception):
-    """The error when the SQL Query CRN is not correct"""
+
+class CosUrlInaccessibleException(Exception):
+    """The error when the Cloud-Object Storage (COS) URL being used is not accessible"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
             super().__init__(msg)
         self.original_exception = original_exception
+
+
+class SqlQueryCrnInvalidFormatException(Exception):
+    """The error when the SQL Query CRN is not correct"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
 
 class SqlQueryInvalidPlanException(Exception):
     """The error when the used feature is not supported by the current service plan -
     e.g. need to upgrade to Standard Plan or higher"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
             super().__init__(msg)
         self.original_exception = original_exception
+
 
 class SqlQueryFailException(Exception):
     """The error raised when a running sql job fails, e.g. timeout"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
@@ -69,8 +92,32 @@ class SqlQueryFailException(Exception):
             super().__init__(msg)
         self.original_exception = original_exception
 
+
+class SqlQueryDropTableException(Exception):
+    """The error raised when a running sql job fails, e.g. timeout"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+
+class SqlQueryInvalidFormatException(SqlQueryFailException):
+    """The error raised when the format of COS URL is not valid"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+
 class UnsupportedStorageFormatException(Exception):
-    """The error when the SQL Query CRN is not correct"""
+    """The error when the SQL uses a format of data that has not been supported yet"""
+
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
