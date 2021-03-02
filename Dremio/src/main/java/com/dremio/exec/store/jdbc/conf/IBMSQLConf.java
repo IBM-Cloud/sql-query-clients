@@ -87,6 +87,7 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
         return configBuilder.withDialect(getDialect())
                 .withFetchSize(fetchSize)
                 .withDatasourceFactory(this::newDataSource)
+                .withAllowExternalQuery(false)
                 .build();
     }
 
