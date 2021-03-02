@@ -18,13 +18,14 @@ Dremio delivers lightning fast query speed and a self-service semantic layer ope
 Usage
 -----------
 
-### Creating a new Snowflake Source
+### Creating a new IBM SQL Query Source
 
 ### Required Parameters
+Learn  about IBM SQL Query JDBC client properties [here](https://cloud.ibm.com/docs/sql-query?topic=sql-query-jdbc)
 
-* JDBC URL
-    * Ex:...
-* Username, Password
+* JDBC URL 
+    * Ex: `jdbc:ibmcloudsql:{instance-crn}?{targetcosurl}`
+* API Key (IBM Cloud IAM API Key)
 
 
 ## Development

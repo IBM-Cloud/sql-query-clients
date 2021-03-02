@@ -3,6 +3,7 @@
 *.egg
 *.EGG
 *.EGG-INFO
+*.DS_Store
 
 ### Local Python env and test
 ibmcloudsql/bin

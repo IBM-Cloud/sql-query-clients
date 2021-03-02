@@ -48,14 +48,14 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
 
     @Tag(2)
     @Secret
-    @DisplayMetadata(label = "Password")
-    public String password;
+    @DisplayMetadata(label = "API Key")
+    public String apikey;
 
 
     @Tag(3)
     @NotMetadataImpacting
-    @DisplayMetadata(label = "Grant External Query access (External Query allows creation of VDS from a Snowflake query. Learn more here: https://docs.dremio.com/data-sources/external-queries.html#enabling-external-queries)")
-    public boolean enableExternalQuery = false;
+    @DisplayMetadata(label = "Target COS URL")
+    public String targetcosurl;
 
 
     @Tag(4)
@@ -64,8 +64,9 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     public int fetchSize = 2000;
     @VisibleForTesting
     public String toJdbcConnectionString() {
+        checkNotNull(this.targetcosurl, "Target COS URL is required");
         checkNotNull(this.jdbcURL, "JDBC URL is required");
-        return jdbcURL;
+        return jdbcURL + "?targetcosurl=" + targetcosurl;
     }
 
 
@@ -86,7 +87,6 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
         return configBuilder.withDialect(getDialect())
                 .withFetchSize(fetchSize)
                 .withDatasourceFactory(this::newDataSource)
-                .withAllowExternalQuery(enableExternalQuery)
                 .build();
     }
 
@@ -99,7 +99,7 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
         }
 
         return DataSources.newGenericConnectionPoolDataSource(DRIVER,
-                toJdbcConnectionString(), null, password, properties,
+                toJdbcConnectionString(), null, apikey, properties,
                 DataSources.CommitMode.DRIVER_SPECIFIED_COMMIT_MODE);
     }
     
