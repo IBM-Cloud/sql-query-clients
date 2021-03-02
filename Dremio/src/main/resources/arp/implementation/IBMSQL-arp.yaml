@@ -32,6 +32,10 @@ data_types:
   mappings:
   # Manually Configured Data Types Mappings Section.
   - source:
+      name: "BOOLEAN"
+    dremio:
+      name: "boolean"
+  - source:
       name: "INTEGER"
     dremio:
       name: "integer"
@@ -41,7 +45,7 @@ data_types:
       name: "timestamp"
     default_cast_spec: true
   - source:
-      name: "LONG"
+      name: "BIGINT"
     dremio:
       name: "bigint"
   - source:
@@ -68,15 +72,28 @@ data_types:
 relational_algebra:
   aggregation:
     enable: true
-    group_by_ordinal: false
+    group_by_ordinal: true
     distinct: true
     count_functions:
       count_star:
         enable: true
       count:
         enable: true
+      count_multi:
+        enable: true
+        variable_rewrite:
+          separator_sequence:
+            - ' IS NULL OR '
+          rewrite_format: 'SUM(CASE WHEN {separator[0]} IS NULL THEN 0 ELSE 1 END)'
       count_distinct:
         enable: true
+      count_distinct_multi:
+        enable: true
+        variable_rewrite:
+          separator_sequence:
+            - ' IS NULL OR '
+            - ', '
+          rewrite_format: 'COUNT(DISTINCT CASE WHEN {separator[0]} IS NULL THEN NULL ELSE CONCAT({separator[1]}) END)'
     functions:
     - names:
       - "avg"
@@ -111,7 +128,7 @@ relational_algebra:
         return: "bigint"
 
   except:
-    enable: false
+    enable: true
   project:
     enable: true
   join:
@@ -125,11 +142,11 @@ relational_algebra:
       enable: true
       inequality: true
     right:
-      enable: false
-      inequality: false
+      enable: true
+      inequality: true
     full:
-      enable: false
-      inequality: false
+      enable: true
+      inequality: true
   sort:
     enable: true
     order_by:
