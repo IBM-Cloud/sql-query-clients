@@ -13,6 +13,6 @@ matrix:
     before_install: cd Python
     install:
     - pipenv sync --dev
-    - pipenv check
+    - pipenv check -i 39253
     script:
     - PYTHONPATH=. pipenv run ci
