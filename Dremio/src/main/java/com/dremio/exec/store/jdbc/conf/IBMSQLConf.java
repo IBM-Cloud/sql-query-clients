@@ -58,10 +58,6 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     public String targetcosurl;
 
 
-    @Tag(4)
-    @DisplayMetadata(label = "Record fetch size")
-    @NotMetadataImpacting
-    public int fetchSize = 2000;
     @VisibleForTesting
     public String toJdbcConnectionString() {
         checkNotNull(this.targetcosurl, "Target COS URL is required");
@@ -85,7 +81,6 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
             OptionManager optionManager
     ){
         return configBuilder.withDialect(getDialect())
-                .withFetchSize(fetchSize)
                 .withDatasourceFactory(this::newDataSource)
                 .withAllowExternalQuery(false)
                 .build();
