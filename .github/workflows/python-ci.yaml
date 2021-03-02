@@ -23,5 +23,5 @@ jobs:
         python-version: '3.7'
     - run: pip install pipenv
     - run: pipenv sync --dev
-    - run: pipenv check
+    - run: pipenv check -i 39253
     - run: PYTHONPATH=. pipenv run ci
