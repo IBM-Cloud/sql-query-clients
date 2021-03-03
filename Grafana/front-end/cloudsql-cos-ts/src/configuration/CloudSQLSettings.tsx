@@ -1,19 +1,25 @@
+//# ------------------------------------------------------------------------------
+//# Copyright IBM Corp. 2020
+//#
+//# Licensed under the Apache License, Version 2.0 (the "License");
+//# you may not use this file except in compliance with the License.
+//# You may obtain a copy of the License at
+//#
+//#    http://www.apache.org/licenses/LICENSE-2.0
+//#
+//# Unless required by applicable law or agreed to in writing, software
+//# distributed under the License is distributed on an "AS IS" BASIS,
+//# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//# See the License for the specific language governing permissions and
+//# limitations under the License.
+//# ------------------------------------------------------------------------------
 import React, { useState, SyntheticEvent } from 'react';
 import { COSIBMDataSourceOptions, DataFormatTypeOptions } from '../types';
-//import {
-//    SelectableValue,
-//    onUpdateDatasourceJsonDataOptionChecked,
-//    DataSourcePluginOptionsEditorProps,
-//} from '@grafana/data';
-//import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
-//import { LegacyForms } from '@grafana/ui';
 import { LegacyForms, useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import defaults from 'lodash/defaults';
-//import { ProgressPlugin } from 'webpack';
 
-//const { SecretFormField, Select, Input, FormField, Switch } = LegacyForms;
 const { FormField, Switch, Select } = LegacyForms;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -42,15 +48,6 @@ export const CloudSQLSettings = (props: Props) => {
   //grafana/public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx:
   defaults(value.disableMetricsLookup, true);
   defaults(value.using_table, false);
-  //if (value.using_table === undefined) {
-  //  defaults(value.using_table, false);
-  //  onChange({
-  //    ...value,
-  //    ['using_table']: value.using_table,
-  //  });
-  //}
-  //value.disableMetricsLookup = true;
-  //value.using_table ?= false;
 
   //
   const changeHandler = (key: keyof COSIBMDataSourceOptions) => (
@@ -163,7 +160,6 @@ export const CloudSQLSettings = (props: Props) => {
                 inputWidth={30}
                 value={value.source_cos_url}
                 onChange={changeHandler('source_cos_url')}
-                //tooltip="COS URL where the queried data are stored"
                 tooltip="(Optional) this datasource can be referenced in the query as $__source"
                 //placeholder="COS URL target"
               />
@@ -186,7 +182,6 @@ export const CloudSQLSettings = (props: Props) => {
                 inputWidth={30}
                 value={value.table}
                 onChange={changeHandler('table')}
-                //tooltip="HIVE metastore reference to the source data"
                 tooltip="(Optional) this datasource can be referenced in the query as $__source"
               />
             </div>

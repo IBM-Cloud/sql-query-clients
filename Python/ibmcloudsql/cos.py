@@ -22,15 +22,10 @@ from datetime import datetime
 from pprint import pformat
 
 import ibm_boto3
-import ibmcloudsql
 import pandas as pd
 import requests
 from ibm_botocore.client import Config
 
-try:
-    from exceptions import RateLimitedException
-except Exception:
-    from .exceptions import RateLimitedException
 try:
     from utilities import IBMCloudAccess
 except Exception:
@@ -137,7 +132,7 @@ class ProjectLib:
                         import pandas as pd
 
                         self._data_out = pd.read_csv(file_content, nrows=10)
-        if file_is_found == False:
+        if file_is_found is False:
             if file_type == "json":
                 self._data_out = dict()
             elif file_type == "csv":
@@ -347,8 +342,8 @@ class ParsedUrl(object):
             return False
         endpoint = self.get_endpoint(origin)
         if (
-            not endpoint in self.endpoint_alias_mapping.values()
-            and not endpoint in self._dedicated_endpoints
+            endpoint not in self.endpoint_alias_mapping.values()
+            and endpoint not in self._dedicated_endpoints
         ):
             return False
 
@@ -395,6 +390,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         client_info="COS Client",
         staging=False,
         thread_safe=False,
+        iam_max_tries=1,
     ):
         ParsedUrl.__init__(self)
         IBMCloudAccess.__init__(
@@ -402,6 +398,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             cloud_apikey=cloud_apikey,
             client_info=client_info,
             staging=staging,
+            iam_max_tries=iam_max_tries,
             thread_safe=thread_safe,
         )
 
@@ -436,11 +433,11 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                 endpoint_url="https://{}".format(endpoint),
             )
 
-        # So that we can avoid the issue of using single session
-        return _get_new_s3_client(endpoint)
-        # TODO add 'thread_safe' and 'session' arguments
-        # to the __init__ at multiple levels
-        # return self._get_default_cos_client(endpoint)
+        if self.thread_safe:
+            # So that we can avoid the issue of using single session
+            return _get_new_s3_client(endpoint)
+        else:
+            return self._get_default_cos_client(endpoint)
 
     def _get_default_cos_client(self, endpoint=None):
         """
@@ -811,6 +808,38 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             bucket, firewall={"allowed_ip": ["10.142.175.0/22", "10.198.243.79"]}
         )
 
+    def _get_object_stats(
+        self,
+        key,
+        smallest_size,
+        largest_size,
+        oldest_modification,
+        newest_modification,
+        smallest_object,
+        largest_object,
+    ):
+        """Return statistics for objects"""
+        size = int(key["Size"])
+        if size < smallest_size:
+            smallest_size = size
+            smallest_object = key["Key"]
+        if size > largest_size:
+            largest_size = size
+            largest_object = key["Key"]
+        modified = key["LastModified"].replace(tzinfo=None)
+        if modified < oldest_modification:
+            oldest_modification = modified
+        if modified > newest_modification:
+            newest_modification = modified
+        return (
+            smallest_size,
+            largest_size,
+            oldest_modification,
+            newest_modification,
+            smallest_object,
+            largest_object,
+        )
+
     def get_cos_summary(self, url):
         """
         Return information for the given COR URL (may include bucket + prefix)
@@ -864,20 +893,24 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         for page in page_iterator:
             if "Contents" in page:
                 for key in page["Contents"]:
-                    size = int(key["Size"])
-                    total_size += size
-                    if size < smallest_size:
-                        smallest_size = size
-                        smallest_object = key["Key"]
-                    if size > largest_size:
-                        largest_size = size
-                        largest_object = key["Key"]
+                    (
+                        smallest_object,
+                        largest_object,
+                        oldest_modification,
+                        newest_modification,
+                        smallest_object,
+                        largest_object,
+                    ) = self._get_object_stats(
+                        key,
+                        smallest_object,
+                        largest_object,
+                        oldest_modification,
+                        newest_modification,
+                        smallest_object,
+                        largest_object,
+                    )
+                    total_size += int(key["Size"])
                     count += 1
-                    modified = key["LastModified"].replace(tzinfo=None)
-                    if modified < oldest_modification:
-                        oldest_modification = modified
-                    if modified > newest_modification:
-                        newest_modification = modified
 
         if count == 0:
             smallest_size = None

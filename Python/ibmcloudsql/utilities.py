@@ -14,10 +14,12 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 import getpass
+import time
 from datetime import datetime
 
 import ibm_boto3
 import ibm_botocore
+import requests
 
 
 def rename_keys(d, keys):
@@ -70,55 +72,14 @@ class IBMCloudAccess:
     thread_safe: bool, optional
         a new Session object is created if not provided
 
-    session: Session, optional
+    session: ibm_boto3.session.Session, optional
         provide a Session object so that it can be reused
 
     staging: bool, optional
+        if True, then uses the test IAM endpoint
+    iam_max_tries: int, optional
+        Number of tries to connect to IAM service
     """
-
-    def _authentication_(self):
-        """
-        function that does custom authentication
-        and returns json with token, refresh token, expiry time
-        and token type.
-
-        forkedfrom ibm_botocore//credentials.py
-
-        NOTE: not  being used yet
-        """
-        import json
-        from ibm_botocore.exceptions import CredentialRetrievalError
-
-        count = 0
-        import requests
-        import httplib
-
-        MAX_COUNT = 10
-        while True:
-            response = requests.post(
-                url=self._get_token_url(),
-                data=self._get_data(),
-                headers=self._get_headers(),
-                timeout=5,
-                proxies=self.proxies,
-                verify=self.get_verify(),
-            )
-            count += 1
-
-            if response.status_code != httplib.OK:
-                if count < MAX_COUNT:
-                    import time
-
-                    time.sleep(10)
-                else:
-                    _msg = "HttpCode({code}) - Retrieval of tokens from server failed.".format(
-                        code=response.status_code
-                    )
-                    raise CredentialRetrievalError(
-                        provider=self._get_token_url(), error_msg=_msg
-                    )
-                    break
-        return json.loads(response.content.decode("utf-8"))
 
     def __init__(
         self,
@@ -127,9 +88,12 @@ class IBMCloudAccess:
         staging=False,
         thread_safe=False,
         session=None,
+        iam_max_tries: int = 1,
     ):
         self.apikey = cloud_apikey
         self.staging = staging
+        self._iam_max_tries = iam_max_tries
+        assert self._iam_max_tries >= 1
         if client_info == "":
             self.user_agent = "IBMCloudAccess"
         else:
@@ -153,6 +117,14 @@ class IBMCloudAccess:
         self.request_headers_xml_content.update({"Accept": "application/json"})
         self.request_headers_xml_content.update({"User-Agent": self.user_agent})
 
+    @property
+    def cos_session(self):
+        return self._session
+
+    @property
+    def thread_safe(self):
+        return self._thread_safe
+
     def get_session(self):
         thread_safe = self._thread_safe
         if thread_safe is False:
@@ -174,8 +146,7 @@ class IBMCloudAccess:
             )
         else:
             self.apikey = cloud_apikey
-        # self._session = self.get_session()
-        self._session.set_credentials(ibm_api_key_id=self.apikey)
+        self._session._session.set_credentials(ibm_api_key_id=self.apikey)
         self.logged_on = False
         self.last_logon = None
 
@@ -212,8 +183,8 @@ class IBMCloudAccess:
 
         Raises
         ---------
-        ibm_botocore.exceptions.CredentialRetrievalError:
-           The exception is raised when the credential is incorrect.
+        AttributeError:
+           The exception is raised when the token cannot be retrieved using the current credential.
 
         """
         if (
@@ -230,15 +201,36 @@ class IBMCloudAccess:
         # TODO refactor construction to avoid calling private method
         boto3_session = self._session
         # ibm_boto3._get_default_session()
-        try:
-            ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
-            self.current_token = ro_credentials.token
-        except ibm_botocore.exceptions.CredentialRetrievalError as e:
-            print(
-                "Login fails: credential cannot be validated ",
-                "- check (1) the key is correct and (2) IBM cloud service is available",
-            )
-            raise e
+        complete = False
+        count = 0
+        retry_delay = 2
+        while not complete and count < self._iam_max_tries:
+            try:
+                ro_credentials = (
+                    boto3_session.get_credentials().get_frozen_credentials()
+                )
+                self.current_token = ro_credentials.token
+                complete = True
+            except ibm_botocore.exceptions.CredentialRetrievalError:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = (
+                        "Login fails: credential cannot be validated",
+                        "- check either (1) the key or (2) if IBM  cloud service is available",
+                    )
+                    raise AttributeError(msg)
+            except requests.exceptions.ReadTimeout:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = "Increase iam_max_tries, or relaunch again as no response from IAM"
+                    raise AttributeError(msg)
+                time.sleep(retry_delay)
+            except Exception:
+                print("print ro_credentials")
+                print(ro_credentials)
+        if self.current_token:
+            assert self.current_token != ro_credentials.token
+            print("check token")
 
         self.request_headers = {"Content-Type": "application/json"}
         self.request_headers.update({"Accept": "application/json"})

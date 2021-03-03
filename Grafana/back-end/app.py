@@ -122,7 +122,7 @@ try:
     from cloud_utilities.sql_magic import format_sql
     from cloud_utilities.cos import ParsedUrl
 except:
-    from ibmcloudsql.SQLQuery import SQLQuery as SQLClient
+    from ibmcloudsql.sql_query_ts import SQLClientTimeSeries as SQLClient
     from ibmcloudsql.cos import COSClient
     from ibmcloudsql.sql_magic import format_sql
     from ibmcloudsql.cos import ParsedUrl

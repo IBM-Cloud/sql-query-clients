@@ -1,3 +1,18 @@
+//# ------------------------------------------------------------------------------
+//# Copyright IBM Corp. 2020
+//#
+//# Licensed under the Apache License, Version 2.0 (the "License");
+//# you may not use this file except in compliance with the License.
+//# You may obtain a copy of the License at
+//#
+//#    http://www.apache.org/licenses/LICENSE-2.0
+//#
+//# Unless required by applicable law or agreed to in writing, software
+//# distributed under the License is distributed on an "AS IS" BASIS,
+//# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//# See the License for the specific language governing permissions and
+//# limitations under the License.
+//# ------------------------------------------------------------------------------
 import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
 
 export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
@@ -10,25 +25,10 @@ export interface CloudSQLQuery extends DataQuery {
 
   id?: number; //track the ID of the associated datasource instance
   name?: string; //track the name of the associated datasource instance
-  //not sure if these will be used
-  //constant: number;
   format: string; //'timeseries' or something else?
   time_column?: string;
   metrics_column?: string; //the column from which uniques values represent different metrics
   get_result: boolean; // default is checked, i.e. the queried data is also returned
-  //refId?: string; <--- from DataQuery
-  ////PromQuery
-  //expr: string;
-  //format?: string;
-  //instant?: boolean;
-  //hinting?: boolean;
-  //interval?: string;
-  //intervalFactor?: number;
-  //legendFormat?: string;
-  //valueWithRefId?: boolean;
-  //requestId?: string;
-  //showingGraph?: boolean;
-  //showingTable?: boolean;
   showingHelp: boolean;
 }
 
@@ -71,16 +71,6 @@ INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET`,
   metrics_column: 'user_agent',
 };
 export const defaultQuery: Partial<CloudSQLQuery> = {
-  //TODO
-  //queryText: `SELECT
-  //   UNIX_TIMESTAMP(<time_column>) as time_sec,
-  //   <text_column> as text,
-  //   <tags_column> as tags
-  // FROM <table name>
-  // WHERE $__timeFilter(time_column)
-  // ORDER BY <time_column> ASC
-  // LIMIT 100
-  //`,
   queryText: `WITH container_ts_table AS
   (SELECT field_name,
           ts
@@ -89,37 +79,13 @@ SELECT field_name AS user_agent,
        ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt,
                                                                                 value)
 FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET`,
-  //the below use macro names, e.g. {cos_in}, {cos_out}
-  //queryText: `WITH container_ts_table AS
-  //(SELECT field_name,
-  //        ts
-  // FROM {cos_in} STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
-  //SELECT field_name AS user_agent,
-  //     ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt,
-  //                                                                              value)
-  //FROM container_ts_table INTO {cos_out} STORED AS PARQUET`
-  //constant: 6.5,
   format: 'table',
 };
 
 export interface ClousSQLQueryRequest extends CloudSQLQuery {
-  ////PromQueryRequest
-  //step?: number;
-  //requestId?: string;
-  //start: number;
-  //end: number;
-  //headers?: any;
 }
-//NOTE: CloudWatch divides requests into different categories
-// MetricRequest [from:string, to:string, queries: MetricQueryp[; debug?: boolean]]
-// GetLogEventsRequest
-// GetLogGroupFieldsRequest
-// DescribeLogGroupsRequest
-// StartQueryRequest [need logGroupNames | logGroupName]
-//
 
 export interface CloudSQLMetricsMetadataItem {
-  ////PromMetricsMetadataItem
   type: string;
   help: string;
   unit?: string;
@@ -133,6 +99,8 @@ export const DataFormatTypeOptions = [
   { value: 'JSON', label: 'JSON' },
   { value: 'CSV', label: 'CSV' },
   { value: 'PARQUET', label: 'PARQUET' },
+  { value: 'AVRO', label: 'AVRO' },
+  { value: 'ORC', label: 'ORC' },
 ] as SelectableValue[];
 /**
  * These are options configured for each DataSource instance
@@ -149,12 +117,6 @@ export interface COSIBMDataSourceOptions extends DataSourceJsonData {
   instance_rate_limit: number;
   sql_ui_link?: string;
 
-  ////PromOptions
-  //timeInterval: string;
-  //queryTimeout: string;
-  //httpMethod: string;
-  //directUrl: string;
-  //customQueryParameters?: string;
   disableMetricsLookup?: boolean;
 }
 
