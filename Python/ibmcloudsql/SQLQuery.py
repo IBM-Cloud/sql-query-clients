@@ -245,6 +245,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         User-defined string
     max_tries: int, optional
         The number of time :meth:`.submit_sql`, should try to request CloudSQL before giving up.
+    iam_max_tries: int, optional
+        The number of times to request credential from IAM. By default, token is returned from a request to `iam.cloud.ibm.com` which may not be responsive (i.e. timeout=5 seconds). This parameter controls how many times to try.
     thread_safe: bool, optional (=False)
         If thread-safe is used, a new Session object is created upon this object creation
     """
@@ -254,10 +256,11 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         api_key,
         instance_crn,
         target_cos_url=None,
-        client_info="",
+        client_info="IBM Cloud SQL Query Python SDK",
         thread_safe=False,
         max_concurrent_jobs=4,
         max_tries=1,
+        iam_max_tries=1,
     ):
         staging_env = instance_crn.startswith("crn:v1:staging")
         if staging_env:
@@ -271,12 +274,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             cloud_apikey=api_key,
             cos_url=target_cos_url,
             client_info=client_info,
+            iam_max_tries=iam_max_tries,
             thread_safe=thread_safe,
             staging=staging_env,
         )
-        if target_cos_url is not None and not self.is_valid_cos_url(target_cos_url):
-            msg = "Not a valid COS URL {}".format(target_cos_url)
-            raise ValueError(msg)
         SQLMagic.__init__(self)
         if target_cos_url is not None:
             HiveMetastore.__init__(self, target_cos_url)
@@ -284,10 +285,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.instance_crn = instance_crn
         self.target_cos_url = target_cos_url
         self.export_cos_url = target_cos_url
-        if client_info == "":
-            self.user_agent = "IBM Cloud SQL Query Python SDK"
-        else:
-            self.user_agent = client_info
+        self.user_agent = client_info
 
         self.max_tries = max_tries
         self.max_concurrent_jobs = (
@@ -1757,7 +1755,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             return df
 
     def analyze(self, job_id, print_msg=True):
-        """Provide some insights about the data layout from the current SQL statement
+        """Provides some insights about the data layout from the current SQL statement
 
         Parameters
         -------------
@@ -1782,7 +1780,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         best_practice = BestPracticeContainer("128 MB", 50)
 
         result = self.get_job(job_id)
-        # TODO : make use of 'resultset_location' and 'resultset_format'
+        # make use of 'resultset_location' and 'resultset_format'
         if not INTO_is_present(result["statement"]):
             cos_out = result["resultset_location"]
             if "jobid=" in result["resultset_location"]:
@@ -1809,7 +1807,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             # total_objects = cos_result['total_objects']  #not exact
             r = self.list_results(job_id)
             seriesObj = r.apply(lambda x: True if int(x["Size"]) > 0 else False, axis=1)
-            total_objects = len(seriesObj[seriesObj == True].index)
+            total_objects = len(seriesObj[seriesObj is True].index)
             return total_objects
 
         total_objects = get_total_objects()
@@ -1955,376 +1953,3 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             print(msg)
 
         return msg
-
-    def _get_ts_datasource(
-        self,
-        table_name,
-        key,
-        time_stamp,
-        observation,
-        cos_out,
-        granularity="raw",
-        where_clause="",
-        ops="avg",
-        dry_run=False,
-        num_objects=None,
-        num_rows=None,
-    ):
-        """
-        Prepare the data source for time-series in the next-query
-
-        It will returns the data source in 3 columns: field_name, time_stamp, observation
-
-        Parameters
-        --------------
-        table: str
-            The catalog table name or the view-table that you generate from the WITH clause via :meth:`with_` method
-        key: str
-            The column name being used as the key, and is maped to `field_name`
-        time_stamp: str
-            The column name being used as timetick, and is mapped to `time_stamp`
-        observation: str
-            The column name being used as value, and is maped to `observation`
-        cos_out: str
-            The COS URL where the data is copied to - later as data source
-        granularity: str
-            There are 2 options:
-
-            * a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec", "per_hour", "per_<x>hour"]
-            with <x> is a number divided by 60, e.g. 10, 15
-
-            * a value that follows ISO 8601 'duration', e.g. PT1M, PT1S, PT2H
-        ops: str
-            The aggregation method: "avg", "sum", "max", "min", "count"
-        dry_run: bool, optional
-            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
-        num_objects: None or int
-            The number of objects to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.
-        num_rows: None or int
-            The number of rows for each object to be created for storing the data. Using `num_objects` and `num_rows` are exclusive.
-
-        Returns
-        ----------
-        str
-            The COS_URL where the data with 3 fields (key, time_stamp, observation)
-            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
-
-        Raises
-        ------
-        ISO8601Error
-            granularity input is not a valid ISO 8601-compliant value
-
-        """
-        tmp_cos = self.target_cos_url
-        if num_objects is None and num_rows is None:
-            print("provide at least `num_objects` or `num_rows`")
-            assert 0
-
-        if granularity == "raw":
-            pass
-        elif granularity == "per_min":
-            pass
-        if time_stamp in self._unixtime_columns:
-            #  -- convert unix-time in ms to sec
-            time_info = "cast({time_stamp}/1000 as timestamp)".format(
-                time_stamp=time_stamp
-            )
-        else:
-            time_info = "{time_stamp}".format(time_stamp=time_stamp)
-
-        if granularity == "raw":
-            tmp_cos = cos_out
-
-        if len(where_clause) == 0:
-            extra_where = ""
-        else:
-            extra_where = "AND " + where_clause
-
-        if num_objects:
-            partition_clause = "PARTITIONED INTO {x} OBJECTS".format(x=num_objects)
-        elif num_rows:
-            partition_clause = "PARTITIONED EVERY {x} ROWS".format(x=num_rows)
-        select_stmt = """
-            SELECT {key} as field_name,
-                {time_info} as time_stamp,
-                {observation} as observation
-            FROM {table_name}
-            WHERE isnotnull({key}) AND isnotnull({observation})
-            {extra_where}
-            INTO {cos_out} STORED AS PARQUET {partition_clause}
-            """.format(
-            table_name=table_name,
-            cos_out=tmp_cos,
-            key=key,
-            observation=observation,
-            time_info=time_info,
-            extra_where=extra_where,
-            partition_clause=partition_clause,
-        )
-        if self._has_with_clause and not self._has_select_clause:
-            self._sql_stmt = self._sql_stmt + select_stmt
-        else:
-            self._sql_stmt = select_stmt
-        result = None
-        if dry_run:
-            print_sql(self._sql_stmt)
-            select_container_id_full_location = "cos://dry_run/"
-        else:
-            result = self.run_sql(self._sql_stmt)
-            select_container_id_full_location = self.get_job(result.job_id)[
-                "resultset_location"
-            ]
-
-        cos_in = ""
-        if granularity == "raw":
-            return result
-        else:
-            cos_in = select_container_id_full_location
-
-        def query_min():
-            """
-            return:
-                None or 'result'
-            """
-            nonlocal cos_in
-            import re
-
-            p = re.compile(r"per_[0-9]*min")
-            p2 = re.compile(r"per_[0-9]+min")
-            level = "raw"
-            num_min = 1
-            if p.match(granularity):
-                level = "minute"
-                if p2.match(granularity):
-                    temp = re.findall(r"\d+", granularity)
-                    num_min = list(map(int, temp))[0]
-                    assert 60 % num_min == 0
-            else:
-                if granularity[0:2].upper() == "PT" and granularity[-1].upper() == "M":
-                    level = "minute"
-                    try:
-                        import isodate
-
-                        x = isodate.parse_duration(granularity.strip())
-                        num_min = int(x.total_seconds() / 60)  # (minute)
-                        assert 60 % num_min == 0
-                    except ISO8601Error:
-                        print("%s unsupported" % granularity)
-                        assert 0
-                else:
-                    return None
-
-            if level == "minute":
-                sql_stmt = """
-                select
-                    field_name,
-                    to_date(time_stamp) as time_stamp_date,
-                    hour(time_stamp) as time_stamp_hour,
-                    (floor(minute(time_stamp)/{num_min})) * {num_min} as time_stamp_minute, -- within [current, current+{num_min}) minute time-window
-                    {ops}(observation) as {observation}
-                from {cos_in} stored as parquet
-                group by field_name,  to_date(time_stamp), hour(time_stamp), (floor(minute(time_stamp)/{num_min})) * {num_min}
-                INTO {cos_out} STORED AS PARQUET {partition_clause}
-                """.format(
-                    cos_in=cos_in,
-                    cos_out=tmp_cos,
-                    key=key,
-                    observation=observation,
-                    time_info=time_info,
-                    num_min=num_min,
-                    partition_clause=partition_clause,
-                    ops=ops,
-                )
-                if dry_run:
-                    print_sql(sql_stmt)
-                    result = None
-                else:
-                    result = self.run_sql(sql_stmt)
-
-                # Restore timestamp as single column
-                if dry_run:
-                    cos_in = "cos://dry_run/"
-                else:
-                    cos_in = self.get_job(result.job_id)["resultset_location"]
-                sql_stmt = """
-                select
-                    field_name, -- as {key},
-                    to_timestamp(concat(date(time_stamp_date), " ", time_stamp_hour, ":", time_stamp_minute), "yyyy-MM-dd HH:mm") as time_stamp,
-                    {observation} as observation
-                from {cos_in} stored as parquet
-                INTO {cos_out} STORED AS PARQUET {partition_clause}
-                """.format(
-                    cos_in=cos_in,
-                    cos_out=cos_out,
-                    key=key,
-                    observation=observation,
-                    time_info=time_info,
-                    partition_clause=partition_clause,
-                )
-                if dry_run:
-                    print_sql(sql_stmt)
-                    result = None
-                else:
-                    result = self.run_sql(sql_stmt)
-            return result
-
-        def query_sec():
-            """
-            return:
-                None or 'result'
-            """
-            import re
-
-            p = re.compile(r"per_[0-9]*sec")
-            p2 = re.compile(r"per_[0-9]+sec")
-            level = "raw"
-            num_sec = 1
-            if p.match(granularity):
-                level = "sec"
-                if p2.match(granularity):
-                    temp = re.findall(r"\d+", granularity)
-                    num_sec = list(map(int, temp))[0]
-                    assert 60 % num_sec == 0
-            else:
-                if granularity[0:2].upper() == "PT" and granularity[-1].upper() == "S":
-                    level = "sec"
-                    try:
-                        import isodate
-
-                        x = isodate.parse_duration(granularity.strip())
-                        num_sec = int(x.total_seconds())
-                        assert 60 % num_sec == 0
-                    except ISO8601Error:
-                        print("%s unsupported" % granularity)
-                        assert 0
-                else:
-                    return None
-
-            if level == "sec":
-                sql_stmt = """
-                select
-                    field_name,
-                    to_date(time_stamp) as time_stamp_date,
-                    hour(time_stamp) as time_stamp_hour,
-                    minute(time_stamp) as time_stamp_minute,
-                    (floor(second(time_stamp)/{num_sec})) * {num_sec} as time_stamp_second, -- within [current, current+{num_sec}) second time-window
-                    {ops}(observation) as {observation}
-                from {cos_in} stored as parquet
-                group by field_name,  to_date(time_stamp), hour(time_stamp), minute(time_stamp), (floor(second(time_stamp)/{num_sec})) * {num_sec}
-                INTO {cos_out} STORED AS PARQUET {partition_clause}
-                """.format(
-                    cos_in=cos_in,
-                    cos_out=tmp_cos,
-                    key=key,
-                    observation=observation,
-                    time_info=time_info,
-                    num_sec=num_sec,
-                    partition_clause=partition_clause,
-                    ops=ops,
-                )
-                if dry_run:
-                    print_sql(sql_stmt)
-                    result = None
-                else:
-                    result = self.run_sql(sql_stmt)
-
-                # Restore timestamp as single column
-                if dry_run:
-                    init_cos = "cos://dry_run/"
-                else:
-                    init_cos = self.get_job(result.job_id)["resultset_location"]
-                sql_stmt = """
-                select
-                    field_name, -- as {key},
-                    to_timestamp(concat(date(time_stamp_date), " ", ":".join([time_stamp_hour, time_stamp_minute, time_stamp_second]), "yyyy-MM-dd HH:mm:ss") as time_stamp,
-                    {observation} as observation
-                from {cos_in} stored as parquet
-                INTO {cos_out} STORED AS PARQUET {partition_clause}
-                """.format(
-                    cos_in=cos_in,
-                    cos_out=cos_out,
-                    key=key,
-                    observation=observation,
-                    time_info=time_info,
-                    partition_clause=partition_clause,
-                )
-                if dry_run:
-                    print_sql(sql_stmt)
-                    result = None
-                else:
-                    result = self.run_sql(sql_stmt)
-            return result
-
-        result = query_min()
-        if result is None:
-            result = query_sec()
-        return result
-
-    def get_ts_datasource(
-        self,
-        table_name,
-        key,
-        time_stamp,
-        observation,
-        cos_out,
-        granularity="raw",
-        where_clause="",
-        ops="avg",
-        dry_run=False,
-        num_objects=20,
-        print_warning=True,
-    ):
-        """
-        Prepare the data source for time-series in the next-query, in that the result is
-        broken down into multiple objects using `num_objects` as the criteria
-
-        It will returns the data source in 3 columns:
-        <key>, time_stamp, observation
-
-        Parameters
-        --------------
-        table: str
-            The catalog table name
-        key: str
-            The column name being used as the key
-        time_stamp: str
-            The column name being used as timestick
-        observation: str
-            The column name being used as value
-        cos_out: str
-            The COS URL where the data is copied to - later as data source
-        granularity: str
-            a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec"]
-            with <x> is a number divided by 60, e.g. 10, 15
-        dry_run: bool, optional
-            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
-        num_objects: int, optional
-            The number of objects to be created for storing the data
-        print_warning: bool, default=True
-            print a warning or not
-
-        Returns
-        ----------
-        str
-            The COS_URL where the data with 3 fields (key, time_stamp, observation)
-            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
-        """
-        if len(self._unixtime_columns) == 0 and print_warning is True:
-            msg = (
-                "WARNING: You may want to assign the list of columns to`.columns_in_unixtime`",
-                " to let the SQL client know what columns are timestamp and in UNIX time format",
-            )
-            print(msg)
-
-        return self._get_ts_datasource(
-            table_name,
-            key,
-            time_stamp,
-            observation,
-            cos_out,
-            granularity,
-            where_clause,
-            ops,
-            dry_run,
-            num_objects=num_objects,
-        )

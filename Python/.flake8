@@ -1,0 +1,8 @@
+[flake8]
+ignore = E203
+per-file-ignores =
+    # line too long
+    apps/aiops/app.py: E501,
+
+[pep8]
+ignore = E203

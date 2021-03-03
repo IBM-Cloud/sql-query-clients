@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 try:
     from .cos import ParsedUrl
     from .exceptions import SqlQueryDropTableException, SqlQueryFailException
-except Exception:
+except ImportError:
     from cos import ParsedUrl
     from exceptions import SqlQueryDropTableException, SqlQueryFailException
 
@@ -33,19 +33,23 @@ class HiveMetastore:
         USING {format_type}
         LOCATION {cos_in}
         """
-        if target_url is None or not ParsedUrl().is_valid_cos_url(target_url):
-            msg = "Not a valid COS URL"
-            if target_url is not None:
-                msg = "Not a valid COS URL: {}".format(target_url)
-            raise ValueError(msg)
         self._target_url = target_url
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
 
+    def _is_valid_target_url(self, target_url=None):
+        """raise ValueError if the required COS URL is invalid"""
+        if target_url is None:
+            target_url = self._target_url
+        if target_url is None or not ParsedUrl().is_valid_cos_url(target_url):
+            msg = "Need to define target COS URL"
+            if target_url is not None:
+                msg = "Not a valid COS URL: {}".format(target_url)
+            raise ValueError(msg)
+        return True
+
     def configure(self, target_url):
         """Update the configuration"""
-        if not ParsedUrl().is_valid_cos_url(target_url):
-            msg = "Not a valid COS URL"
-            raise ValueError(msg)
+        self._is_valid_target_url(target_url)
         self._target_url = target_url
 
     @property
@@ -54,9 +58,7 @@ class HiveMetastore:
 
     @target_url.setter
     def target_url(self, target_url):
-        if not ParsedUrl().is_valid_cos_url(target_url):
-            msg = "Not a valid COS URL"
-            raise ValueError(msg)
+        self._is_valid_target_url(target_url)
         self._target_url = target_url
 
     # Extended functionality
@@ -78,15 +80,15 @@ class HiveMetastore:
 
         Raises
         -------
+        SqlQueryFailException
+        ValueError
 
         """
         if target_cos_url is None:
             cos_out = self.target_url
         else:
             cos_out = target_cos_url
-            if not ParsedUrl().is_valid_cos_url(cos_out):
-                msg = "Not a valid COS URL"
-                raise ValueError(msg)
+            self._is_valid_target_url(cos_out)
         sql_stmt_show = self.sql_stmt_show_template.format(
             like="LIKE '{}'".format(pattern) if pattern else "", cos_out=cos_out
         )
@@ -218,10 +220,7 @@ class HiveMetastore:
             when it cannot remove the given table name
 
         """
-        if cos_url:
-            if not ParsedUrl().is_valid_cos_url(cos_url):
-                msg = "Not a valid COS URL"
-                raise ValueError(msg)
+        self._is_valid_target_url(cos_url)
 
         def create_table_async(
             table_name,
@@ -380,9 +379,7 @@ class HiveMetastore:
         if cos_url is None:
             cos_url = self.cos_in_url_partitioned
         else:
-            if not ParsedUrl().is_valid_cos_url(cos_url):
-                msg = "Not a valid COS URL"
-                raise ValueError(msg)
+            self._is_valid_target_url(cos_url)
 
         df = self.show_tables()
         try:
@@ -466,9 +463,7 @@ class HiveMetastore:
             3 columns: col_name (object), data_type (object), comment (float64)
 
         """
-        if self.target_url is None:
-            msg = "Need to define target COS URL"
-            raise ValueError(msg)
+        self._is_valid_target_url()
 
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(

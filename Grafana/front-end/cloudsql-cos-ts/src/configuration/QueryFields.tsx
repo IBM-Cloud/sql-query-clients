@@ -1,3 +1,18 @@
+//# ------------------------------------------------------------------------------
+//# Copyright IBM Corp. 2020
+//#
+//# Licensed under the Apache License, Version 2.0 (the "License");
+//# you may not use this file except in compliance with the License.
+//# You may obtain a copy of the License at
+//#
+//#    http://www.apache.org/licenses/LICENSE-2.0
+//#
+//# Unless required by applicable law or agreed to in writing, software
+//# distributed under the License is distributed on an "AS IS" BASIS,
+//# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//# See the License for the specific language governing permissions and
+//# limitations under the License.
+//# ------------------------------------------------------------------------------
 import _ from 'lodash';
 import React, { ReactNode } from 'react';
 
@@ -50,50 +65,6 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metr
   //return 'Metrics';
 }
 
-//function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CascaderOption {
-//  const option: CascaderOption = { label: metric, value: metric };
-//  if (metadata && metadata[metric]) {
-//    const { type = '', help } = metadata[metric][0];
-//    option.title = [metric, type.toUpperCase(), help].join('\n');
-//  }
-//  return option;
-//}
-
-//export function groupMetricsByPrefix(metrics: string[], metadata?: PromMetricsMetadata): CascaderOption[] {
-//  // Filter out recording rules and insert as first option
-//  const ruleRegex = /:\w+:/;
-//  const ruleNames = metrics.filter(metric => ruleRegex.test(metric));
-//  const rulesOption = {
-//    label: 'Recording rules',
-//    value: RECORDING_RULES_GROUP,
-//    children: ruleNames
-//      .slice()
-//      .sort()
-//      .map(name => ({ label: name, value: name })),
-//  };
-//
-//  const options = ruleNames.length > 0 ? [rulesOption] : [];
-//
-//  const delimiter = '_';
-//  const metricsOptions = _.chain(metrics)
-//    .filter((metric: string) => !ruleRegex.test(metric))
-//    .groupBy((metric: string) => metric.split(delimiter)[0])
-//    .map(
-//      (metricsForPrefix: string[], prefix: string): CascaderOption => {
-//        const prefixIsMetric = metricsForPrefix.length === 1 && metricsForPrefix[0] === prefix;
-//        const children = prefixIsMetric ? [] : metricsForPrefix.sort().map(m => addMetricsMetadata(m, metadata));
-//        return {
-//          children,
-//          label: prefix,
-//          value: prefix,
-//        };
-//      }
-//    )
-//    .sortBy('label')
-//    .value();
-//
-//  return [...options, ...metricsOptions];
-//}
 
 export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
