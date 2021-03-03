@@ -44,6 +44,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
@@ -55,6 +56,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.cos">Cloud Object Storage module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.exceptions">Exceptions module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.sql_magic">Magic module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.sql_query_ts">Time-Series SQL Query module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql.utilities">Utilities module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-ibmcloudsql">Module contents</a></li>
 </ul>
@@ -110,7 +112,7 @@
 <span id="sql-query-module"></span><h2>SQL Query module<a class="headerlink" href="#module-ibmcloudsql.SQLQuery" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery">
-<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.SQLQuery.</code><code class="sig-name descname">SQLQuery</code><span class="sig-paren">(</span><em class="sig-param">api_key</em>, <em class="sig-param">instance_crn</em>, <em class="sig-param">target_cos_url=None</em>, <em class="sig-param">client_info=''</em>, <em class="sig-param">max_concurrent_jobs=4</em>, <em class="sig-param">max_tries=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.SQLQuery.</code><code class="sig-name descname">SQLQuery</code><span class="sig-paren">(</span><em class="sig-param">api_key</em>, <em class="sig-param">instance_crn</em>, <em class="sig-param">target_cos_url=None</em>, <em class="sig-param">client_info='IBM Cloud SQL Query Python SDK'</em>, <em class="sig-param">thread_safe=False</em>, <em class="sig-param">max_concurrent_jobs=4</em>, <em class="sig-param">max_tries=1</em>, <em class="sig-param">iam_max_tries=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">sql_magic.SQLMagic</span></code>, <a class="reference internal" href="#ibmcloudsql.catalog_table.HiveMetastore" title="ibmcloudsql.catalog_table.HiveMetastore"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.catalog_table.HiveMetastore</span></code></a></p>
 <p>The class the provides necessary APIs to interact with</p>
 <ol class="arabic simple">
@@ -132,17 +134,23 @@
 </dd>
 <dt><strong>max_tries: int, optional</strong></dt><dd><p>The number of time <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>, should try to request CloudSQL before giving up.</p>
 </dd>
+<dt><strong>iam_max_tries: int, optional</strong></dt><dd><p>The number of times to request credential from IAM. By default, token is returned from a request to <cite>iam.cloud.ibm.com</cite> which may not be responsive (i.e. timeout=5 seconds). This parameter controls how many times to try.</p>
+</dd>
+<dt><strong>thread_safe: bool, optional (=False)</strong></dt><dd><p>If thread-safe is used, a new Session object is created upon this object creation</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes</dt>
 <dd class="field-even"><dl class="simple">
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">columns_in_unixtime</span></code></dt><dd><p>Return the name of columns whose values are in UNIX timestamp</p>
 </dd>
+<dt><strong>cos_session</strong></dt><dd></dd>
 <dt><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.my_jobs" title="ibmcloudsql.SQLQuery.SQLQuery.my_jobs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">my_jobs</span></code></a></dt><dd><p>Return information about jobs already queried via <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_job" title="ibmcloudsql.SQLQuery.SQLQuery.get_job"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_job()</span></code></a></p>
 </dd>
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">project_lib</span></code></dt><dd><p>Project: IBM Watson Studio ProjectLib object</p>
 </dd>
 <dt><strong>target_url</strong></dt><dd></dd>
+<dt><strong>thread_safe</strong></dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -153,11 +161,11 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.analyze" title="ibmcloudsql.SQLQuery.SQLQuery.analyze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze</span></code></a>(job_id)</p></td>
-<td><p>Provide some insights about the data layout from the current SQL statement</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.analyze" title="ibmcloudsql.SQLQuery.SQLQuery.analyze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze</span></code></a>(job_id[, print_msg])</p></td>
+<td><p>Provides some insights about the data layout from the current SQL statement</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze_cos_url</span></code>(cos_url)</p></td>
-<td><p>Return a namedtuple containing the 3 fields</p></td>
+<td><p>return a namedtuple containing the 3 fields</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.configure" title="ibmcloudsql.SQLQuery.SQLQuery.configure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code></a>([apikey, instance_crn, cos_out_url])</p></td>
 <td><p>Update the configuration</p></td>
@@ -175,7 +183,7 @@
 <td><p>Delete zero-size objects.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_objects</span></code>(cos_url[, dry_run])</p></td>
-<td><p>Delete all objects stored at the given COS URL</p></td>
+<td><p>delete all objects stored at the given COS URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.delete_result" title="ibmcloudsql.SQLQuery.SQLQuery.delete_result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_result</span></code></a>(jobId)</p></td>
 <td><p>Delete the COS objects created by a given job-id</p></td>
@@ -211,7 +219,7 @@
 <td><p>FROM (&lt;sql&gt;)</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket</span></code>(cos_url)</p></td>
-<td><p>Return the bucket name from COS URL</p></td>
+<td><p>return the bucket name from COS URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket_info</span></code>(cos_url)</p></td>
 <td><p>Return the information of the given bucket</p></td>
@@ -220,10 +228,10 @@
 <td><p>Return information for the given COR URL (may include bucket + prefix)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_endpoint</span></code>(cos_url)</p></td>
-<td><p>Return the endpoint string from COS URL</p></td>
+<td><p>return the endpoint string from COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_exact_url</span></code>(cos_url)</p></td>
-<td><p>Convert COS URL from using alias to exact URL</p></td>
+<td><p>convert COS URL from using alias to exact URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_job" title="ibmcloudsql.SQLQuery.SQLQuery.get_job"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_job</span></code></a>(jobId)</p></td>
 <td><p>Return the details of the job-id</p></td>
@@ -241,7 +249,7 @@
 <td><p>return the number of running jobs in the SQL Query server</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_prefix</span></code>(cos_url)</p></td>
-<td><p>Return the prefix part from COS URL</p></td>
+<td><p>return the prefix part from COS URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_result" title="ibmcloudsql.SQLQuery.SQLQuery.get_result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_result</span></code></a>(jobId[, pagenumber])</p></td>
 <td><p>Return the queried data from the given job-id</p></td>
@@ -252,71 +260,71 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_sql</span></code>()</p></td>
 <td><p>Return the current sql string</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource" title="ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ts_datasource</span></code></a>(table_name, key, …[, …])</p></td>
-<td><p>Prepare the data source for time-series in the next-query, in that the result is broken down into multiple objects using <cite>num_objects</cite> as the criteria</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_by_</span></code>(columns)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_by_</span></code>(columns)</p></td>
 <td><p>GROUP BY &lt;columns&gt;</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid_cos_url</span></code>(cos_url)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid_cos_url</span></code>(cos_url)</p></td>
 <td><p>Validate if a string is COS URL</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_cos_</span></code>(cos_url, condition[, type, alias])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_cos_</span></code>(cos_url, condition[, type, alias])</p></td>
 <td><p>[type] JOIN &lt;cos-url&gt; [AS alias]</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_table_</span></code>(table, condition[, type, alias])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_table_</span></code>(table, condition[, type, alias])</p></td>
 <td><p>[type] JOIN &lt;table&gt; [AS alias] ON &lt;condition&gt;</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_cos_objects</span></code>(cos_url)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_cos_objects</span></code>(cos_url[, size_unit])</p></td>
 <td><p>List all objects in the current COS URL.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="ibmcloudsql.SQLQuery.SQLQuery.list_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_results</span></code></a>(jobId[, wait])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.list_results" title="ibmcloudsql.SQLQuery.SQLQuery.list_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_results</span></code></a>(jobId[, wait])</p></td>
 <td><p>NOTE: A single SQL Query can store the queried data in the COS output in multiple objects/partitions</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">logon</span></code>([force])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">logon</span></code>([force])</p></td>
 <td><p>Establish a connection to IBM Cloud</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_by_</span></code>(columns)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_by_</span></code>(columns)</p></td>
 <td><p>ORDER BY &lt;columns&gt;</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_by_</span></code>(columns)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_by_</span></code>(columns)</p></td>
 <td><p>PARTITIONED BY &lt;columns&gt;</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_objects_</span></code>(num_objects)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_objects_</span></code>(num_objects)</p></td>
 <td><p>PARTITIONED INTO &lt;num&gt;  OBJECTS</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_rows_</span></code>(num_rows)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_rows_</span></code>(num_rows)</p></td>
 <td><p>PARTITIONED INTO &lt;num&gt; ROWS</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_sql</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_sql</span></code>()</p></td>
 <td><p>print() sql string</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.process_failed_jobs_until_all_completed" title="ibmcloudsql.SQLQuery.SQLQuery.process_failed_jobs_until_all_completed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_failed_jobs_until_all_completed</span></code></a>(…)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.process_failed_jobs_until_all_completed" title="ibmcloudsql.SQLQuery.SQLQuery.process_failed_jobs_until_all_completed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_failed_jobs_until_all_completed</span></code></a>(…)</p></td>
 <td><p>re-send those that are failed - due to the time-out mechanism of SQL Query server</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_project_lib_data</span></code>([file_name])</p></td>
-<td><p>Read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_project_lib_data</span></code>([file_name])</p></td>
+<td><p>read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">recover_table_partitions</span></code>(table_name)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">recover_table_partitions</span></code>(table_name)</p></td>
 <td><p>This step is required after creating a new partitioned table</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result</span></code></a>(jobId[, wait])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result</span></code></a>(jobId[, wait])</p></td>
 <td><p>A SQL Query can store data into partitioned/paginated multiple objects, or single object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result_joblist</span></code></a>(job_list[, wait])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist" title="ibmcloudsql.SQLQuery.SQLQuery.rename_exact_result_joblist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result_joblist</span></code></a>(job_list[, wait])</p></td>
 <td><p>The bulk mode of <cite>rename_exact_result</cite> method.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_</span></code>()</p></td>
 <td><p>Reset and returns the current sql string</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run" title="ibmcloudsql.SQLQuery.SQLQuery.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>([pagesize, get_result])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run" title="ibmcloudsql.SQLQuery.SQLQuery.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>([pagesize, get_result])</p></td>
 <td><p>run the internal SQL statement provided by SQLMagic using <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.execute_sql" title="ibmcloudsql.SQLQuery.SQLQuery.execute_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_sql()</span></code></a></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_sql</span></code></a>(sql_text[, pagesize])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.run_sql" title="ibmcloudsql.SQLQuery.SQLQuery.run_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_sql</span></code></a>(sql_text[, pagesize])</p></td>
 <td><p>Submits a SQL job, waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>) and return the result as Pandas DataFrame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_</span></code>(columns)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_</span></code>(columns)</p></td>
 <td><p>SELECT &lt;columns&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.set_tracking_file" title="ibmcloudsql.SQLQuery.SQLQuery.set_tracking_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tracking_file</span></code></a>(file_name)</p></td>
+<td><p>provides the file name which is used for tracking multiple SQL requests</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_tables</span></code>([target_cos_url, pattern])</p></td>
 <td><p>List the available Hive Metastore</p></td>
@@ -336,7 +344,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.submit_sql" title="ibmcloudsql.SQLQuery.SQLQuery.submit_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit_sql</span></code></a>(sql_stmt[, pagesize])</p></td>
 <td><p>Asynchronous call - submit and quickly return the job_id.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job" title="ibmcloudsql.SQLQuery.SQLQuery.wait_for_job"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_job</span></code></a>(jobId)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job" title="ibmcloudsql.SQLQuery.SQLQuery.wait_for_job"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_job</span></code></a>(jobId[, sleep_time])</p></td>
 <td><p>It’s possible that the job’s failed because of Spark’s internal error.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">where_</span></code>(condition)</p></td>
@@ -346,18 +354,31 @@
 <td><p>WITH &lt;table&gt; AS &lt;sql&gt; [, &lt;table AS &lt;sql&gt;]</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_project_lib_data</span></code>([file_name])</p></td>
-<td><p>Write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+<td><p>write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_session</strong></p></td>
+<td></td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.analyze">
-<code class="sig-name descname">analyze</code><span class="sig-paren">(</span><em class="sig-param">job_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.analyze" title="Permalink to this definition">¶</a></dt>
-<dd><p>Provide some insights about the data layout from the current SQL statement</p>
+<code class="sig-name descname">analyze</code><span class="sig-paren">(</span><em class="sig-param">job_id</em>, <em class="sig-param">print_msg=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.analyze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides some insights about the data layout from the current SQL statement</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>job_id</strong><span class="classifier">str</span></dt><dd><p>The job ID</p>
+</dd>
+<dt><strong>print_msg: bool, optional</strong></dt><dd><p>Default is True: print out the hints to the console</p>
 </dd>
 <dt><strong>.. todo::</strong></dt><dd><ol class="arabic simple">
 <li><p>new sql only when max_obj_size &gt; 300MB</p></li>
@@ -557,7 +578,7 @@ where the data will be stored</p>
 </pre></div>
 </div>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">job_id      status  user_id statement       resultset_location      submit_time     end_time        rows_read       rows_returned   bytes_read      error   error_message</span>
-<span class="go">8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8        completed       tmhoangt@us.ibm.com     SELECT o.OrderID, c.CompanyName, e.FirstName, e.LastName FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET o, cos://us-geo/sql/employees.parquet STORED AS PARQUET e, cos://us-geo/sql/customers.parquet STORED AS PARQUET c WHERE e.EmployeeID = o.EmployeeID AND c.CustomerID = o.CustomerID AND o.ShippedDate &gt; o.RequiredDate AND o.OrderDate &gt; &quot;1998-01-01&quot; ORDER BY c.CompanyName    cos://s3.us-south.cloud-object-storage.appdomain.cloud/tuan-sql-result/jobid=8d9c5a97-808f-4a08-9cc3-78e3f07f7ba8       2020-02-21T16:19:03.638Z        2020-02-21T16:19:13.691Z        1760    29      41499   None    None</span>
+<span class="go">&lt;long-string&gt; completed     &lt;email-here&gt;    &lt;query-string&gt;  &lt;cos-url-result-location&gt; 2020-02-21T16:19:03.638Z      2020-02-21T16:19:13.691Z        1760    29      41499   None    None</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -683,47 +704,6 @@ Use from [‘json’, ‘csv’, ‘parquet’] with case-insensitive</p>
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><dl class="simple">
 <dt>ValueError</dt><dd><p>in either scenarios: (1) target COS URL is not set, (2) invalid type, (3) invalid COS URL</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource">
-<code class="sig-name descname">get_ts_datasource</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">key</em>, <em class="sig-param">time_stamp</em>, <em class="sig-param">observation</em>, <em class="sig-param">cos_out</em>, <em class="sig-param">granularity='raw'</em>, <em class="sig-param">where_clause=''</em>, <em class="sig-param">ops='avg'</em>, <em class="sig-param">dry_run=False</em>, <em class="sig-param">num_objects=20</em>, <em class="sig-param">print_warning=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.get_ts_datasource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepare the data source for time-series in the next-query, in that the result is
-broken down into multiple objects using <cite>num_objects</cite> as the criteria</p>
-<p>It will returns the data source in 3 columns:
-&lt;key&gt;, time_stamp, observation</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>table: str</strong></dt><dd><p>The catalog table name</p>
-</dd>
-<dt><strong>key: str</strong></dt><dd><p>The column name being used as the key</p>
-</dd>
-<dt><strong>time_stamp: str</strong></dt><dd><p>The column name being used as timestick</p>
-</dd>
-<dt><strong>observation: str</strong></dt><dd><p>The column name being used as value</p>
-</dd>
-<dt><strong>cos_out: str</strong></dt><dd><p>The COS URL where the data is copied to - later as data source</p>
-</dd>
-<dt><strong>granularity: str</strong></dt><dd><p>a value in one of [“raw”, “per_min”, “per_&lt;x&gt;min”, “per_sec”, “per_&lt;x&gt;sec”]
-with &lt;x&gt; is a number divided by 60, e.g. 10, 15</p>
-</dd>
-<dt><strong>dry_run: bool, optional</strong></dt><dd><p>This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</p>
-</dd>
-<dt><strong>num_objects: int, optional</strong></dt><dd><p>The number of objects to be created for storing the data</p>
-</dd>
-<dt><strong>print_warning: bool, default=True</strong></dt><dd><p>print a warning or not</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>str</dt><dd><p>The COS_URL where the data with 3 fields (key, time_stamp, observation)
-and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)</p>
 </dd>
 </dl>
 </dd>
@@ -864,6 +844,10 @@ or the rename_exact_result() has been applied to this job_id.</p>
 <dd class="field-odd"><dl class="simple">
 <dt>CosUrlNotFoundException</dt><dd><p>the COS URL is not valid</p>
 </dd>
+<dt>CosUrlInaccessibleException</dt><dd><p>the COS URL is inaccessible - no access granted to the given API key</p>
+</dd>
+<dt>SqlQueryInvalidFormatException</dt><dd><p>the format provided to COS URL is incorrect</p>
+</dd>
 <dt>KeyError</dt><dd><p>the returned error message does not have job_id, error, or error_message</p>
 </dd>
 <dt>Exception</dt><dd><p>unexpected exception</p>
@@ -871,6 +855,14 @@ or the rename_exact_result() has been applied to this job_id.</p>
 </dl>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.SQLQuery.SQLQuery.set_tracking_file">
+<code class="sig-name descname">set_tracking_file</code><span class="sig-paren">(</span><em class="sig-param">file_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.set_tracking_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.set_tracking_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>provides the file name which is used for tracking multiple SQL requests</p>
+<p class="rubric">Notes</p>
+<p>This is the local file, which is used when you don’t have access to Watson Studio</p>
 </dd></dl>
 
 <dl class="method">
@@ -891,7 +883,7 @@ or the rename_exact_result() has been applied to this job_id.</p>
 <dd><p>Each SQL Query instance is limited by the number of sql queries that it
 can handle at a time.  This can be a problem when you
 launch many SQL Query jobs, as such limitation may prevent you to
-complete all of them in one session. The <cite>maxtries</cite> options when creating
+complete all of them in one session. The <cite>max_tries</cite> options when creating
 the SQL Query client object allows
 you to re-send the job, which is still limited to one session.
 The time for one session is often limited when when using
@@ -1027,7 +1019,7 @@ passed to the <em>json</em> argument of requests.post() API.</p>
 
 <dl class="method">
 <dt id="ibmcloudsql.SQLQuery.SQLQuery.wait_for_job">
-<code class="sig-name descname">wait_for_job</code><span class="sig-paren">(</span><em class="sig-param">jobId</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.wait_for_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">wait_for_job</code><span class="sig-paren">(</span><em class="sig-param">jobId</em>, <em class="sig-param">sleep_time=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/SQLQuery.html#SQLQuery.wait_for_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.SQLQuery.SQLQuery.wait_for_job" title="Permalink to this definition">¶</a></dt>
 <dd><p>It’s possible that the job’s failed because of Spark’s internal error.
 So “unknown” is added for such cases.</p>
 <dl class="field-list simple">
@@ -1120,7 +1112,8 @@ match HIVE metastore criteria, e.g.</p>
 <span class="go">&lt;COS-URL&gt;/field_1=value1_2/field_2=value_2_1/object_file</span>
 </pre></div>
 </div>
-<p>NOTE: Each time the data is updated, we need to call <cite>recover_table_partitions</cite> on the created partitioned table.</p>
+<p>NOTE: Each time the data is updated, we need to call <cite>recover_table_partitions</cite>
+on the created partitioned table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -1138,6 +1131,15 @@ string in the form “(columnName type, columnName type)”</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><dl class="simple">
+<dt>ValueError:</dt><dd><p>when the argument is invalid for <cite>cos_url</cite> (invalid format or there is no such location),
+format_type (invalid value)</p>
+</dd>
+<dt>SqlQueryFailException:</dt><dd><p>when it cannot remove the given table name</p>
+</dd>
+</dl>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1145,7 +1147,7 @@ string in the form “(columnName type, columnName type)”</p>
 <dt id="ibmcloudsql.catalog_table.HiveMetastore.create_table">
 <code class="sig-name descname">create_table</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">cos_url=None</em>, <em class="sig-param">format_type='CSV'</em>, <em class="sig-param">force_recreate=False</em>, <em class="sig-param">blocking=True</em>, <em class="sig-param">schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.create_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.create_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a table for data on COS</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>table_name: str</strong></dt><dd><p>The name of the table</p>
@@ -1168,6 +1170,16 @@ string in the form “(columnName type, columnName type)”</p>
 <dd class="field-even"><dl class="simple">
 <dt>none if job “failed”</dt><dd><p>otherwise returns</p>
 </dd>
+<dt>Raises</dt><dd></dd>
+</dl>
+<blockquote>
+<div></div></blockquote>
+<dl class="simple">
+<dt>ValueError:</dt><dd><p>when the argument is invalid for <cite>cos_url</cite> (invalid format or there is no such location),
+format_type (invalid value)</p>
+</dd>
+<dt>SqlQueryDropTableException</dt><dd><p>when it cannot remove the given table name</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -1184,7 +1196,7 @@ string in the form “(columnName type, columnName type)”</p>
 </dd>
 <dt><strong>Returns</strong></dt><dd></dd>
 <dt><strong>——</strong></dt><dd></dd>
-<dt><strong>DataFrame</strong></dt><dd><p>3 columns: col_name (object), data_type (object), comment (float64)</p>
+<dt><strong>DataFrame or None [if failed - table not found]</strong></dt><dd><p>3 columns: col_name (object), data_type (object), comment (float64)</p>
 </dd>
 </dl>
 </dd>
@@ -1209,7 +1221,7 @@ string in the form “(columnName type, columnName type)”</p>
 <dt id="ibmcloudsql.catalog_table.HiveMetastore.drop_table">
 <code class="sig-name descname">drop_table</code><span class="sig-paren">(</span><em class="sig-param">table_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/catalog_table.html#HiveMetastore.drop_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.catalog_table.HiveMetastore.drop_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Drop a given table</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>table_name: str, optional</strong></dt><dd><p>The name of the table
@@ -1219,7 +1231,14 @@ If skipped, the being tracked catalog-table is used</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt>none</dt><dd></dd>
+<dt>str:</dt><dd><p>a job status</p>
+</dd>
+<dt>Raises</dt><dd></dd>
+</dl>
+<blockquote>
+<div></div></blockquote>
+<dl class="simple">
+<dt>SqlQueryFailException</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -1262,13 +1281,21 @@ If skipped, the being tracked catalog-table is used</p>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>target_cos_url: string, optional</strong></dt><dd><p>The COR URL where the information about the tables are stored</p>
 </dd>
-<dt><strong>pattern: str, optional</strong></dt><dd><p>If provided, this should be a pattern being used in name matching, e.g. ‘<em>cus</em>’, which finds all tables with the name has ‘cus’</p>
+<dt><strong>pattern: str, optional</strong></dt><dd><p>If provided, this should be a pattern being used in name matching,
+e.g. ‘<em>cus</em>’, which finds all tables with the name has ‘cus’</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt>DataFrame</dt><dd></dd>
+<dt>DataFrame or None</dt><dd><p>return <cite>None</cite> if there is an error.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>SqlQueryFailException</dt><dd></dd>
+<dt>ValueError</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -1287,7 +1314,7 @@ If skipped, the being tracked catalog-table is used</p>
 <span id="cloud-object-storage-module"></span><h2>Cloud Object Storage module<a class="headerlink" href="#module-ibmcloudsql.cos" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.cos.COSClient">
-<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.cos.</code><code class="sig-name descname">COSClient</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">cos_url=''</em>, <em class="sig-param">client_info='COS Client'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.cos.</code><code class="sig-name descname">COSClient</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">cos_url=''</em>, <em class="sig-param">client_info='COS Client'</em>, <em class="sig-param">staging=False</em>, <em class="sig-param">thread_safe=False</em>, <em class="sig-param">iam_max_tries=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ParsedUrl</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">utilities.IBMCloudAccess</span></code></p>
 <p>This class handles the interaction with IBM COS storage</p>
 <dl class="field-list">
@@ -1301,12 +1328,16 @@ If skipped, the being tracked catalog-table is used</p>
 </dd>
 <dt><strong>client_info</strong><span class="classifier">str, optional</span></dt><dd><p>User-defined string</p>
 </dd>
+<dt><strong>thread_safe: bool, optional (=False)</strong></dt><dd><p>If thread-safe is used, a new Session object is created upon this object creation</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes</dt>
 <dd class="field-even"><dl class="simple">
+<dt><strong>cos_session</strong></dt><dd></dd>
 <dt><a class="reference internal" href="#ibmcloudsql.cos.COSClient.project_lib" title="ibmcloudsql.cos.COSClient.project_lib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">project_lib</span></code></a></dt><dd><p>Project: IBM Watson Studio ProjectLib object</p>
 </dd>
+<dt><strong>thread_safe</strong></dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -1318,7 +1349,7 @@ If skipped, the being tracked catalog-table is used</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze_cos_url</span></code>(cos_url)</p></td>
-<td><p>Return a namedtuple containing the 3 fields</p></td>
+<td><p>return a namedtuple containing the 3 fields</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>([cloud_apikey])</p></td>
 <td><p>Update Cloud API key</p></td>
@@ -1330,10 +1361,10 @@ If skipped, the being tracked catalog-table is used</p>
 <td><p>Delete zero-size objects.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.delete_objects" title="ibmcloudsql.cos.COSClient.delete_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_objects</span></code></a>(cos_url[, dry_run])</p></td>
-<td><p>Delete all objects stored at the given COS URL</p></td>
+<td><p>delete all objects stored at the given COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket</span></code>(cos_url)</p></td>
-<td><p>Return the bucket name from COS URL</p></td>
+<td><p>return the bucket name from COS URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.get_bucket_info" title="ibmcloudsql.cos.COSClient.get_bucket_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket_info</span></code></a>(cos_url)</p></td>
 <td><p>Return the information of the given bucket</p></td>
@@ -1342,28 +1373,39 @@ If skipped, the being tracked catalog-table is used</p>
 <td><p>Return information for the given COR URL (may include bucket + prefix)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_endpoint</span></code>(cos_url)</p></td>
-<td><p>Return the endpoint string from COS URL</p></td>
+<td><p>return the endpoint string from COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_exact_url</span></code>(cos_url)</p></td>
-<td><p>Convert COS URL from using alias to exact URL</p></td>
+<td><p>convert COS URL from using alias to exact URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_prefix</span></code>(cos_url)</p></td>
-<td><p>Return the prefix part from COS URL</p></td>
+<td><p>return the prefix part from COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid_cos_url</span></code>(cos_url)</p></td>
 <td><p>Validate if a string is COS URL</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="ibmcloudsql.cos.COSClient.list_cos_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_cos_objects</span></code></a>(cos_url)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="ibmcloudsql.cos.COSClient.list_cos_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_cos_objects</span></code></a>(cos_url[, size_unit])</p></td>
 <td><p>List all objects in the current COS URL.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">logon</span></code>([force])</p></td>
 <td><p>Establish a connection to IBM Cloud</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.read_project_lib_data" title="ibmcloudsql.cos.COSClient.read_project_lib_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_project_lib_data</span></code></a>([file_name])</p></td>
-<td><p>Read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+<td><p>read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.cos.COSClient.write_project_lib_data" title="ibmcloudsql.cos.COSClient.write_project_lib_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_project_lib_data</span></code></a>([file_name])</p></td>
-<td><p>Write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+<td><p>write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_session</strong></p></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -1400,7 +1442,7 @@ If skipped, the being tracked catalog-table is used</p>
 <dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.delete_objects">
 <code class="sig-name descname">delete_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">dry_run=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.delete_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.delete_objects" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delete all objects stored at the given COS URL</p>
+<dd><p>delete all objects stored at the given COS URL</p>
 <p><a class="reference external" href="https:/">https:/</a>/&lt;cos-url&gt;/&lt;bucket&gt;?prefix=&lt;prefix-path&gt;</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
@@ -1462,11 +1504,14 @@ than just file size and modification date. Sample code to handle <a class="refer
 </pre></div>
 </div>
 <p>200 status code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># NOTE: long strings are broken using ( sub1, sub2)</span>
+<span class="p">{</span>
 <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;my-new-bucket&quot;</span><span class="p">,</span>
-<span class="s2">&quot;crn&quot;</span><span class="p">:</span> <span class="s2">&quot;crn:v1:bluemix:public:cloud-object-storage:global:a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket&quot;</span><span class="p">,</span>
+<span class="s2">&quot;crn&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;crn:v1:bluemix:public:cloud-object-storage:global:&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket&quot;</span><span class="p">),</span>
 <span class="s2">&quot;service_instance_id&quot;</span><span class="p">:</span> <span class="s2">&quot;xxxxxxx-6c4f-4a62-a165-696756d63903&quot;</span><span class="p">,</span>
-<span class="s2">&quot;service_instance_crn&quot;</span><span class="p">:</span> <span class="s2">&quot;crn:v1:bluemix:public:cloud-object-storage:global:a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::&quot;</span><span class="p">,</span>
+<span class="s2">&quot;service_instance_crn&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;crn:v1:bluemix:public:cloud-object-storage:global&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;:a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::&quot;</span><span class="p">),</span>
 <span class="s2">&quot;time_created&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-03-26T16:23:36.980Z&quot;</span><span class="p">,</span>
 <span class="s2">&quot;time_updated&quot;</span><span class="p">:</span> <span class="s2">&quot;2018-10-17T19:29:10.117Z&quot;</span><span class="p">,</span>
 <span class="s2">&quot;object_count&quot;</span><span class="p">:</span> <span class="mi">764265234</span><span class="p">,</span>
@@ -1484,7 +1529,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dt id="ibmcloudsql.cos.COSClient.get_cos_summary">
 <code class="sig-name descname">get_cos_summary</code><span class="sig-paren">(</span><em class="sig-param">url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.get_cos_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.get_cos_summary" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return information for the given COR URL (may include bucket + prefix)</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><dl class="simple">
 <dt>dict</dt><dd><dl class="simple">
@@ -1500,6 +1545,12 @@ than just file size and modification date. Sample code to handle <a class="refer
 </dd>
 </dl>
 </dd>
+<dt>Notes</dt><dd></dd>
+</dl>
+<blockquote>
+<div></div></blockquote>
+<dl class="simple">
+<dt>Example: self.get_cos_summary_demo()</dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -1507,12 +1558,15 @@ than just file size and modification date. Sample code to handle <a class="refer
 
 <dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.list_cos_objects">
-<code class="sig-name descname">list_cos_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.list_cos_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">list_cos_objects</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em>, <em class="sig-param">size_unit='B'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.list_cos_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.list_cos_objects" title="Permalink to this definition">¶</a></dt>
 <dd><p>List all objects in the current COS URL.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>url: str</strong></dt><dd><p>A URI prefix. e.g., cos://us-south/&lt;bucket-name&gt;/object_path/</p>
+</dd>
+<dt><strong>size_unit: str, optional (“B” = byte)</strong></dt><dd><p>A value indicate the unit of “Size” column.
+[“B”, “KB”, “MB”, “GB”]</p>
 </dd>
 </dl>
 </dd>
@@ -1552,7 +1606,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.read_project_lib_data">
 <code class="sig-name descname">read_project_lib_data</code><span class="sig-paren">(</span><em class="sig-param">file_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.read_project_lib_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.read_project_lib_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p>
+<dd><p>read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -1566,7 +1620,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.cos.COSClient.write_project_lib_data">
 <code class="sig-name descname">write_project_lib_data</code><span class="sig-paren">(</span><em class="sig-param">file_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#COSClient.write_project_lib_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.COSClient.write_project_lib_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p>
+<dd><p>write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -1593,19 +1647,19 @@ than just file size and modification date. Sample code to handle <a class="refer
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.analyze_cos_url" title="ibmcloudsql.cos.ParsedUrl.analyze_cos_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze_cos_url</span></code></a>(cos_url)</p></td>
-<td><p>Return a namedtuple containing the 3 fields</p></td>
+<td><p>return a namedtuple containing the 3 fields</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.get_bucket" title="ibmcloudsql.cos.ParsedUrl.get_bucket"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket</span></code></a>(cos_url)</p></td>
-<td><p>Return the bucket name from COS URL</p></td>
+<td><p>return the bucket name from COS URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.get_endpoint" title="ibmcloudsql.cos.ParsedUrl.get_endpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_endpoint</span></code></a>(cos_url)</p></td>
-<td><p>Return the endpoint string from COS URL</p></td>
+<td><p>return the endpoint string from COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.get_exact_url" title="ibmcloudsql.cos.ParsedUrl.get_exact_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_exact_url</span></code></a>(cos_url)</p></td>
-<td><p>Convert COS URL from using alias to exact URL</p></td>
+<td><p>convert COS URL from using alias to exact URL</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.get_prefix" title="ibmcloudsql.cos.ParsedUrl.get_prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_prefix</span></code></a>(cos_url)</p></td>
-<td><p>Return the prefix part from COS URL</p></td>
+<td><p>return the prefix part from COS URL</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.cos.ParsedUrl.is_valid_cos_url" title="ibmcloudsql.cos.ParsedUrl.is_valid_cos_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid_cos_url</span></code></a>(cos_url)</p></td>
 <td><p>Validate if a string is COS URL</p></td>
@@ -1615,7 +1669,7 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.cos.ParsedUrl.analyze_cos_url">
 <code class="sig-name descname">analyze_cos_url</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ParsedUrl.analyze_cos_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ParsedUrl.analyze_cos_url" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a namedtuple containing the 3 fields</p>
+<dd><p>return a namedtuple containing the 3 fields</p>
 <ul class="simple">
 <li><p>bucket</p></li>
 <li><p>endpoint</p></li>
@@ -1634,25 +1688,25 @@ than just file size and modification date. Sample code to handle <a class="refer
 <dl class="method">
 <dt id="ibmcloudsql.cos.ParsedUrl.get_bucket">
 <code class="sig-name descname">get_bucket</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ParsedUrl.get_bucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ParsedUrl.get_bucket" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the bucket name from COS URL</p>
+<dd><p>return the bucket name from COS URL</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.cos.ParsedUrl.get_endpoint">
 <code class="sig-name descname">get_endpoint</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ParsedUrl.get_endpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ParsedUrl.get_endpoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the endpoint string from COS URL</p>
+<dd><p>return the endpoint string from COS URL</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.cos.ParsedUrl.get_exact_url">
 <code class="sig-name descname">get_exact_url</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ParsedUrl.get_exact_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ParsedUrl.get_exact_url" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert COS URL from using alias to exact URL</p>
+<dd><p>convert COS URL from using alias to exact URL</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.cos.ParsedUrl.get_prefix">
 <code class="sig-name descname">get_prefix</code><span class="sig-paren">(</span><em class="sig-param">cos_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/cos.html#ParsedUrl.get_prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.cos.ParsedUrl.get_prefix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the prefix part from COS URL</p>
+<dd><p>return the prefix part from COS URL</p>
 </dd></dl>
 
 <dl class="method">
@@ -1794,10 +1848,24 @@ than just file size and modification date. Sample code to handle <a class="refer
 <div class="section" id="module-ibmcloudsql.exceptions">
 <span id="exceptions-module"></span><h2>Exceptions module<a class="headerlink" href="#module-ibmcloudsql.exceptions" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
+<dt id="ibmcloudsql.exceptions.CosUrlInaccessibleException">
+<em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">CosUrlInaccessibleException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#CosUrlInaccessibleException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.CosUrlInaccessibleException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>The error when the Cloud-Object Storage (COS) URL being used is not accessible</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="ibmcloudsql.exceptions.CosUrlNotFoundException">
 <em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">CosUrlNotFoundException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#CosUrlNotFoundException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.CosUrlNotFoundException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>The error when the Cloud-Object Storage (COS) URL being used is invalid or not accessible</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ibmcloudsql.exceptions.InternalError502Exception">
+<em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">InternalError502Exception</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#InternalError502Exception"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.InternalError502Exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>The error when SQL Query returns a 502 internal error</p>
 </dd></dl>
 
 <dl class="exception">
@@ -1815,10 +1883,24 @@ than just file size and modification date. Sample code to handle <a class="refer
 </dd></dl>
 
 <dl class="exception">
+<dt id="ibmcloudsql.exceptions.SqlQueryDropTableException">
+<em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">SqlQueryDropTableException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#SqlQueryDropTableException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.SqlQueryDropTableException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>The error raised when a running sql job fails, e.g. timeout</p>
+</dd></dl>
+
+<dl class="exception">
 <dt id="ibmcloudsql.exceptions.SqlQueryFailException">
 <em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">SqlQueryFailException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#SqlQueryFailException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.SqlQueryFailException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
 <p>The error raised when a running sql job fails, e.g. timeout</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ibmcloudsql.exceptions.SqlQueryInvalidFormatException">
+<em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">SqlQueryInvalidFormatException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#SqlQueryInvalidFormatException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.SqlQueryInvalidFormatException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ibmcloudsql.exceptions.SqlQueryFailException" title="ibmcloudsql.exceptions.SqlQueryFailException"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.exceptions.SqlQueryFailException</span></code></a></p>
+<p>The error raised when the format of COS URL is not valid</p>
 </dd></dl>
 
 <dl class="exception">
@@ -1833,7 +1915,7 @@ e.g. need to upgrade to Standard Plan or higher</p>
 <dt id="ibmcloudsql.exceptions.UnsupportedStorageFormatException">
 <em class="property">exception </em><code class="sig-prename descclassname">ibmcloudsql.exceptions.</code><code class="sig-name descname">UnsupportedStorageFormatException</code><span class="sig-paren">(</span><em class="sig-param">msg</em>, <em class="sig-param">original_exception=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/exceptions.html#UnsupportedStorageFormatException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.exceptions.UnsupportedStorageFormatException" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
-<p>The error when the SQL Query CRN is not correct</p>
+<p>The error when the SQL uses a format of data that has not been supported yet</p>
 </dd></dl>
 
 </div>
@@ -2151,13 +2233,516 @@ the below values.</p>
 <dd></dd></dl>
 
 </div>
+<div class="section" id="module-ibmcloudsql.sql_query_ts">
+<span id="time-series-sql-query-module"></span><h2>Time-Series SQL Query module<a class="headerlink" href="#module-ibmcloudsql.sql_query_ts" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries">
+<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.sql_query_ts.</code><code class="sig-name descname">SQLClientTimeSeries</code><span class="sig-paren">(</span><em class="sig-param">api_key</em>, <em class="sig-param">instance_crn</em>, <em class="sig-param">target_cos_url=None</em>, <em class="sig-param">max_concurrent_jobs=4</em>, <em class="sig-param">max_tries=1</em>, <em class="sig-param">iam_max_tries=1</em>, <em class="sig-param">thread_safe=False</em>, <em class="sig-param">client_info='TimeSeries Cloud SQL Query Python'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.SQLQuery.SQLQuery</span></code></a></p>
+<p>This class augments SQLClient with time-series functionality</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">columns_in_unixtime</span></code></dt><dd><p>Return the name of columns whose values are in UNIX timestamp</p>
+</dd>
+<dt><strong>cos_session</strong></dt><dd></dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">my_jobs</span></code></dt><dd><p>Return information about jobs already queried via <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_job" title="ibmcloudsql.SQLQuery.SQLQuery.get_job"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_job()</span></code></a></p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">project_lib</span></code></dt><dd><p>Project: IBM Watson Studio ProjectLib object</p>
+</dd>
+<dt><strong>target_url</strong></dt><dd></dd>
+<dt><strong>thread_safe</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze</span></code>(job_id[, print_msg])</p></td>
+<td><p>Provides some insights about the data layout from the current SQL statement</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyze_cos_url</span></code>(cos_url)</p></td>
+<td><p>return a namedtuple containing the 3 fields</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>([apikey, instance_crn, cos_out_url])</p></td>
+<td><p>Update the configuration</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_project_lib</span></code>(project[, file_name])</p></td>
+<td><p>Connect to an IBM Watson Studio Project’s COS bucket for its own assets</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_partitioned_table</span></code>(table_name[, …])</p></td>
+<td><p>Create a partitioned table for data on COS.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_table</span></code>(table_name[, cos_url, …])</p></td>
+<td><p>Create a table for data on COS</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_empty_objects</span></code>(cos_url)</p></td>
+<td><p>Delete zero-size objects.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_objects</span></code>(cos_url[, dry_run])</p></td>
+<td><p>delete all objects stored at the given COS URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_result</span></code>(jobId)</p></td>
+<td><p>Delete the COS objects created by a given job-id</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">describe_table</span></code>(table_name)</p></td>
+<td><p>Return the schema of table</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_all_tables</span></code>()</p></td>
+<td><p>Delete all created tables in the project</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_table</span></code>([table_name])</p></td>
+<td><p>Drop a given table</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_tables</span></code>(table_names)</p></td>
+<td><p>Drop a list of tables</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">execute_sql</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Extend the behavior of <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_job_history</span></code>([cos_url, …])</p></td>
+<td><p>Export the most recent jobs to COS URL</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_</span></code>()</p></td>
+<td><p>Perform string replacement needed so that the final result is a SQL statement that is accepted by IBM Spark SQL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_cos_</span></code>(cos_url[, format_type, alias])</p></td>
+<td><p>FROM &lt;cos-url&gt; AS type [AS alias] [, &lt;cos-url&gt; AS type [AS alias]]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_table_</span></code>(table[, alias])</p></td>
+<td><p>FROM &lt;table&gt; [AS alias] [, &lt;table&gt; [AS alias]]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_view_</span></code>(sql_stmt)</p></td>
+<td><p>FROM (&lt;sql&gt;)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket</span></code>(cos_url)</p></td>
+<td><p>return the bucket name from COS URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bucket_info</span></code>(cos_url)</p></td>
+<td><p>Return the information of the given bucket</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cos_summary</span></code>(url)</p></td>
+<td><p>Return information for the given COR URL (may include bucket + prefix)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_endpoint</span></code>(cos_url)</p></td>
+<td><p>return the endpoint string from COS URL</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_exact_url</span></code>(cos_url)</p></td>
+<td><p>convert COS URL from using alias to exact URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_job</span></code>(jobId)</p></td>
+<td><p>Return the details of the job-id</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_jobs</span></code>()</p></td>
+<td><p>Return the up-to-30 most recent jobs from the given Cloud API</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_jobs_count_with_status</span></code>(status)</p></td>
+<td><p>Return the number of jobs in the SQL Query server for the given <cite>status</cite></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_jobs_with_status</span></code>(job_id_list, status)</p></td>
+<td><p>Return the list of job_id, among those provided, that have the given status</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_number_running_jobs</span></code>()</p></td>
+<td><p>return the number of running jobs in the SQL Query server</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_prefix</span></code>(cos_url)</p></td>
+<td><p>return the prefix part from COS URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_result</span></code>(jobId[, pagenumber])</p></td>
+<td><p>Return the queried data from the given job-id</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_schema_data</span></code>(cos_url[, type, dry_run])</p></td>
+<td><p>Return the schema of COS URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_sql</span></code>()</p></td>
+<td><p>Return the current sql string</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ts_datasource</span></code></a>(table_name, key, …[, …])</p></td>
+<td><p>Prepare the data source for time-series in the next-query, in that the result is broken down into multiple objects using <cite>num_objects</cite> as the criteria</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_by_</span></code>(columns)</p></td>
+<td><p>GROUP BY &lt;columns&gt;</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.human_form_to_machine_form" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.human_form_to_machine_form"><code class="xref py py-obj docutils literal notranslate"><span class="pre">human_form_to_machine_form</span></code></a>()</p></td>
+<td><p>apply magic tricks to convert some useful names, e.g.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_valid_cos_url</span></code>(cos_url)</p></td>
+<td><p>Validate if a string is COS URL</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_cos_</span></code>(cos_url, condition[, type, alias])</p></td>
+<td><p>[type] JOIN &lt;cos-url&gt; [AS alias]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_table_</span></code>(table, condition[, type, alias])</p></td>
+<td><p>[type] JOIN &lt;table&gt; [AS alias] ON &lt;condition&gt;</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_cos_objects</span></code>(cos_url[, size_unit])</p></td>
+<td><p>List all objects in the current COS URL.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_results</span></code>(jobId[, wait])</p></td>
+<td><p>NOTE: A single SQL Query can store the queried data in the COS output in multiple objects/partitions</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">logon</span></code>([force])</p></td>
+<td><p>Establish a connection to IBM Cloud</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">order_by_</span></code>(columns)</p></td>
+<td><p>ORDER BY &lt;columns&gt;</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_by_</span></code>(columns)</p></td>
+<td><p>PARTITIONED BY &lt;columns&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_objects_</span></code>(num_objects)</p></td>
+<td><p>PARTITIONED INTO &lt;num&gt;  OBJECTS</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition_rows_</span></code>(num_rows)</p></td>
+<td><p>PARTITIONED INTO &lt;num&gt; ROWS</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_sql</span></code>()</p></td>
+<td><p>print() sql string</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_failed_jobs_until_all_completed</span></code>(…)</p></td>
+<td><p>re-send those that are failed - due to the time-out mechanism of SQL Query server</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_project_lib_data</span></code>([file_name])</p></td>
+<td><p>read the content from the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">recover_table_partitions</span></code>(table_name)</p></td>
+<td><p>This step is required after creating a new partitioned table</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result</span></code>(jobId[, wait])</p></td>
+<td><p>A SQL Query can store data into partitioned/paginated multiple objects, or single object.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_exact_result_joblist</span></code>(job_list[, wait])</p></td>
+<td><p>The bulk mode of <cite>rename_exact_result</cite> method.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_</span></code>()</p></td>
+<td><p>Reset and returns the current sql string</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>([pagesize, get_result])</p></td>
+<td><p>run the internal SQL statement provided by SQLMagic using <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_sql()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_sql</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Submits a SQL job, waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>) and return the result as Pandas DataFrame.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_</span></code>(columns)</p></td>
+<td><p>SELECT &lt;columns&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tracking_file</span></code>(file_name)</p></td>
+<td><p>provides the file name which is used for tracking multiple SQL requests</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">show_tables</span></code>([target_cos_url, pattern])</p></td>
+<td><p>List the available Hive Metastore</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sql_ui_link</span></code>()</p></td>
+<td><p>both print out and also return the string containing SQL Query URL</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">store_at_</span></code>(cos_url[, format_type])</p></td>
+<td><p>INTO &lt;cos-url&gt; STORED AS &lt;type&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit</span></code>([pagesize])</p></td>
+<td><p>run the internal SQL statement that you created using the APIs provided by SQLMagic</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit_and_track_sql</span></code>(sql_stmt[, pagesize, …])</p></td>
+<td><p>Each SQL Query instance is limited by the number of sql queries that it can handle at a time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit_sql</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Asynchronous call - submit and quickly return the job_id.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_job</span></code>(jobId[, sleep_time])</p></td>
+<td><p>It’s possible that the job’s failed because of Spark’s internal error.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">where_</span></code>(condition)</p></td>
+<td><p>WHERE &lt;condition&gt; [, &lt;condition&gt;]</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_</span></code>(table_name, sql_stmt)</p></td>
+<td><p>WITH &lt;table&gt; AS &lt;sql&gt; [, &lt;table AS &lt;sql&gt;]</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_project_lib_data</span></code>([file_name])</p></td>
+<td><p>write the content to the given file (via ProjectLib in IBM Watson Studio’s COS bucket)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_session</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql">
+<code class="sig-name descname">execute_sql</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries.execute_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extend the behavior of <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a>.
+It is a blocking call that waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>), but it has the following features:</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>returning of data (Pandas dataframe) is optional (controlled by <cite>get_result</cite> parameter): to help avoiding Python runtime memory overload.</dt><dd><p>This is also useful when you run SQL statements such as DDLs that don’t produce results at all.</p>
+</dd>
+</dl>
+</li>
+<li><p>returns a namedtuple, in that result.data is the one returned by <cite>run_sql</cite>, while result.job_id is the one returned by <cite>submit_sql</cite></p></li>
+<li><p>raise an exception for a failed job</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sql_stmt: str</strong></dt><dd><p>the SQL statement to run</p>
+</dd>
+<dt><strong>pagesize: int, optional</strong></dt><dd><p>an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</p>
+</dd>
+<dt><strong>get_result: bool, optional (default=False)</strong></dt><dd><p>When set it will return only the job_id, but still wait for the job’s completion.
+Later, you can get the data using <a class="reference internal" href="#ibmcloudsql.SQLQuery.SQLQuery.get_result" title="ibmcloudsql.SQLQuery.SQLQuery.get_result"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_result()</span></code></a> (job_id, pagenumber)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>namedtuple [<cite>data</cite>, <cite>job_id</cite>]</dt><dd><dl class="simple">
+<dt><cite>get_result</cite> = True, then behavior like <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_sql()</span></code></a> which materializes the returned data as type</dt><dd><p>pd.DataFrame in memory. The default behavior is opposite, to avoid unintended overload of memory.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>KeyError</dt><dd><p>when information about a failed job is missing (job_status, job_id, error, error_message)</p>
+</dd>
+<dt>SqlQueryFailException</dt><dd><p>when the sql query fails, e.g. time out on the server side</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource">
+<code class="sig-name descname">get_ts_datasource</code><span class="sig-paren">(</span><em class="sig-param">table_name</em>, <em class="sig-param">key</em>, <em class="sig-param">time_stamp</em>, <em class="sig-param">observation</em>, <em class="sig-param">cos_out</em>, <em class="sig-param">granularity='raw'</em>, <em class="sig-param">where_clause=''</em>, <em class="sig-param">ops='avg'</em>, <em class="sig-param">dry_run=False</em>, <em class="sig-param">keep_col_names: bool = True</em>, <em class="sig-param">cast_observation=None</em>, <em class="sig-param">num_objects=20</em>, <em class="sig-param">print_warning=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries.get_ts_datasource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the data source for time-series in the next-query, in that the result is
+broken down into multiple objects using <cite>num_objects</cite> as the criteria</p>
+<dl class="simple">
+<dt>It will returns the data source in 3 columns:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>keep_col_names &lt;- False: use exact values below</dt><dd><p>field_name, time_stamp, observation</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>keep_col_names &lt;- True: use the values passed via arguments</dt><dd><p>&lt;key&gt;, &lt;time_stamp&gt;, &lt;observation&gt;</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>table: str</strong></dt><dd><p>The catalog table name</p>
+</dd>
+<dt><strong>key: str</strong></dt><dd><p>The column name being used as the key</p>
+</dd>
+<dt><strong>time_stamp: str</strong></dt><dd><p>The column name being used as timestick</p>
+</dd>
+<dt><strong>observation: str</strong></dt><dd><p>The column name being used as value</p>
+</dd>
+<dt><strong>cast_observation: str, optional=None</strong></dt><dd><p>The type to be casted for the <cite>observation</cite> column</p>
+</dd>
+<dt><strong>cos_out: str</strong></dt><dd><p>The COS URL where the data is copied to - later as data source</p>
+</dd>
+<dt><strong>granularity: str</strong></dt><dd><p>a value in one of [“raw”, “per_min”, “per_&lt;x&gt;min”, “per_sec”, “per_&lt;x&gt;sec”]
+with &lt;x&gt; is a number divided by 60, e.g. 10, 15</p>
+</dd>
+<dt><strong>dry_run: bool, optional</strong></dt><dd><p>This option, once selected as True, returns the internally generated SQL statement, and no job is queried.</p>
+</dd>
+<dt><strong>num_objects: int, optional</strong></dt><dd><p>The number of objects to be created for storing the data</p>
+</dd>
+<dt><strong>print_warning: bool, default=True</strong></dt><dd><p>print a warning or not</p>
+</dd>
+<dt><strong>keep_col_names: bool, optional (False)</strong></dt><dd><p>By default, all 3 original column names are maintained.
+If you set to false, they are mapped to <cite>field_name</cite> (for key),
+<cite>time_stamp</cite> and <cite>observation</cite>, respectively.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>The COS_URL where the data with 3 fields (key, time_stamp, observation)
+and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.human_form_to_machine_form">
+<code class="sig-name descname">human_form_to_machine_form</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries.human_form_to_machine_form"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.human_form_to_machine_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply magic tricks to convert some useful names, e.g. hour, day, … to the expected numeric value in [ms] - which is the expected input to TimeSeries functions in SQL</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql">
+<code class="sig-name descname">run_sql</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries.run_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submits a SQL job, waits for the job to finish (unlike <a class="reference internal" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_sql()</span></code></a>) and return the result as Pandas DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sql_text: str</strong></dt><dd><p>the SQL statement to run</p>
+</dd>
+<dt><strong>pagesize: int, optional</strong></dt><dd><p>an integer indicating the number of rows for each partition/page [using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame with the query results.</dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>CosUrlNotFoundException</dt><dd><p>the COS URL is not valid</p>
+</dd>
+<dt>CosUrlInaccessibleException</dt><dd><p>the COS URL is inaccessible - no access granted to the given API key</p>
+</dd>
+<dt>SqlQueryInvalidFormatException</dt><dd><p>the format provided to COS URL is incorrect</p>
+</dd>
+<dt>KeyError</dt><dd><p>the returned error message does not have job_id, error, or error_message</p>
+</dd>
+<dt>Exception</dt><dd><p>unexpected exception</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql">
+<code class="sig-name descname">submit_sql</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#SQLClientTimeSeries.submit_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asynchronous call - submit and quickly return the job_id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>sql_stmt: str</strong></dt><dd><p>SQL Query string</p>
+</dd>
+<dt><strong>pagesize: int, optional</strong></dt><dd><p>an integer indicating the number of rows for each partition/page
+[using PARTITIONED EVERY &lt;pagesize&gt; ROWS syntax]</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>job_id</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>RateLimitedException</dt><dd><p>when the SQLQUery instance is serving the max-limit of requests</p>
+</dd>
+<dt>SyntaxError</dt><dd><p>for both KeyError or HTTPError</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">curl -XPOST                 --url &quot;https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=YOUR_SQL_QUERY_CRN&quot;                 -H &quot;Accept: application/json&quot;                 -H &quot;Authorization: Bearer YOUR_BEARER_TOKEN&quot;                 -H &quot;Content-Type: application/json&quot;                 -d &#39;{&quot;statement&quot;:&quot;SELECT firstname FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET WHERE EMPLOYEEID=5 INTO cos://us-geo/target-bucket/q1-results&quot; }&#39;</span>
+</pre></div>
+</div>
+<p>NOTE:</p>
+<p>1. All the headers (-H) can be put into a dictionary and
+passed to the <em>headers</em> argument of requests.post() API.</p>
+<p>2. All the data (-d option) is put into a dictionary and
+passed to the <em>json</em> argument of requests.post() API.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘statement’: value is full SQL statement in string</p></li>
+<li><p>‘resultset_target’ (optional): only need when there is no ‘INTO statement’ in the query string, and the value must be the COS URL output</p></li>
+</ul>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sqlData</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;statement&#39;</span><span class="p">:</span> <span class="n">sql_stmt</span><span class="p">}</span>
+<span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+<span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
+<span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
+<span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ro_credentials</span><span class="o">.</span><span class="n">token</span><span class="p">)})</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+    <span class="s2">&quot;https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_crn</span><span class="p">),</span>
+    <span class="n">headers</span><span class="o">=</span><span class="n">request_headers</span><span class="p">,</span>
+    <span class="n">json</span><span class="o">=</span><span class="n">sqlData</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">{</span>
+<span class="sd">    &quot;errors&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">        &quot;code&quot;: &quot;bad_request&quot;,</span>
+<span class="sd">        &quot;message&quot;: &quot;Target url specified in parameter resultset_target and as part of into clause in statement&quot;</span>
+<span class="sd">        }</span>
+<span class="sd">    ]</span>
+<span class="sd">}</span>
+<span class="sd">{</span>
+<span class="sd">    &quot;job_id&quot;: &quot;e2adca0a-9247-4cfa-ac58-db4b2bc33a01&quot;,</span>
+<span class="sd">    &quot;status&quot;: &quot;queued&quot;</span>
+<span class="sd">}</span>
+<span class="sd">{</span>
+<span class="sd">    &quot;status_code&quot;: 429,</span>
+<span class="sd">    &quot;errors&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">        &quot;code&quot;: &quot;too_many_requests&quot;,</span>
+<span class="sd">        &quot;message&quot;: &quot;This instance is currently running its maximum number of query jobs. Try again later, after at least one of the currently running jobs has completed.&quot;</span>
+<span class="sd">        }</span>
+<span class="sd">    ]</span>
+<span class="sd">}</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># error code information: https://cloud.ibm.com/apidocs/sql-query</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="ibmcloudsql.sql_query_ts.test_run">
+<code class="sig-prename descclassname">ibmcloudsql.sql_query_ts.</code><code class="sig-name descname">test_run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/sql_query_ts.html#test_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.sql_query_ts.test_run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 <div class="section" id="module-ibmcloudsql.utilities">
 <span id="utilities-module"></span><h2>Utilities module<a class="headerlink" href="#module-ibmcloudsql.utilities" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ibmcloudsql.utilities.IBMCloudAccess">
-<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.utilities.</code><code class="sig-name descname">IBMCloudAccess</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">client_info=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">ibmcloudsql.utilities.</code><code class="sig-name descname">IBMCloudAccess</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=''</em>, <em class="sig-param">client_info=''</em>, <em class="sig-param">staging=False</em>, <em class="sig-param">thread_safe=False</em>, <em class="sig-param">session=None</em>, <em class="sig-param">iam_max_tries: int = 1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>cloud_apikey</strong><span class="classifier">str, optional</span></dt><dd><p>an account-level API key [manage/Access (IAM)/IBM Cloud API keys]</p>
+</dd>
+<dt><strong>client_info</strong><span class="classifier">str, optional</span></dt><dd><p>a description</p>
+</dd>
+<dt><strong>thread_safe: bool, optional</strong></dt><dd><p>a new Session object is created if not provided</p>
+</dd>
+<dt><strong>session: ibm_boto3.session.Session, optional</strong></dt><dd><p>provide a Session object so that it can be reused</p>
+</dd>
+<dt><strong>staging: bool, optional</strong></dt><dd><p>if True, then uses the test IAM endpoint</p>
+</dd>
+<dt><strong>iam_max_tries: int, optional</strong></dt><dd><p>Number of tries to connect to IAM service</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>cos_session</strong></dt><dd></dd>
+<dt><strong>thread_safe</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
 <p class="rubric">Methods</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -2173,11 +2758,33 @@ the below values.</p>
 </tr>
 </tbody>
 </table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>get_session</strong></p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="ibmcloudsql.utilities.IBMCloudAccess.configure">
 <code class="sig-name descname">configure</code><span class="sig-paren">(</span><em class="sig-param">cloud_apikey=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess.configure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update Cloud API key</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.utilities.IBMCloudAccess.cos_session">
+<em class="property">property </em><code class="sig-name descname">cos_session</code><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess.cos_session" title="Permalink to this definition">¶</a></dt>
+<dd><p>!! processed by numpydoc !!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.utilities.IBMCloudAccess.get_session">
+<code class="sig-name descname">get_session</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ibmcloudsql/utilities.html#IBMCloudAccess.get_session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess.get_session" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="ibmcloudsql.utilities.IBMCloudAccess.logon">
@@ -2186,7 +2793,7 @@ the below values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><dl class="simple">
-<dt>ibm_botocore.exceptions.CredentialRetrievalError:</dt><dd><p>The exception is raised when the credential is incorrect.</p>
+<dt>AttributeError:</dt><dd><p>The exception is raised when the token cannot be retrieved using the current credential.</p>
 </dd>
 </dl>
 </dd>
@@ -2195,6 +2802,12 @@ the below values.</p>
 <p>An AIM token is needed for any operations to IBM cloud services (e.g. COS)
 A new AIM token is created after 300 seconds.
 A token is valid for 3600 seconds</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ibmcloudsql.utilities.IBMCloudAccess.thread_safe">
+<em class="property">property </em><code class="sig-name descname">thread_safe</code><a class="headerlink" href="#ibmcloudsql.utilities.IBMCloudAccess.thread_safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>!! processed by numpydoc !!</p>
 </dd></dl>
 
 </dd></dl>

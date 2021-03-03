@@ -42,6 +42,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
@@ -85,24 +86,29 @@
           <div class="body" role="main">
             
   <h1>Source code for ibmcloudsql.catalog_table</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.cos</span> <span class="kn">import</span> <span class="n">ParsedUrl</span>
-<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">SqlQueryDropTableException</span><span class="p">,</span> <span class="n">SqlQueryFailException</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">cos</span> <span class="kn">import</span> <span class="n">ParsedUrl</span>
+    <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">SqlQueryDropTableException</span><span class="p">,</span> <span class="n">SqlQueryFailException</span>
 
-<div class="viewcode-block" id="HiveMetastore"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore">[docs]</a><span class="k">class</span> <span class="nc">HiveMetastore</span><span class="p">():</span>
+
+<div class="viewcode-block" id="HiveMetastore"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore">[docs]</a><span class="k">class</span> <span class="nc">HiveMetastore</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class supports the handling HIVE catalog table</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># keep tracks of what tables are availables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        SHOW TABLES </span><span class="si">{like}</span><span class="s2"></span>
 <span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
 <span class="s2">        &quot;&quot;&quot;</span>
@@ -115,32 +121,32 @@
 <span class="s2">        USING </span><span class="si">{format_type}</span><span class="s2"></span>
 <span class="s2">        LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
 <span class="s2">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        SHOW TABLES</span>
-<span class="s2">        INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV</span>
-<span class="s2">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PARQUET&quot;</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;JSON&quot;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="HiveMetastore.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Update the configuration</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
+    <span class="k">def</span> <span class="nf">_is_valid_target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;raise ValueError if the required COS URL is invalid&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">target_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span>
+        <span class="k">if</span> <span class="n">target_url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Need to define target COS URL&quot;</span>
+            <span class="k">if</span> <span class="n">target_url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_url</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="HiveMetastore.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the configuration&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span>
+
     <span class="nd">@target_url</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">target_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_url</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">(</span><span class="n">target_url</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target_url</span> <span class="o">=</span> <span class="n">target_url</span>
 
     <span class="c1"># Extended functionality</span>
@@ -152,34 +158,34 @@
 <span class="sd">        target_cos_url: string, optional</span>
 <span class="sd">            The COR URL where the information about the tables are stored</span>
 <span class="sd">        pattern: str, optional</span>
-<span class="sd">            If provided, this should be a pattern being used in name matching, e.g. &#39;*cus*&#39;, which finds all tables with the name has &#39;cus&#39;</span>
+<span class="sd">            If provided, this should be a pattern being used in name matching,</span>
+<span class="sd">            e.g. &#39;*cus*&#39;, which finds all tables with the name has &#39;cus&#39;</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        --------</span>
-<span class="sd">        DataFrame</span>
+<span class="sd">        DataFrame or None</span>
+<span class="sd">            return `None` if there is an error.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        SqlQueryFailException</span>
+<span class="sd">        ValueError</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">target_cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cos_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_url</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cos_out</span> <span class="o">=</span> <span class="n">target_cos_url</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_out</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="n">sql_stmt_show</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_temmplate</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">like</span><span class="o">=</span><span class="s2">&quot;LIKE &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span> <span class="k">if</span> <span class="n">pattern</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-            <span class="n">cos_out</span><span class="o">=</span><span class="n">cos_out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">(</span><span class="n">cos_out</span><span class="p">)</span>
+        <span class="n">sql_stmt_show</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_show_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">like</span><span class="o">=</span><span class="s2">&quot;LIKE &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span> <span class="k">if</span> <span class="n">pattern</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="n">cos_out</span>
+        <span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
-            <span class="n">sql_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sql_status</span> <span class="o">==</span> <span class="s2">&quot;failed&quot;</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">sql_status</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">pass</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">df</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="n">sql_stmt_show</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">SqlQueryFailException</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fail at SHOW TABLE&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
         <span class="k">return</span> <span class="n">df</span></div>
 
 <div class="viewcode-block" id="HiveMetastore.drop_all_tables"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.drop_all_tables">[docs]</a>    <span class="k">def</span> <span class="nf">drop_all_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -228,7 +234,11 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">            none</span>
+<span class="sd">        str:</span>
+<span class="sd">            a job status</span>
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        SqlQueryFailException</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR: please provide table_name&quot;</span><span class="p">)</span>
@@ -236,21 +246,32 @@
             <span class="n">table_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">sql_stmt_drop</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        DROP TABLE </span><span class="si">{table_name}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="n">sql_stmt_drop</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Job_id (</span><span class="si">{stmt}</span><span class="s2">): </span><span class="si">{job_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stmt</span><span class="o">=</span><span class="n">sql_stmt_drop</span><span class="p">,</span>
-                                                            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">))</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="c1"># There is a bug - the DROP TABLE statement does not need a returned COS URI - but it seems the Python API looks for that</span>
-            <span class="k">pass</span>
+<span class="s2">        DROP TABLE </span><span class="si">{table_name}</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span>
+        <span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="n">sql_stmt_drop</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Job_id (</span><span class="si">{stmt}</span><span class="s2">): </span><span class="si">{job_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stmt</span><span class="o">=</span><span class="n">sql_stmt_drop</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">job_status</span> <span class="o">!=</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">job_status</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">pass</span></div>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="s2">&quot;completed&quot;</span></div>
 
-<div class="viewcode-block" id="HiveMetastore.create_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="HiveMetastore.create_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">,</span>
+        <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span>
+        <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a table for data on COS</span>
 
 <span class="sd">        Parameters</span>
@@ -276,17 +297,26 @@
 <span class="sd">        -------</span>
 <span class="sd">            none if job &quot;failed&quot;</span>
 <span class="sd">            otherwise returns</span>
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        ValueError:</span>
+<span class="sd">            when the argument is invalid for `cos_url` (invalid format or there is no such location),</span>
+<span class="sd">            format_type (invalid value)</span>
+
+
+<span class="sd">        SqlQueryDropTableException</span>
+<span class="sd">            when it cannot remove the given table name</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">cos_url</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+
         <span class="k">def</span> <span class="nf">create_table_async</span><span class="p">(</span>
-                                    <span class="n">table_name</span><span class="p">,</span>
-                                    <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                                    <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span>
-                                    <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                    <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">table_name</span><span class="p">,</span>
+            <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span>
+            <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            the async version of `create_table`</span>
 
@@ -315,7 +345,7 @@
             <span class="c1"># from IPython.display import display</span>
             <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_tables</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;tableName&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;tableName&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="c1"># not found</span>
                 <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
@@ -323,12 +353,15 @@
             <span class="c1"># if logger.getEffectiveLevel() == logging.DEBUG:</span>
             <span class="c1">#     display(df)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">force_recreate</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">drop_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+                <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">job_status</span> <span class="o">!=</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SqlQueryDropTableException</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">regular_tables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">force_recreate</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">sql_stmt_create</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">)</span>
+                        <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span>
+                    <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># explit selection of scheme -&gt; need to tell &quot;PARTITIONED BY&quot;</span>
                     <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
@@ -336,16 +369,25 @@
 <span class="s2">                    CREATE TABLE </span><span class="si">{table_name}</span><span class="s2"> </span><span class="si">{schema}</span><span class="s2"></span>
 <span class="s2">                    USING </span><span class="si">{format_type}</span><span class="s2"></span>
 <span class="s2">                    LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
-<span class="s2">                    &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+<span class="s2">                    &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+                        <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span>
+                        <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span>
+                        <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+                    <span class="p">)</span>
 
                 <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create</span><span class="p">)</span>
                 <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit_sql</span><span class="p">(</span><span class="n">sql_stmt_create</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">job_id</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">job_id</span> <span class="o">=</span> <span class="n">create_table_async</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span>
-                                    <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span>
-                                    <span class="n">force_recreate</span><span class="o">=</span><span class="n">force_recreate</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+        <span class="n">job_id</span> <span class="o">=</span> <span class="n">create_table_async</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="p">,</span>
+            <span class="n">cos_url</span><span class="p">,</span>
+            <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span>
+            <span class="n">force_recreate</span><span class="o">=</span><span class="n">force_recreate</span><span class="p">,</span>
+            <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">job_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">blocking</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_for_job</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">job_status</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
@@ -357,15 +399,22 @@
     <span class="k">def</span> <span class="nf">_format_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Format the schema string to ensure it is enclosed by ( and )&quot;&quot;&quot;</span>
         <span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;(&#39;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;(&quot;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;)&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;(&quot;</span> <span class="ow">or</span> <span class="n">schema</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;)&quot;</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;schema wrong format, should be: (name type, name type)&quot;</span><span class="p">)</span>
-                <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="mi">0</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">schema</span> <span class="o">=</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="n">schema</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+            <span class="n">schema</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="n">schema</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
         <span class="k">return</span> <span class="n">schema</span>
 
-<div class="viewcode-block" id="HiveMetastore.create_partitioned_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_partitioned_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="HiveMetastore.create_partitioned_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.create_partitioned_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_partitioned_table</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">,</span>
+        <span class="n">cos_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span>
+        <span class="n">force_recreate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a partitioned table for data on COS. The data needs to be organized in the form that</span>
 <span class="sd">        match HIVE metastore criteria, e.g.</span>
@@ -375,7 +424,8 @@
 <span class="sd">            &lt;COS-URL&gt;/field_1=value1_1/field_2=value_2_1/object_file</span>
 <span class="sd">            &lt;COS-URL&gt;/field_1=value1_2/field_2=value_2_1/object_file</span>
 
-<span class="sd">        NOTE: Each time the data is updated, we need to call `recover_table_partitions` on the created partitioned table.</span>
+<span class="sd">        NOTE: Each time the data is updated, we need to call `recover_table_partitions`</span>
+<span class="sd">        on the created partitioned table.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        --------------</span>
@@ -400,26 +450,46 @@
 <span class="sd">        Returns</span>
 <span class="sd">        ----------</span>
 
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        ValueError:</span>
+<span class="sd">            when the argument is invalid for `cos_url` (invalid format or there is no such location),</span>
+<span class="sd">            format_type (invalid value)</span>
+
+
+<span class="sd">        SqlQueryFailException:</span>
+<span class="sd">            when it cannot remove the given table name</span>
+
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span> <span class="o">=</span> <span class="n">table_name</span>
 
         <span class="k">if</span> <span class="n">cos_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cos_in_url_partitioned</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ParsedUrl</span><span class="p">()</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL&quot;</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_tables</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;tableName&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
+            <span class="n">found</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;tableName&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">table_name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="c1"># not found</span>
             <span class="n">found</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">force_recreate</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">drop_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="n">job_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">job_status</span> <span class="o">!=</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SqlQueryFailException</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="s2">&quot; table name removed failed&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">partitioned_tables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Please fix `format_type` to be in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cos_objects</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Please fix - the path </span><span class="si">{}</span><span class="s2"> does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">force_recreate</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># auto-detection of scheme</span>
@@ -429,7 +499,8 @@
 <span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
 <span class="s2">                &quot;&quot;&quot;</span>
                 <span class="n">sql_stmt_create_partitioned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_stmt_create_partitioned_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">)</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># explit selection of scheme -&gt; need to tell &quot;PARTITIONED BY&quot;</span>
                 <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
@@ -438,7 +509,12 @@
 <span class="s2">                USING </span><span class="si">{format_type}</span><span class="s2"></span>
 <span class="s2">                PARTITIONED BY (country)</span>
 <span class="s2">                LOCATION </span><span class="si">{cos_in}</span><span class="s2"></span>
-<span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+                    <span class="n">cos_in</span><span class="o">=</span><span class="n">cos_url</span><span class="p">,</span>
+                    <span class="n">format_type</span><span class="o">=</span><span class="n">format_type</span><span class="p">,</span>
+                    <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt_create_partitioned</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -454,19 +530,15 @@
 <span class="sd">                The partitioned table name</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_table_name</span> <span class="o">=</span> <span class="n">table_name</span>
-        <span class="c1"># if table_name not in self.partitioned_tables:</span>
-        <span class="c1">#     logger.error(&quot;Table %s is not a partitioned table&quot; % (table_name))</span>
-        <span class="c1">#     logger.error(&quot;.... [ %s ]&quot; %</span>
-        <span class="c1">#                  &quot; &quot;.join(list({k: 1</span>
-        <span class="c1">#                                 for k in self.partitioned_tables})))</span>
-        <span class="c1">#     assert (0)</span>
 
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;ALTER TABLE </span><span class="si">{table_name}</span><span class="s2"> RECOVER PARTITIONS</span>
-<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">)</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HiveMetastore.describe_table"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.describe_table">[docs]</a>    <span class="k">def</span> <span class="nf">describe_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the schema of table</span>
+        <span class="sd">&quot;&quot;&quot;Return the schema of table</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -475,18 +547,20 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        ------</span>
-<span class="sd">        DataFrame</span>
+<span class="sd">        DataFrame or None [if failed - table not found]</span>
 <span class="sd">            3 columns: col_name (object), data_type (object), comment (float64)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Need to define target COS URL&quot;</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_target_url</span><span class="p">()</span>
 
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        DESCRIBE TABLE </span><span class="si">{table_name}</span><span class="s2"> INTO </span><span class="si">{cos_out}</span><span class="s2"> STORED AS CSV&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span></div></div>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">cos_out</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_url</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div></div>
 </pre></div>
 
           </div>

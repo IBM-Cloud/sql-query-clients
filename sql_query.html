@@ -51,10 +51,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#manage-cloud-object-storage-url">Manage Cloud Object Storage URL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#manage-table-catalog">Manage table catalog</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-skipping">Data skipping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#prepare-data-for-time-series">Prepare data for time series</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#limitations">Limitations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tips">Tips</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#sqlclienttimeseries-class">SQLClientTimeSeries Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prepare-data-for-time-series">Prepare data for time series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#user-friendly-sql-string">User-friendly SQL string</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
@@ -177,45 +181,6 @@ This way the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQ
 <h2>Data skipping<a class="headerlink" href="#data-skipping" title="Permalink to this headline">¶</a></h2>
 <p>[Not available yet]</p>
 </div>
-<div class="section" id="prepare-data-for-time-series">
-<h2>Prepare data for time series<a class="headerlink" href="#prepare-data-for-time-series" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource" title="ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_ts_datasource()</span></code></a></p></li>
-</ul>
-<p>Let’s assume that you create a HIVE catalog table to store the data for fast access that is used as the data source via <cite>table_name</cite> argument.</p>
-<p>A time series is comprised of the following:</p>
-<ol class="arabic simple">
-<li><p>The <cite>time_stamp</cite> information.</p></li>
-<li><p>The <cite>observation</cite> information.</p></li>
-<li><p>Category, for example, the <cite>key</cite>.</p></li>
-</ol>
-<p>Very often, the raw data is too dense to be digested into a time series. Such data has to be transformed into a coarser timescale, using a proper aggregated function, for example, avg() or max(). The time window during which the summarized data point is to be collected is given by passing a value to <cite>granularity</cite> argument, as in the following example:</p>
-<ul class="simple">
-<li><p><cite>raw</cite>: No change, just extract to a new location.</p></li>
-<li><p><cite>per_sec</cite>, or <cite>PT1S</cite>: Per every second.</p></li>
-<li><p><cite>per_2sec</cite>, or <cite>PT2S</cite>: Per every two seconds.</p></li>
-<li><p><cite>per_min</cite>, or <cite>PT1M</cite>: Per every minute.</p></li>
-<li><p><cite>per_5min</cite>, or <cite>PT5M</cite>: Per every five minutes.</p></li>
-</ul>
-<p>In general, a valid value to <cite>granularity</cite> follows the following conventions:</p>
-<ul class="simple">
-<li><p>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60</p></li>
-<li><p>ISO 8601 duration standard</p></li>
-</ul>
-<p>The transformed data is then copied and saved into a new location (the time-series data source), which is specified by the following:</p>
-<ul class="simple">
-<li><p><cite>cos_out</cite>: Cloud Object Storage URL (stored as PARQUET).</p></li>
-<li><p><cite>num_objects</cite>: Split into multiple objects.</p></li>
-<li><p><cite>num_rows</cite>: Split into multiple objects based on number of rows per object.</p></li>
-</ul>
-<p><strong>At the end of the transformation</strong>, the data source to be used for time series creation comprises the following three columns:</p>
-<ul class="simple">
-<li><p><cite>field_name</cite>: Representing category.</p></li>
-<li><p><cite>time_stamp</cite>: Representing the point of time at the given granularity.</p></li>
-<li><p><cite>observation</cite>: Representing the recorded information.</p></li>
-</ul>
-<p>If you use a generic name, you can quickly apply it to any data source.</p>
-</div>
 <div class="section" id="limitations">
 <h2>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -258,6 +223,54 @@ This way the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQ
 <li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/big-data-layout">Tips for data layout</a></p></li>
 <li><p><a class="reference external" href="https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query">Data skipping</a></p></li>
 </ul>
+</div>
+</div>
+<div class="section" id="sqlclienttimeseries-class">
+<h1>SQLClientTimeSeries Class<a class="headerlink" href="#sqlclienttimeseries-class" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_query_ts" title="ibmcloudsql.sql_query_ts"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.sql_query_ts</span></code></a> provides the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLClientTimeSeries</span></code></a> class which is derived from <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery" title="ibmcloudsql.SQLQuery.SQLQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLQuery</span></code></a> class. The class provides APIs to make it easier to issue SQL statement that contains time-series functions.</p>
+<div class="section" id="prepare-data-for-time-series">
+<h2>Prepare data for time series<a class="headerlink" href="#prepare-data-for-time-series" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_ts_datasource()</span></code></a></p></li>
+</ul>
+<p>Let’s assume that you create a HIVE catalog table to store the data for fast access that is used as the data source via <cite>table_name</cite> argument.</p>
+<p>A time series is comprised of the following:</p>
+<ol class="arabic simple">
+<li><p>The <cite>time_stamp</cite> information.</p></li>
+<li><p>The <cite>observation</cite> information.</p></li>
+<li><p>Category, for example, the <cite>key</cite>.</p></li>
+</ol>
+<p>Very often, the raw data is too dense to be digested into a time series. Such data has to be transformed into a coarser timescale, using a proper aggregated function, for example, avg() or max(). The time window during which the summarized data point is to be collected is given by passing a value to <cite>granularity</cite> argument, as in the following example:</p>
+<ul class="simple">
+<li><p><cite>raw</cite>: No change, just extract to a new location.</p></li>
+<li><p><cite>per_sec</cite>, or <cite>PT1S</cite>: Per every second.</p></li>
+<li><p><cite>per_2sec</cite>, or <cite>PT2S</cite>: Per every two seconds.</p></li>
+<li><p><cite>per_min</cite>, or <cite>PT1M</cite>: Per every minute.</p></li>
+<li><p><cite>per_5min</cite>, or <cite>PT5M</cite>: Per every five minutes.</p></li>
+</ul>
+<p>In general, a valid value to <cite>granularity</cite> follows the following conventions:</p>
+<ul class="simple">
+<li><p>‘per_[x]sec’ and ‘per_[x]min’ with x is divisible by 60</p></li>
+<li><p>ISO 8601 duration standard</p></li>
+</ul>
+<p>The transformed data is then copied and saved into a new location (the time-series data source), which is specified by the following:</p>
+<ul class="simple">
+<li><p><cite>cos_out</cite>: Cloud Object Storage URL (stored as PARQUET).</p></li>
+<li><p><cite>num_objects</cite>: Split into multiple objects.</p></li>
+<li><p><cite>num_rows</cite>: Split into multiple objects based on number of rows per object.</p></li>
+</ul>
+<p><strong>At the end of the transformation</strong>, the data source to be used for time series creation comprises the following three columns:</p>
+<ul class="simple">
+<li><p><cite>field_name</cite>: Representing category.</p></li>
+<li><p><cite>time_stamp</cite>: Representing the point of time at the given granularity.</p></li>
+<li><p><cite>observation</cite>: Representing the recorded information.</p></li>
+</ul>
+<p>If you use a generic name, you can quickly apply it to any data source.</p>
+</div>
+<div class="section" id="user-friendly-sql-string">
+<h2>User-friendly SQL string<a class="headerlink" href="#user-friendly-sql-string" title="Permalink to this headline">¶</a></h2>
+<p>Several time-series functions being used in CloudSQL accept parameters in the unit of mili-seconds, which is not user-friendly.
+The class provides the built-in functionality to map user-friendly name such as <cite>hour</cite>, <cite>day</cite>, <cite>2hour</cite>, <cite>week</cite> into the right unit, before sending the query to CloudSQL service.</p>
 </div>
 </div>
 

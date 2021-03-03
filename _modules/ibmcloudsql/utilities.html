@@ -42,6 +42,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
@@ -100,12 +101,13 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">ibm_boto3</span>
 <span class="kn">import</span> <span class="nn">ibm_botocore</span>
-<span class="kn">from</span> <span class="nn">ibm_botocore.client</span> <span class="kn">import</span> <span class="n">Config</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">import</span> <span class="nn">getpass</span>
+<span class="kn">import</span> <span class="nn">requests</span>
 
 
 <div class="viewcode-block" id="rename_keys"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.rename_keys">[docs]</a><span class="k">def</span> <span class="nf">rename_keys</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
@@ -134,6 +136,7 @@
 
 <span class="sd">    IMPORTANT: Inside the function, access to the variable should be using the function name, e.g. func.var_stat</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">decorate</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
@@ -142,48 +145,118 @@
     <span class="k">return</span> <span class="n">decorate</span></div>
 
 
-<div class="viewcode-block" id="IBMCloudAccess"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess">[docs]</a><span class="k">class</span> <span class="nc">IBMCloudAccess</span><span class="p">():</span>
+<div class="viewcode-block" id="IBMCloudAccess"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess">[docs]</a><span class="k">class</span> <span class="nc">IBMCloudAccess</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cloud_apikey : str, optional</span>
+<span class="sd">        an account-level API key [manage/Access (IAM)/IBM Cloud API keys]</span>
+
+<span class="sd">    client_info : str, optional</span>
+<span class="sd">        a description</span>
+
+<span class="sd">    thread_safe: bool, optional</span>
+<span class="sd">        a new Session object is created if not provided</span>
+
+<span class="sd">    session: ibm_boto3.session.Session, optional</span>
+<span class="sd">        provide a Session object so that it can be reused</span>
+
+<span class="sd">    staging: bool, optional</span>
+<span class="sd">        if True, then uses the test IAM endpoint</span>
+<span class="sd">    iam_max_tries: int, optional</span>
+<span class="sd">        Number of tries to connect to IAM service</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">client_info</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cloud_apikey</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">client_info</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">staging</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">thread_safe</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">iam_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">cloud_apikey</span>
-        <span class="k">if</span> <span class="n">client_info</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span> <span class="o">=</span> <span class="s1">&#39;IBMCloudAccess&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">staging</span> <span class="o">=</span> <span class="n">staging</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iam_max_tries</span> <span class="o">=</span> <span class="n">iam_max_tries</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iam_max_tries</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">client_info</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span> <span class="o">=</span> <span class="s2">&quot;IBMCloudAccess&quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span> <span class="o">=</span> <span class="n">client_info</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/x-www-form-urlencoded&#39;</span>
+            <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span>
         <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_token</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread_safe</span> <span class="o">=</span> <span class="n">thread_safe</span>
+        <span class="k">if</span> <span class="n">session</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_session</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-            <span class="p">{</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers_xml_content</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cos_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">thread_safe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_safe</span>
+
+<div class="viewcode-block" id="IBMCloudAccess.get_session"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.get_session">[docs]</a>    <span class="k">def</span> <span class="nf">get_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">thread_safe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_safe</span>
+        <span class="k">if</span> <span class="n">thread_safe</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_new_session</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">session</span></div>
 
 <div class="viewcode-block" id="IBMCloudAccess.configure"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cloud_apikey</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update Cloud API key</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">cloud_apikey</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
-                <span class="s1">&#39;Enter IBM Cloud API Key (leave empty to use previous one): &#39;</span>
-            <span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">getpass</span><span class="o">.</span><span class="n">getpass</span><span class="p">(</span>
+                    <span class="s2">&quot;Enter IBM Cloud API Key (leave empty to use previous one): &quot;</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">apikey</span> <span class="o">=</span> <span class="n">cloud_apikey</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">set_credentials</span><span class="p">(</span><span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+    <span class="k">def</span> <span class="nf">_get_new_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return a new ibm_boto3.session.Session object&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staging</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span>
+                <span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">,</span>
+                <span class="n">ibm_auth_endpoint</span><span class="o">=</span><span class="s2">&quot;https://iam.test.cloud.ibm.com/identity/token&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">,)</span>
+
     <span class="k">def</span> <span class="nf">_get_default_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key</span>
-        <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">setup_default_session</span><span class="p">(</span><span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">,</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staging</span><span class="p">:</span>
+            <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">setup_default_session</span><span class="p">(</span>
+                <span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">,</span>
+                <span class="n">ibm_auth_endpoint</span><span class="o">=</span><span class="s2">&quot;https://iam.test.cloud.ibm.com/identity/token&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">setup_default_session</span><span class="p">(</span><span class="n">ibm_api_key_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apikey</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ibm_boto3</span><span class="o">.</span><span class="n">_get_default_session</span><span class="p">()</span>
 
 <div class="viewcode-block" id="IBMCloudAccess.logon"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.logon">[docs]</a>    <span class="k">def</span> <span class="nf">logon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -198,30 +271,61 @@
 
 <span class="sd">        Raises</span>
 <span class="sd">        ---------</span>
-<span class="sd">        ibm_botocore.exceptions.CredentialRetrievalError:</span>
-<span class="sd">           The exception is raised when the credential is incorrect.</span>
+<span class="sd">        AttributeError:</span>
+<span class="sd">           The exception is raised when the token cannot be retrieved using the current credential.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span>
-                                            <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">300</span> <span class="ow">and</span> \
-                                            <span class="p">(</span><span class="s1">&#39;authorization&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="ow">and</span>
-                                            <span class="s1">&#39;None&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">[</span><span class="s1">&#39;authorization&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span> <span class="o">&lt;</span> <span class="mi">300</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="s2">&quot;authorization&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span>
+                <span class="ow">and</span> <span class="s2">&quot;None&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">[</span><span class="s2">&quot;authorization&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
 
-        <span class="c1">## TODO refactor construction to avoid calling private method</span>
+        <span class="c1"># TODO refactor construction to avoid calling private method</span>
         <span class="n">boto3_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
         <span class="c1"># ibm_boto3._get_default_session()</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">ro_credentials</span> <span class="o">=</span> <span class="n">boto3_session</span><span class="o">.</span><span class="n">get_credentials</span><span class="p">()</span><span class="o">.</span><span class="n">get_frozen_credentials</span><span class="p">()</span>
-        <span class="k">except</span> <span class="n">ibm_botocore</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">CredentialRetrievalError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available&quot;</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">e</span>
+        <span class="n">complete</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">retry_delay</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">complete</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iam_max_tries</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ro_credentials</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">boto3_session</span><span class="o">.</span><span class="n">get_credentials</span><span class="p">()</span><span class="o">.</span><span class="n">get_frozen_credentials</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_token</span> <span class="o">=</span> <span class="n">ro_credentials</span><span class="o">.</span><span class="n">token</span>
+                <span class="n">complete</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="n">ibm_botocore</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">CredentialRetrievalError</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iam_max_tries</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="s2">&quot;Login fails: credential cannot be validated&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;- check either (1) the key or (2) if IBM  cloud service is available&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ReadTimeout</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iam_max_tries</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Increase iam_max_tries, or relaunch again as no response from IAM&quot;</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;print ro_credentials&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">ro_credentials</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_token</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_token</span> <span class="o">!=</span> <span class="n">ro_credentials</span><span class="o">.</span><span class="n">token</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;check token&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_agent</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-            <span class="p">{</span><span class="s1">&#39;authorization&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ro_credentials</span><span class="o">.</span><span class="n">token</span><span class="p">)})</span>
+            <span class="p">{</span><span class="s2">&quot;authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ro_credentials</span><span class="o">.</span><span class="n">token</span><span class="p">)}</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logged_on</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_logon</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></div></div>
 </pre></div>

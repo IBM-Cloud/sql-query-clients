@@ -43,6 +43,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
@@ -135,11 +136,15 @@
         <li><a href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.configure">(ibmcloudsql.utilities.IBMCloudAccess method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient.connect_project_lib">connect_project_lib() (ibmcloudsql.cos.COSClient method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.cos_session">cos_session() (ibmcloudsql.utilities.IBMCloudAccess property)</a>
+</li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.COSClient">COSClient (class in ibmcloudsql.cos)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.CosUrlInaccessibleException">CosUrlInaccessibleException</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.CosUrlNotFoundException">CosUrlNotFoundException</a>
 </li>
@@ -177,8 +182,12 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">execute_sql() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.execute_sql">execute_sql() (ibmcloudsql.sql_query_ts.SQLClientTimeSeries method)</a>
+
+      <ul>
+        <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.execute_sql">(ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.export_job_history">export_job_history() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
@@ -235,9 +244,11 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_schema_data">get_schema_data() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.get_session">get_session() (ibmcloudsql.utilities.IBMCloudAccess method)</a>
+</li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.get_sql">get_sql() (ibmcloudsql.sql_magic.SQLMagic method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.get_ts_datasource">get_ts_datasource() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource">get_ts_datasource() (ibmcloudsql.sql_query_ts.SQLClientTimeSeries method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.group_by_">group_by_() (ibmcloudsql.sql_magic.SQLMagic method)</a>
 </li>
@@ -248,6 +259,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore">HiveMetastore (class in ibmcloudsql.catalog_table)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.human_form_to_machine_form">human_form_to_machine_form() (ibmcloudsql.sql_query_ts.SQLClientTimeSeries method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -263,15 +278,19 @@
 </li>
       <li><a href="ibmcloudsql.html#module-ibmcloudsql.cos">ibmcloudsql.cos (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#module-ibmcloudsql.exceptions">ibmcloudsql.exceptions (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#module-ibmcloudsql.sql_magic">ibmcloudsql.sql_magic (module)</a>
+</li>
+      <li><a href="ibmcloudsql.html#module-ibmcloudsql.sql_query_ts">ibmcloudsql.sql_query_ts (module)</a>
 </li>
       <li><a href="ibmcloudsql.html#module-ibmcloudsql.SQLQuery">ibmcloudsql.SQLQuery (module)</a>
 </li>
       <li><a href="ibmcloudsql.html#module-ibmcloudsql.utilities">ibmcloudsql.utilities (module)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.InternalError502Exception">InternalError502Exception</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl.is_valid_cos_url">is_valid_cos_url() (ibmcloudsql.cos.ParsedUrl method)</a>
 </li>
@@ -373,8 +392,12 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run">run() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql">run_sql() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.run_sql">run_sql() (ibmcloudsql.sql_query_ts.SQLClientTimeSeries method)</a>
+
+      <ul>
+        <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.run_sql">(ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -383,9 +406,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.select_">select_() (ibmcloudsql.sql_magic.SQLMagic method)</a>
 </li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.set_tracking_file">set_tracking_file() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+</li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.show_tables">show_tables() (ibmcloudsql.catalog_table.HiveMetastore method)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.sql_ui_link">sql_ui_link() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries">SQLClientTimeSeries (class in ibmcloudsql.sql_query_ts)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic">SQLMagic (class in ibmcloudsql.sql_magic)</a>
 </li>
@@ -393,9 +420,13 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryCrnInvalidFormatException">SqlQueryCrnInvalidFormatException</a>
 </li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryDropTableException">SqlQueryDropTableException</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryFailException">SqlQueryFailException</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryInvalidFormatException">SqlQueryInvalidFormatException</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryInvalidPlanException">SqlQueryInvalidPlanException</a>
 </li>
@@ -407,8 +438,12 @@
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_and_track_sql">submit_and_track_sql() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql">submit_sql() (ibmcloudsql.SQLQuery.SQLQuery method)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.submit_sql">submit_sql() (ibmcloudsql.sql_query_ts.SQLClientTimeSeries method)</a>
+
+      <ul>
+        <li><a href="ibmcloudsql.html#ibmcloudsql.SQLQuery.SQLQuery.submit_sql">(ibmcloudsql.SQLQuery.SQLQuery method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -417,10 +452,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="ibmcloudsql.html#ibmcloudsql.catalog_table.HiveMetastore.target_url">target_url() (ibmcloudsql.catalog_table.HiveMetastore property)</a>
 </li>
-      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema">TimeSeriesSchema (class in ibmcloudsql.sql_magic)</a>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.test_run">test_run() (in module ibmcloudsql.sql_query_ts)</a>
+</li>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess.thread_safe">thread_safe() (ibmcloudsql.utilities.IBMCloudAccess property)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema">TimeSeriesSchema (class in ibmcloudsql.sql_magic)</a>
+</li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput">TimeSeriesTransformInput (class in ibmcloudsql.sql_magic)</a>
 </li>
       <li><a href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql">transform_sql() (ibmcloudsql.sql_magic.TimeSeriesTransformInput class method)</a>

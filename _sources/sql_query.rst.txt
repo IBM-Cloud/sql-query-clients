@@ -85,6 +85,51 @@ Data skipping
 
 [Not available yet]
 
+Limitations
+------------------------------------------------
+
+* The SQL statement string size limit is 200KB.
+* Maximum five concurrent SQL queries for a standard SQL Query instance.
+* Maximum duration of one hour for a query job. However, many jobs can be stopped much earlier due to the current mechanism of AIM token timeout, and this token is shared across all current SQL queries.
+
+Tips
+-----
+
+* Combine the SQL query if you can, as there is an overhead (and possibly $ cost) for a REST API request. However, also consider the current limit for a YARN executor of 7.5GB, so design the SQL query accordingly. It is best if the data being accessed is organized with multiple objects of ideal sizes (see below), since this enables more parallelism in the Object Storage.
+* Complex data can only be stored using Json or Parquet, it is faster with Parquet.
+* Avoid storing the data with a single object's size larger than 200MB. To check, consider using :meth:`.get_cos_summary` or :meth:`.list_results`. To resolve the issue, consider using the following:
+
+    + Partition table into multiple buckets/objects type-1: PARTITION INTO <x> BUCKETS/OBJECTS, with maximum allowed for 'x' is 50.
+    + Partition table into multiple buckets/objects type-2: PARTITIONED EVERY <x> ROWS.
+    + Hive-style partitioning: PARTITION BY (col1, col2, ...).
+* When partitioning according to a column that has NULL values, Spark will use “__HIVE_DEFAULT_PARTITION__” in the object name, for example,  <bucket>/Location=__HIVE_DEFAULT_PARTITION__/<data-partition>.
+
+.. code-block:: python
+
+        sqlClient.list_results(job_id)
+
+.. code-block:: console
+
+        ObjectURL	Size	Bucket	Object
+        0	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa	0	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa
+        1	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS	0	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS
+        2	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet	7060033106	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet
+
+
+References
+--------------
+
+*  `Sparksql-parser <https://github.ibm.com/SqlServiceWdp/sparksql-parser>`_: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.
+* `Grammar <https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4>`_
+* `Tips for data layout <https://www.ibm.com/cloud/blog/big-data-layout>`_
+* `Data skipping <https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query>`_
+
+SQLClientTimeSeries Class
+================================================
+
+:mod:`ibmcloudsql.sql_query_ts` provides the :py:class:`.SQLClientTimeSeries` class which is derived from :py:class:`.SQLQuery` class. The class provides APIs to make it easier to issue SQL statement that contains time-series functions.
+
+
 Prepare data for time series
 -------------------------------------
 
@@ -123,43 +168,10 @@ The transformed data is then copied and saved into a new location (the time-seri
 * `time_stamp`: Representing the point of time at the given granularity.
 * `observation`: Representing the recorded information.
 
-If you use a generic name, you can quickly apply it to any data source. 
+If you use a generic name, you can quickly apply it to any data source.
 
-Limitations
-------------------------------------------------
+User-friendly SQL string
+-------------------------------------
 
-* The SQL statement string size limit is 200KB.
-* Maximum five concurrent SQL queries for a standard SQL Query instance.
-* Maximum duration of one hour for a query job. However, many jobs can be stopped much earlier due to the current mechanism of AIM token timeout, and this token is shared across all current SQL queries.
-
-Tips
------
-
-* Combine the SQL query if you can, as there is an overhead (and possibly $ cost) for a REST API request. However, also consider the current limit for a YARN executor of 7.5GB, so design the SQL query accordingly. It is best if the data being accessed is organized with multiple objects of ideal sizes (see below), since this enables more parallelism in the Object Storage.
-* Complex data can only be stored using Json or Parquet, it is faster with Parquet.
-* Avoid storing the data with a single object's size larger than 200MB. To check, consider using :meth:`.get_cos_summary` or :meth:`.list_results`. To resolve the issue, consider using the following: 
-
-    + Partition table into multiple buckets/objects type-1: PARTITION INTO <x> BUCKETS/OBJECTS, with maximum allowed for 'x' is 50.
-    + Partition table into multiple buckets/objects type-2: PARTITIONED EVERY <x> ROWS.
-    + Hive-style partitioning: PARTITION BY (col1, col2, ...).
-* When partitioning according to a column that has NULL values, Spark will use “__HIVE_DEFAULT_PARTITION__” in the object name, for example,  <bucket>/Location=__HIVE_DEFAULT_PARTITION__/<data-partition>.
-
-.. code-block:: python
-
-        sqlClient.list_results(job_id)
-
-.. code-block:: console
-
-        ObjectURL	Size	Bucket	Object
-        0	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa	0	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa
-        1	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS	0	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/_SUCCESS
-        2	cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet	7060033106	sql-query-cos-access-ts	jobid=a3475263-469a-4e22-b382-1d0ae8f1d1fa/part-00000-e299e734-43e3-4032-b27d-b0d7e93d51c2-c000-attempt_20200318152159_0040_m_000000_0.snappy.parquet
-
-
-References
---------------
-
-*  `Sparksql-parser <https://github.ibm.com/SqlServiceWdp/sparksql-parser>`_: The module contains code with the know how to parse an SQLCloud-specific statement and transform it into a valid SQL statement.
-* `Grammar <https://github.ibm.com/SqlServiceWdp/sparksql-parser/blob/8895a3872790d21e4bb0f0e47a608bfb633e0b2a/antlr/SqlQuery.g4>`_
-* `Tips for data layout <https://www.ibm.com/cloud/blog/big-data-layout>`_
-* `Data skipping <https://www.ibm.com/cloud/blog/data-skipping-for-ibm-cloud-sql-query>`_
+Several time-series functions being used in CloudSQL accept parameters in the unit of mili-seconds, which is not user-friendly.
+The class provides the built-in functionality to map user-friendly name such as `hour`, `day`, `2hour`, `week` into the right unit, before sending the query to CloudSQL service.
