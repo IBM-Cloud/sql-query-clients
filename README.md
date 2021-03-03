@@ -7,8 +7,9 @@ Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/
 ## List of clients
  * [ibmcloudsql](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python) Python SDK
  * [Cloud Function](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function) for SQL Query (uses `ibmcloudsql`)
- * [sqlQuery](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK
+ * [sqlQuery](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK **deprecated** (Use this [SQL Query Node SDK]( https://github.com/IBM/sql-query-node-sdk inatead)
  * [Documentation](https://ibm-cloud.github.io/sql-query-clients/)
+ * [Dremio](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Dremio) connector
 
 ## How to generate docs
 
