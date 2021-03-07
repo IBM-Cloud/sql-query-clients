@@ -54,6 +54,7 @@ setup(
         "sqlparse",
         "packaging",
         "pre-commit",
+        "isodate",
     ],
     description="Python client for interacting with IBM Cloud SQL Query service",
     url="https://github.com/IBM-Cloud/sql-query-clients",
