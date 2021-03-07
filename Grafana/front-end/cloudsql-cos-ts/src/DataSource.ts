@@ -13,14 +13,18 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import defaults from 'lodash/defaults';
-import { getBackendSrv, BackendSrvRequest, getTemplateSrv } from '@grafana/runtime';
-import { ScopedVars } from '@grafana/data';
-import { TimeSeries } from '@grafana/data';
-import { DataFrame } from '@grafana/data';
-import { toDataFrame } from '@grafana/data';
+import defaults from "lodash/defaults";
+import {
+  getBackendSrv,
+  BackendSrvRequest,
+  getTemplateSrv,
+} from "@grafana/runtime";
 
 import {
+  ScopedVars,
+  TimeSeries,
+  DataFrame,
+  toDataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -28,10 +32,10 @@ import {
   MutableDataFrame,
   FieldType,
   //DefaultTimeRange,
-} from '@grafana/data';
+} from "@grafana/data";
 
-import { CloudSQLQuery, COSIBMDataSourceOptions, defaultQuery } from './types';
-import CloudSQLLanguageProvider from './sql/language_provider';
+import { CloudSQLQuery, COSIBMDataSourceOptions, defaultQuery } from "./types";
+import CloudSQLLanguageProvider from "./sql/language_provider";
 
 //export const CLOUDSQL_ENDPOINT = '/cloudsql/api/v1';
 
@@ -41,7 +45,10 @@ function extend(obj: any, src: any) {
   });
   return obj;
 }
-export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSourceOptions> {
+export class COSIBMDataSource extends DataSourceApi<
+  CloudSQLQuery,
+  COSIBMDataSourceOptions
+> {
   //server_url: any;
   jsonData: COSIBMDataSourceOptions;
   instanceSettings: DataSourceInstanceSettings<COSIBMDataSourceOptions>;
@@ -67,32 +74,36 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup!;
   }
 
-
-  async _query_default(options: DataQueryRequest<CloudSQLQuery>): Promise<DataQueryResponse> {
+  async _query_default(
+    options: DataQueryRequest<CloudSQLQuery>
+  ): Promise<DataQueryResponse> {
     //NOTE : this one does not connect to remote server at all
     const { range } = options;
     const from = range!.from.valueOf();
     const to = range!.to.valueOf();
 
     // Return a constant for each query.
-    const data = options.targets.map(target => {
+    const data = options.targets.map((target) => {
       const query = defaults(target, defaultQuery);
       return new MutableDataFrame({
         refId: query.refId,
         fields: [
-          { name: 'Time', values: [from, to], type: FieldType.time },
+          { name: "Time", values: [from, to], type: FieldType.time },
           //{ name: 'Value', values: [query.constant, query.constant], type: FieldType.number },
-          { name: 'Value', values: [5, 5], type: FieldType.number },
+          { name: "Value", values: [5, 5], type: FieldType.number },
         ],
       });
     });
     return { data };
   }
-  interpolateVariablesInQueries(queries: CloudSQLQuery[], scopedVars: ScopedVars): CloudSQLQuery[] {
+  interpolateVariablesInQueries(
+    queries: CloudSQLQuery[],
+    scopedVars: ScopedVars
+  ): CloudSQLQuery[] {
     if (!queries.length) {
       return queries;
     }
-    return queries.map(query => {
+    return queries.map((query) => {
       const expandedQuery = {
         ...query,
         //queryText: getTemplateSrv().replace(query.queryText, scopedVars),
@@ -103,7 +114,10 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
   }
   buildQueryParameters(options: DataQueryRequest<CloudSQLQuery>) {
     let new_options = options;
-    new_options.targets = this.interpolateVariablesInQueries(options.targets, options.scopedVars);
+    new_options.targets = this.interpolateVariablesInQueries(
+      options.targets,
+      options.scopedVars
+    );
 
     //options.targets = targets;
     return new_options;
@@ -145,19 +159,21 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     return seriesList;
   }
 
-  async _query_return_dataframes(options: DataQueryRequest<CloudSQLQuery>): Promise<DataQueryResponse> {
+  async _query_return_dataframes(
+    options: DataQueryRequest<CloudSQLQuery>
+  ): Promise<DataQueryResponse> {
     // NOTE: This one actually connect to the server
 
     // 1. first extract what is needed to send to the server
     var query = this.buildQueryParameters(options);
     var result = this.doRequest({
-      url: this.url + '/query',
+      url: this.url + "/query",
       data: query,
-      method: 'POST',
+      method: "POST",
     });
-    return result.then(response => {
+    return result.then((response) => {
       return {
-        data: response.data.map(result => {
+        data: response.data.map((result) => {
           //The toDataFrame() function converts a legacy response, such as TimeSeries or Table, to a DataFrame
           return toDataFrame(result);
         }),
@@ -165,7 +181,9 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     });
     //https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/#migrate-to-data-frames
   }
-  async _query_default_2(options: DataQueryRequest<CloudSQLQuery>): Promise<DataQueryResponse> {
+  async _query_default_2(
+    options: DataQueryRequest<CloudSQLQuery>
+  ): Promise<DataQueryResponse> {
     // NOTE: This one actually connect to the server
 
     // 1. first extract what is needed to send to the server
@@ -182,11 +200,11 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     //}
 
     var result = this.doRequest({
-      url: this.url + '/query',
+      url: this.url + "/query",
       data: query,
-      method: 'POST',
+      method: "POST",
     });
-    return result.then(response => {
+    return result.then((response) => {
       return response;
     });
 
@@ -202,7 +220,9 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     //  } as DataQueryResponse;
     //});
   }
-  async query(options: DataQueryRequest<CloudSQLQuery>): Promise<DataQueryResponse> {
+  async query(
+    options: DataQueryRequest<CloudSQLQuery>
+  ): Promise<DataQueryResponse> {
     // REQUIREMENT
     //  //must returns an instance of DataQueryResponse
     //  //which must contains at least the field
@@ -213,78 +233,18 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     //  // type LegacyResponseData = TimeSeries | TableData | any;
     //  return {data};
 
-    //const startMs = Date.now() - 10 * 60 * 1000; // last 10 minutes
-    //const start = `${startMs}000000`; //API expects unit in nanoseconds
-    ////this._request(`${this.server_url}`)
-    //const { range } = options;
-    //const from = range!.from.valueOf();
-    //const to = range!.to.valueOf();
-
-    //// Return a constant for each query.
-    //const data = options.targets.map(target => {
-    //  const query = defaults(target, defaultQuery);
-    //  return new MutableDataFrame({
-    //    refId: query.refId,
-    //    fields: [
-    //      { name: 'Time', values: [from, to], type: FieldType.time },
-    //      { name: 'Value', values: [query.constant, query.constant], type: FieldType.number },
-    //    ],
-    //  });
-    //});
-
-    //  //data = {};
-    //return { data };
-
-    //DEFAULT behavior
-    //return this._query_default(options);
-    //return this._query_default_2(options);
-    //NEW behavior
     return this._query_return_dataframes(options);
-
-    //What an expected data look like for Grafana?
-    // Zipkin example: a dictionary with 'data' as key
-    // . .... and value is an array
-    //const emptyDataQueryResponse = {
-    //  data: [
-    //    new MutableDataFrame({
-    //      fields: [
-    //        {
-    //          name: 'trace',
-    //          type: FieldType.trace,
-    //          values: [],
-    //        },
-    //      ],
-    //    }),
-    //  ],
-    //function responseToDataQueryResponse(response: { data: ZipkinSpan[] }): DataQueryResponse {
-    //  return {
-    //    data: [
-    //      new MutableDataFrame({
-    //        fields: [
-    //          {
-    //            name: 'trace',
-    //            type: FieldType.trace,
-    //            // There is probably better mapping than just putting everything in as a single value but that's how
-    //            // we do it with jaeger and is the simplest right now.
-    //            values: response?.data ? [transformResponse(response?.data)] : [],
-    //          },
-    //        ],
-    //      }),
-    //    ],
-    //  };
-    //}
   }
 
   async testDatasource() {
-
-    let myUrl = this.url + '/login';
+    let myUrl = this.url + "/login";
 
     let tmp = this.jsonData;
     let id = this.instanceSettings.id;
     let name = this.instanceSettings.name;
     let id_name: { [id: string]: string | number } = {};
-    id_name['id'] = id;
-    id_name['name'] = name;
+    id_name["id"] = id;
+    id_name["name"] = name;
 
     //TODO: add the check 'using_table' so that
     // we can also configure HIVE metastore
@@ -294,10 +254,10 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     //let content = JSON.stringify({});
     //NOTE: body type must match Content-Type header
     const response = await fetch(myUrl, {
-      method: 'POST',
+      method: "POST",
       body: content,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         //'Content-Type': 'application/x-www-form-urlencoded',
         //'Content-Type': 'application/json',
       },
@@ -307,7 +267,7 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
       //always CONNECT successfully
       // you can use one of this
       return {
-        status: 'success',
+        status: "success",
         message: response.statusText, //'Success',
         //message: JSON.stringify(response.json()),
         //title: 'Connected to CloudSQL',
@@ -317,13 +277,13 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
       //window.alert(JSON.stringify(text));
       //window.alert(response.status); //JSON.stringify(text));
       return {
-        status: 'error',
+        status: "error",
         //message: JSON.stringify(text),
         message: text,
       };
     } else {
       return {
-        status: 'error',
+        status: "error",
         message: response.statusText,
       };
     }
@@ -331,56 +291,41 @@ export class COSIBMDataSource extends DataSourceApi<CloudSQLQuery, COSIBMDataSou
     //always CONNECT successfully
     // you can use one of this
     return {
-      status: 'success',
-      message: 'Success',
+      status: "success",
+      message: "Success",
     };
-    //return Promise.resolve({});
-    //return Promise.resolve({
-    //  status: 200,
-    //});
-    //return Promise.resolve({
-    //  status: 200,
-    //  data: {
-    //    values: ['avalue'],
-    //  },
-    //});
-
-    //  return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(() => ({
-    //    status: 'success',
-    //    message: 'Data source is working',
-    //  }));
   }
 
   testDatasource_old() {
     //another way to issue Rest API is using the functionality provided by Grafana
     return getBackendSrv()
       .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
+        url: "/api/tsdb/query",
+        method: "POST",
         data: {
-          from: '5m',
-          to: 'now',
+          from: "5m",
+          to: "now",
           queries: [
             {
-              refId: 'A',
+              refId: "A",
               intervalMs: 1,
               maxDataPoints: 1,
               datasourceId: this.id,
-              rawSql: 'SELECT 1',
-              format: 'table',
+              rawSql: "SELECT 1",
+              format: "table",
             },
           ],
         },
       })
       .then((res: any) => {
-        return { status: 'success', message: 'Database Connection OK' };
+        return { status: "success", message: "Database Connection OK" };
       })
       .catch((err: any) => {
         console.log(err);
         if (err.data && err.data.message) {
-          return { status: 'error', message: err.data.message };
+          return { status: "error", message: err.data.message };
         } else {
-          return { status: 'error', message: err.status };
+          return { status: "error", message: err.status };
         }
       });
   }

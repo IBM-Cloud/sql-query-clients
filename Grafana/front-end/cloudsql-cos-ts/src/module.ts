@@ -13,15 +13,19 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import { DataSourcePlugin } from '@grafana/data';
-import { COSIBMDataSource } from './DataSource';
-import { ConfigEditor } from './ConfigEditor';
-import { QueryEditor } from './QueryEditor';
-import CloudSQLCheatSheet from './CheatSheet';
-import CloudSQLExploreQueryEditor from './ExploreQueryEditor';
-import { CloudSQLQuery, COSIBMDataSourceOptions } from './types';
+import { DataSourcePlugin } from "@grafana/data";
+import { COSIBMDataSource } from "./DataSource";
+import { ConfigEditor } from "./ConfigEditor";
+import { QueryEditor } from "./QueryEditor";
+import CloudSQLCheatSheet from "./CheatSheet";
+import CloudSQLExploreQueryEditor from "./ExploreQueryEditor";
+import { CloudSQLQuery, COSIBMDataSourceOptions } from "./types";
 
-export const plugin = new DataSourcePlugin<COSIBMDataSource, CloudSQLQuery, COSIBMDataSourceOptions>(COSIBMDataSource)
+export const plugin = new DataSourcePlugin<
+  COSIBMDataSource,
+  CloudSQLQuery,
+  COSIBMDataSourceOptions
+>(COSIBMDataSource)
   .setConfigEditor(ConfigEditor)
   //.setExploreMetricsQueryField(CloudSQLExploreQueryEditor)
   .setExploreQueryField(CloudSQLExploreQueryEditor)

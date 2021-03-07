@@ -459,9 +459,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         return _get_default_s3_client(endpoint)
 
-    def list_cos_objects(self, cos_url, size_unit="B"):
+    def list_cos_objects(self, cos_url, size_unit=None):
         """
-        List all objects in the current COS URL.
+        List all objects in the current COS URL. Also, please read the note to see the role of trailing slash in the COS URL.
 
         Parameters
         ------------
@@ -494,13 +494,13 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         ValueError
             if COS URL is invalid
         """
+        if size_unit is None:
+            size_unit = "B"
         if not self.is_valid_cos_url(cos_url):
             msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         self.logon()
 
-        if cos_url[-1] != "/":
-            cos_url = cos_url + "/"
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
@@ -533,7 +533,6 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             result.Size = result.Size / mapping[size_unit]
         else:
             result = pd.DataFrame()
-            # result = pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
         return result
 
     def delete_empty_objects(self, cos_url):
@@ -736,10 +735,10 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             # NOTE: long strings are broken using ( sub1, sub2)
             {
             "name": "my-new-bucket",
-            "crn": ("crn:v1:bluemix:public:cloud-object-storage:global:",
+            "crn": ("crn:v1:bluemix:public:cloud-object-storage:global:"
                 "a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket"),
             "service_instance_id": "xxxxxxx-6c4f-4a62-a165-696756d63903",
-            "service_instance_crn": ("crn:v1:bluemix:public:cloud-object-storage:global",
+            "service_instance_crn": ("crn:v1:bluemix:public:cloud-object-storage:global"
                 ":a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::"),
             "time_created": "2018-03-26T16:23:36.980Z",
             "time_updated": "2018-10-17T19:29:10.117Z",
@@ -988,16 +987,4 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
 
 if __name__ == "__main__":
-    cos = COSClient()
-    cos_url = (
-        "cos://us-south/sql-query-cos-access-ts/aiops_test/",
-        "Location=us-south/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/",
-    )
-    print("From: ", cos_url)
-    print("To : ", cos.get_exact_url(cos_url))
-
-    cos_url = (
-        "cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/aiops_test/",
-        "Location=eu-de/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/",
-    )
-    cos.delete_objects(cos_url)
+    pass

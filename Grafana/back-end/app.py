@@ -24,7 +24,8 @@ https://stackoverflow.com/questions/32799808/python-web-application-project-stru
 4. handle empty returned data
 5. able to handle request in concurrent -> thread-specific or coroutine-specific sqlClient object
 6. able to handle NaN data and convert to empty string before returning
-7. support special functions: $__timeFilter() and $__timeFilter(aiops) - assumes the time column is a number, i.e. long type or timestamp type
+7. support special functions: $__timeFilter() and $__timeFilter(aiops) -
+   assumes the time column is a number, i.e. long type or timestamp type
 8. allow caching based on `key` and sql_stmt
 9. columns detection in SELECT statement:
     SELECT name
@@ -35,14 +36,17 @@ https://stackoverflow.com/questions/32799808/python-web-application-project-stru
 12. can handle multiple queries at once
 13. handle 'hide=True' when user don't want to run a query
 14. add 'get_result' option to allow not returning any result back - good for chained queries
-15. add '--time-out' option [to pass in the value (in seconds) before timeout when the webapp is launched as a service in IBM CloudEngine for example]
+15. add '--time-out' option [to pass in the value (in seconds) before timeout when
+    the webapp is launched as a service in IBM CloudEngine for example]
 16. add '--ssl' option [to run HTTPS Webserver]
 17. support using $__source in CREATE TABLE statement
 18. $__timeFilter(string) - now accept 'string' if the time colum is represented as a string
 19. a 'time' column is now automatically converted to datetime - if it's stored in string
 20. able to detect column name correctly even inside a nested SELECT statement [Feb 12, 2021]
 21. able to detect and reject 'SELECT *'
-22. add new macro: '$__timeFilterColumn(col-name, [type])' - user can explicitly specify the column containing timestamp-data, and need to provide its type (string or long/timestamp or empty) [Feb 12, 2021]
+22. add new macro: '$__timeFilterColumn(col-name, [type])' - user can explicitly specify
+    the column containing timestamp-data, and need to provide its type
+    (string or long/timestamp or empty) [Feb 12, 2021]
 
 CHANGED BEHAVIOR:
     * [grafana] revise conf. setting so that $__source is optional - with tooltips to explain why user should provide
@@ -51,9 +55,12 @@ CHANGED BEHAVIOR:
     * add $__source_prev, $__source_prev(), $__source_prev(A), $__source_prev(B) to refer to the
     data source as the output from a previous query, or a given query based on its `refId` A or B.
     * avoid re-create sqlClient in a panel with multiple queries
-    * use status code 403, rather than 401, for error: newer Grafana 7.3.x for some reasons maps 401 to 400 and the original message is lost
-    * check `should_sql_stmt_be_run` move to outside the loop --> faster for a panel with multiple queries
-    (the check is not vigorous - sql is compared before any transformation done so that adjacent spaces are also considered)
+    * use status code 403, rather than 401, for error: newer Grafana 7.3.x for some reasons
+    maps 401 to 400 and the original message is lost
+    * check `should_sql_stmt_be_run` move to outside the loop --> faster for a panel
+    with multiple queries
+    (the check is not vigorous - sql is compared before any transformation done so that
+    adjacent spaces are also considered)
     * HTTPS/SSL is added (--ssl)
 
 code:
@@ -77,17 +84,19 @@ try:
 except:
     print("No concurrency")
     pass
+import sys
 from time import sleep
 from bottle import Bottle, HTTPResponse, run, request, response, route, abort
 from bottle import json_dumps
 from calendar import timegm
-from datetime import datetime
+from datetime import date, datetime
 import math
 import random
-import json
 import os
 import re
+import regex
 import numpy as np
+from enum import Enum
 
 import ibm_botocore
 
@@ -95,10 +104,36 @@ from IPython import embed
 
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
+from pandas.io.json import build_table_schema
 
+import json
+import sqlparse
+from sqlparse.sql import IdentifierList, Identifier
+from sqlparse.tokens import Keyword
 import logging
+import pandas as pd
+import threading
+from joblib import Memory
+
+
+sys.path.insert(0, "../../Python/")
+try:
+    from cloud_utilities.sql_query import SQLClient
+    from cloud_utilities.sql_magic import format_sql
+    from cloud_utilities.cos import ParsedUrl
+except ImportError:
+    from ibmcloudsql.sql_query_ts import SQLClientTimeSeries as SQLClient
+    from ibmcloudsql.sql_magic import format_sql
+    from ibmcloudsql.cos import ParsedUrl
+from ibmcloudsql.exceptions import (
+    CosUrlNotFoundException,
+    CosUrlInaccessibleException,
+    SqlQueryCrnInvalidFormatException,
+    RateLimitedException,
+)
+
 
 logger = logging.getLogger()
 # since Python 3.3
@@ -110,36 +145,6 @@ logging.basicConfig(
 )
 
 DEBUG = False
-
-import sys
-
-# sys.path.insert(0,'/Users/tmhoangtus.ibm.com/Codes.IBM/cloud_sqlquery/')
-sys.path.insert(0, "/Users/tmhoangtus.ibm.com/Codes.IBM/ibmcloudsql/sql-query-clients/")
-# sys.path.insert(0,'/Users/tmhoangtus.ibm.com/Codes.IBM/ibm-cos-sdk-python/')
-try:
-    from cloud_utilities.sql_query import SQLClient
-    from cloud_utilities.cos import COSClient
-    from cloud_utilities.sql_magic import format_sql
-    from cloud_utilities.cos import ParsedUrl
-except:
-    from ibmcloudsql.sql_query_ts import SQLClientTimeSeries as SQLClient
-    from ibmcloudsql.cos import COSClient
-    from ibmcloudsql.sql_magic import format_sql
-    from ibmcloudsql.cos import ParsedUrl
-import pandas as pd
-from ibmcloudsql.exceptions import (
-    CosUrlNotFoundException,
-    CosUrlInaccessibleException,
-    SqlQueryCrnInvalidFormatException,
-    RateLimitedException,
-)
-
-from pandas.io.json import build_table_schema
-
-import json
-import sqlparse
-from sqlparse.sql import IdentifierList, Identifier
-from sqlparse.tokens import Keyword
 
 
 def get_parser():
@@ -160,8 +165,6 @@ def get_parser():
     return args
 
 
-import threading
-
 lock = threading.Lock()
 lock_savejob = threading.Lock()
 
@@ -169,8 +172,6 @@ lock_savejob = threading.Lock()
 cmd_args = get_parser()
 
 cachedir = "_cache_dir"
-from joblib import Memory
-
 memory = Memory(cachedir, verbose=0)
 
 
@@ -194,7 +195,8 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         # with time-out
         if rerun:
             # not support - need to implement a mechanism in that an rerun query with timeout
-            # would not lead to another rerun (i.e. automatically switch off the rerun flag at Grafana plugin level) --> so that the next one to retrieve the data only
+            # would not lead to another rerun (i.e. automatically switch off the rerun
+            # flag at Grafana plugin level) --> so that the next one to retrieve the data only
             assert 0
         else:
             job_id = grafanaPluginInstances.get_job_id(key, key_refId)
@@ -262,7 +264,6 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
 def _query_data_with_result(key, sql_stmt, sqlClient=None):
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    # df = sqlClient.run_sql(sql_stmt)
     res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.data, res.job_id
@@ -273,43 +274,32 @@ def _query_data_noresultback(key, sql_stmt, sqlClient=None):
     """return job_id"""
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    # df = sqlClient.run_sql(sql_stmt)
     res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.job_id
 
 
 # regex
-import re
-
 regex_timeFilter = r"\$__timeFilter\s*\((\s*\w*\s*)\)"
 p_timeFilter = re.compile(regex_timeFilter)
 regex_timeFilterColumn = r"\$__timeFilterColumn\s*\((\s*\w*\s*),(\s*\w*\s*)\)"
 p_timeFilterColumn = re.compile(regex_timeFilterColumn)
 
 # regex
-import re
-
 regex_source = r"(?<=(?i:FROM)\s)\s*\$__source(?!_)(\s*\(\s*\))?(?=[\b|\n|\s])?"
 p_cos_in = re.compile(regex_source)
 regex_source = r"(?<=(?i:USING)\s)\s*\$__source(?!_)(\s*\(\s*\))?(?=[\b|\n|\s])?"
 p_cos_in_using = re.compile(regex_source)
 
 # regex
-import re
-
 regex_source = r"(?<=(?i:FROM)\s)\s*\$__source_test(\s*\(\s*\w*\s*\))?(?=[\b|\n|\s])?"
 p_cos_in_test = re.compile(regex_source)
 
 # regex
-import re
-
 regex_source = r"(?<=(?i:FROM)\s)\s*\$__source_prev(\s*\(\s*\w*\s*\))(?=[\b|\n|\s])?"
 p_cos_in_prev = re.compile(regex_source)
 
 # regex
-import re
-
 regex_source = r"(?i:INTO)\s*\$__dest(\s*\([\s|\w|,|/]*\))?(?=[\b|\n|\s])?"
 p_cos_out = re.compile(regex_source)
 
@@ -328,8 +318,6 @@ regex_column = r"^\s*(\w+)\s*$"
 p_column = re.compile(regex_column)
 
 # nested SELECT statement
-import regex
-
 regex_nested_select = r"(?i)\(((?>[^\(\)]+|(?R))*)\)"
 p_nested_select = regex.compile(regex_nested_select)
 
@@ -345,9 +333,6 @@ def gen_key_refId(dashboardId, panelId, refId):
     """generate the key for finding the right sqlClient object,
     using the given (dashboard, panel, sql-id)"""
     return "-".join([str(dashboardId), str(panelId), refId])
-
-
-from datetime import date, datetime
 
 
 def json_serial(obj):
@@ -382,7 +367,7 @@ def find_column_mapping(sql_stmt, columns):
     try:
         stmt = parsed[0]
     except IndexError as e:
-        print(sql)
+        print(sql_stmt)
         print(parsed)
         raise e
     # assert(stmt.get_type() == "SELECT")
@@ -482,9 +467,6 @@ def get_columns_from_single_select(sql):
         if token.ttype is Keyword:  # from
             break
     return columns
-
-
-from enum import Enum
 
 
 class SourceType(Enum):
@@ -640,22 +622,20 @@ class CloudSQLDB(dict):
                 sqlClient = grafanaPluginInstancesSqlClient[key]
                 print("Found SqlClient... ", sqlClient)
             else:
-                aiOps = SQLClient(
+                sqlClient = SQLClient(
                     cloud_apikey=apiKey,
                     sqlquery_instance_crn=instance_crn,
                     cos_out_url=target_cos_url,
                 )
-                sqlClient = aiOps
                 grafanaPluginInstancesSqlClient[key] = sqlClient
         else:
-            aiOps = SQLClient(
+            sqlClient = SQLClient(
                 cloud_apikey=apiKey,
                 sqlquery_instance_crn=instance_crn,
                 cos_out_url=target_cos_url,
                 thread_safe=True,
                 max_tries=100,
             )
-            sqlClient = aiOps
             print("Create thread-safe SqlClient... ", sqlClient)
 
         sqlClient.logon()
@@ -1126,12 +1106,11 @@ def login():
 
     if key not in grafanaPluginInstancesSqlClient.keys():
         # TODO: consider add max_concurrent_jobs info from `instance_rate_limit`
-        aiOps = SQLClient(
+        sqlClient = SQLClient(
             cloud_apikey=apiKey,
             sqlquery_instance_crn=instance_crn,
             cos_out_url=target_cos_url,
         )
-        sqlClient = aiOps
         grafanaPluginInstancesSqlClient[key] = sqlClient
         if DEBUG:
             print("Create new SQLClient: ", sqlClient)
@@ -1145,12 +1124,11 @@ def login():
                     print("Found SQLClient: ", sqlClient)
         except AttributeError:
             # recreate
-            aiOps = SQLClient(
+            sqlClient = SQLClient(
                 cloud_apikey=apiKey,
                 sqlquery_instance_crn=instance_crn,
                 cos_out_url=target_cos_url,
             )
-            sqlClient = aiOps
             grafanaPluginInstancesSqlClient[key] = sqlClient
             if DEBUG:
                 print("Create new SQLClient: ", sqlClient)
@@ -1512,9 +1490,6 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
                 # the $__timeFilter is used
                 appname = pattern.group(1).strip().lower()
                 substr = ""
-                # if 'aiops' == appname:
-                #   # process for AIOps data
-                #   substr += get_datetime_conditions_aiops(dt_from, dt_to) + "  AND "
 
                 # process for regular data
                 type_of_column = appname
@@ -1537,32 +1512,6 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
     sql_stmt = process_macro_data_source(
         p_cos_in_using, grafanaPluginInstances.get_cos_source_using, key, sql_stmt
     )
-    # p_reg = p_cos_in
-    # patterns = p_reg.findall(sql_stmt)
-    # try:
-    #    substr = grafanaPluginInstances.get_cos_source(key)
-    # except KeyError:
-    #  # TODO: maybe we want to resend the credential each time -
-    #    as when deploying to CodeEngine - the storage is not permanent?
-    #  msg = "The webapp doesn't hold CloudSQL info - you may want to revalidate in the datasource setting"
-    #  return None, HTTPResponse(
-    #    body=json.dumps({'error': msg}),
-    #    status=403,
-    #    headers={'Content-type': 'application/json'}
-    #  )
-    # if len(patterns) > 0 and len(substr) == 0:
-    #  msg = "Can't use $__source (default value has not been configured yet)"
-    #  raise HTTPResponse(
-    #      body=json.dumps({'error': msg}),
-    #      status=403,
-    #      headers={'Content-type': 'application/json'}
-    #  )
-    # for pattern in patterns:
-    #  pattern = p_reg.search(sql_stmt)
-    #  if pattern:
-    #    # the $__source is used
-    #    sql_stmt = p_reg.sub(substr, sql_stmt, count=1)
-    # get test_data
     p_reg = p_cos_in_test
     patterns = p_reg.findall(sql_stmt)
     for pattern in patterns:
@@ -1617,11 +1566,10 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
         try:
             substr = grafanaPluginInstances.get_cos_source_prev(key, key_refId)
         except KeyError:
-            msg = "The name {} used in $__source_prev() either: {} or {}".format(
-                prev_refId_name,
-                "does not exist",
-                "is not the prior sql statement in the chain",
-            )
+            msg = (
+                "The name {} used in $__source_prev()"
+                "does not exist or is not the prior sql statement in the chain"
+            ).format(prev_refId_name)
             return (
                 None,
                 HTTPResponse(
@@ -1797,40 +1745,40 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
         # {'target': name, 'datapoints': datapoints})
         # DataFrame
         """
-        https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/dataframe/processDataFrame.ts
+      https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/dataframe/processDataFrame.ts
+      {
+        name: timeSeries.target || (timeSeries as any).name,
+        refId: timeSeries.refId,
+        meta: timeSeries.meta,
+        fields,
+        length: values.length, // # rows in DataFrame
+      };
+      which means we return a dict
+      {
+      'name': name,
+      'refId': refId,
+      'meta': any metadata,
+      'length': numeric, // # rows in DataFrame
+      'fields': [
         {
-          name: timeSeries.target || (timeSeries as any).name,
-          refId: timeSeries.refId,
-          meta: timeSeries.meta,
-          fields,
-          length: values.length, // # rows in DataFrame
-        };
-        which means we return a dict
+        'name': col-name, // e.g. 'Time'
+        'type': 'fieldtype', //see above
+        'config': {}, //optional
+        'values': [list-of-values]
+        },
         {
-        'name': name,
-        'refId': refId,
-        'meta': any metadata,
-        'length': numeric, // # rows in DataFrame
-        'fields': [
-          {
-          'name': col-name, // e.g. 'Time'
-          'type': 'fieldtype', //see above
-          'config': {}, //optional
-          'values': [list-of-values]
+        'name': col-name, //e.g. 'Value'
+        'type': 'fieldtype', //see above
+          config: {
+            unit: "a unit-here",
           },
-          {
-          'name': col-name, //e.g. 'Value'
-          'type': 'fieldtype', //see above
-            config: {
-              unit: "a unit-here",
-            },
-          'values': [list-of-values]
-          'labels': 'original a 'tag' attribute in timeSeries'
-          }
-        ]
+        'values': [list-of-values]
+        'labels': 'original a 'tag' attribute in timeSeries'
         }
+      ]
+      }
 
-        """
+      """
 
         time_col = df.columns[0]
         if "time_column" in fullquery:

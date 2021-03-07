@@ -151,9 +151,11 @@ class HiveMetastore:
         Raises
         -------
         SqlQueryFailException
+        ValueError
         """
         if table_name is None and self.current_table_name is None:
-            print("ERROR: please provide table_name")
+            msg = "please provide table_name"
+            raise ValueError(msg)
         if table_name is None:
             table_name = self.current_table_name
             self.current_table_name = None

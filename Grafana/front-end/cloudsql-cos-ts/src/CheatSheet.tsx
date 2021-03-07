@@ -13,16 +13,19 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import React from 'react';
-import { ExploreStartPageProps, DataQuery } from '@grafana/data';
-import { stripIndent, stripIndents } from 'common-tags';
-import { css, cx } from 'emotion';
+import React from "react";
+import { ExploreStartPageProps, DataQuery } from "@grafana/data";
+import { stripIndent, stripIndents } from "common-tags";
+import { css, cx } from "emotion";
 
 interface QueryExampleCat {
   category: string;
   examples: Array<{
     title: string;
-    expr: string;
+    queryText: string;
+    format?: string;
+    time_column?: string;
+    metrics_column?: string;
   }>;
 }
 //interface QueryExample {
@@ -31,79 +34,71 @@ interface QueryExampleCat {
 //  expression?: string;
 //}
 
-const CLIQ_EXAMPLES: QueryExampleCat[] = [
+const SQLQUERY_EXAMPLES: QueryExampleCat[] = [
   {
-    category: 'Lambda',
+    category: "Time-Series",
     examples: [
       {
-        title: 'View latency statistics for 5-minute intervals',
-        expr: stripIndents`filter @type = "REPORT" |
-                         stats avg(@duration), max(@duration), min(@duration) by bin(5m)`,
+        title:
+          "Return single time-series [replace COS_IN_URL, update format, and column names (field_name, time_stamp, observation) to match those in your data]",
+        format: "time_series",
+        time_column: "tt",
+        queryText: stripIndents`WITH container_ts_table AS
+  (SELECT field_name,
+          ts
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
+ tmp_table AS
+(
+SELECT field_name AS user_agent,
+       ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt,
+                                                                                value)
+FROM container_ts_table)
+ SELECT tt, log(value) as value
+FROM tmp_table
+WHERE user_agent LIKE "<a-value-in-column"
+INTO <COS_OUT_URL> STORED AS PARQUET`,
       },
       {
-        title: 'Determine the amount of overprovisioned memory',
-        expr: stripIndent`
-      filter @type = "REPORT" |
-      stats max(@memorySize / 1024 / 1024) as provisonedMemoryMB,
-            min(@maxMemoryUsed / 1024 / 1024) as smallestMemoryRequestMB,
-            avg(@maxMemoryUsed / 1024 / 1024) as avgMemoryUsedMB,
-            max(@maxMemoryUsed / 1024 / 1024) as maxMemoryUsedMB,
-            provisonedMemoryMB - maxMemoryUsedMB as overProvisionedMB`,
+        title:
+          "Return multiple time-series [replace COS_IN_URL, update format, and column names (field_name, time_stamp, observation) to match those in your data]",
+        format: "time_series",
+        time_column: "tt",
+        metrics_column: "user_agent",
+        queryText: stripIndents`WITH container_ts_table AS
+  (SELECT field_name,
+          ts
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
+ tmp_table AS
+(
+SELECT field_name AS user_agent,
+       ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt,
+                                                                                value)
+FROM container_ts_table)
+ SELECT tt, log(value) as value
+FROM tmp_table
+INTO <COS_OUT_URL> STORED AS PARQUET`,
       },
+    ],
+  },
+  {
+    category: "Table",
+    examples: [
       {
-        title: 'Find the most expensive requests',
-        expr: stripIndents`filter @type = "REPORT" |
-                         fields @requestId, @billedDuration |
-                         sort by @billedDuration desc`,
+        title: "Return a table-form data",
+        format: "table",
+        queryText: stripIndents`WITH container_ts_table AS
+  (SELECT field_name, ts
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
+SELECT field_name AS user_agent,
+       ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt, value)
+FROM container_ts_table INTO <COS_OUT_URL> STORED AS PARQUET`,
       },
     ],
   },
 ];
-//const CHEAT_SHEET_ITEMS: QueryExample[] = [
-//  {
-//    title: 'Getting started',
-//    label:
-//      'Start by selecting a measurement and field from the dropdown above. You can then use the tag selector to further narrow your search.',
-//  },
-//  {
-//    title: 'Request Rate',
-//    expression: 'rate(http_request_total[5m])',
-//    label:
-//      'Given an HTTP request counter, this query calculates the per-second average request rate over the last 5 minutes.',
-//  },
-//  {
-//    title: '95th Percentile of Request Latencies',
-//    expression: 'histogram_quantile(0.95, sum(rate(prometheus_http_request_duration_seconds_bucket[5m])) by (le))',
-//    label: 'Calculates the 95th percentile of HTTP request rate over 5 minute windows.',
-//  },
-//  {
-//    title: 'Alerts Firing',
-//    expression: 'sort_desc(sum(sum_over_time(ALERTS{alertstate="firing"}[24h])) by (alertname))',
-//    label: 'Sums up the alerts that have been firing over the last 24 hours.',
-//  },
-//  {
-//    title: 'Step',
-//    label:
-//      'Defines the graph resolution using a duration format (15s, 1m, 3h, ...). Small steps create high-resolution graphs but can be slow over larger time ranges. Using a longer step lowers the resolution and smooths the graph by producing fewer datapoints. If no step is given the resolution is calculated automatically.',
-//  },
-//];
 
 function renderHighlightedMarkup(code: string, keyPrefix: string) {
   const spans = code;
-  //const grammar = Prism.languages['cloudwatch'] ?? tokenizer;
-  //const tokens = flattenTokens(Prism.tokenize(code, grammar));
-  //const spans = tokens
-  //  .filter(token => typeof token !== 'string')
-  //  .map((token, i) => {
-  //    return (
-  //      <span
-  //        className={`prism-token token ${token.types.join(' ')} ${token.aliases.join(' ')}`}
-  //        key={`${keyPrefix}-token-${i}`}
-  //      >
-  //        {token.content}
-  //      </span>
-  //    );
-  //  });
   return <div className="slate-query-field">{spans}</div>;
 }
 
@@ -125,11 +120,17 @@ const cheatsheetitem__example = css`
   cursor: pointer;
 `;
 
-//export default class LogsCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }>
-//export default (props: ExploreStartPageProps) => (
-//CheatSheet(props: ExploreStartPageProps)
-export default class CheatSheet extends React.PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
-  renderExpression(expr: string, keyPrefix: string) {
+export default class CheatSheet extends React.PureComponent<
+  ExploreStartPageProps,
+  { userExamples: string[] }
+> {
+  renderExpression(
+    expr: string,
+    keyPrefix: string,
+    format: string,
+    time_column: string,
+    metrics_column: string
+  ) {
     const { onClickExample } = this.props;
 
     return (
@@ -137,7 +138,15 @@ export default class CheatSheet extends React.PureComponent<ExploreStartPageProp
         //className="cheat-sheet-item__example"
         className={cx(cheatsheetitem__example)}
         key={expr}
-        onClick={e => onClickExample({ refId: 'A', expression: expr } as DataQuery)}
+        onClick={(e) =>
+          onClickExample({
+            refId: "A",
+            queryText: expr,
+            format: format,
+            time_column: time_column,
+            metrics_column: metrics_column,
+          } as DataQuery)
+        }
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
       </div>
@@ -147,38 +156,26 @@ export default class CheatSheet extends React.PureComponent<ExploreStartPageProp
     return (
       <div>
         <h2>CloudSQL Cheat Sheet</h2>
-        {CLIQ_EXAMPLES.map((cat, j) => (
+        {SQLQUERY_EXAMPLES.map((cat, j) => (
           <div key={`cat-${j}`}>
-            <div className={cx(cheatsheetitem__title, exampleCategory)}>{cat.category}</div>
+            <div className={cx(cheatsheetitem__title, exampleCategory)}>
+              {cat.category}
+            </div>
             {cat.examples.map((item, i) => (
               <div className={cx(cheatsheetitem)} key={`item-${i}`}>
                 <h4>{item.title}</h4>
-                {this.renderExpression(item.expr, `item-${i}`)}
+                {this.renderExpression(
+                  item.queryText,
+                  `item-${i}`,
+                  item.format | "",
+                  item.time_column | "",
+                  item.metrics_column | ""
+                )}
               </div>
             ))}
           </div>
         ))}
       </div>
     );
-    //return (
-    //  <div>
-    //    <h2>CloudSQL Cheat Sheet</h2>
-    //    {CHEAT_SHEET_ITEMS.map((item, index) => (
-    //      <div className="cheat-sheet-item" key={index}>
-    //        <div className="cheat-sheet-item__title">{item.title}</div>
-    //        {item.expression ? (
-    //          <div
-    //            className="cheat-sheet-item__example"
-    //            onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
-    //          >
-    //            <code>{item.expression}</code>
-    //          </div>
-    //        ) : null}
-    //        <div className="cheat-sheet-item__label">{item.label}</div>
-    //      </div>
-    //    ))}
-    //  </div>
-    //);
   }
 }
-//);

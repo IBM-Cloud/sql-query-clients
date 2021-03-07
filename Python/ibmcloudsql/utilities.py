@@ -204,6 +204,8 @@ class IBMCloudAccess:
         complete = False
         count = 0
         retry_delay = 2
+        old_token = self.current_token
+        ro_credentials = None
         while not complete and count < self._iam_max_tries:
             try:
                 ro_credentials = (
@@ -215,22 +217,23 @@ class IBMCloudAccess:
                 count += 1
                 if count > self._iam_max_tries:
                     msg = (
-                        "Login fails: credential cannot be validated",
-                        "- check either (1) the key or (2) if IBM  cloud service is available",
+                        "Login fails: credential cannot be validated"
+                        "- check either (1) the key or (2) if IBM  cloud service is available"
                     )
                     raise AttributeError(msg)
             except requests.exceptions.ReadTimeout:
                 count += 1
                 if count > self._iam_max_tries:
-                    msg = "Increase iam_max_tries, or relaunch again as no response from IAM"
+                    msg = (
+                        "Increase iam_max_tries (current set to {}),"
+                        " or relaunch again as no response from IAM"
+                    ).format(self._iam_max_tries)
                     raise AttributeError(msg)
                 time.sleep(retry_delay)
-            except Exception:
-                print("print ro_credentials")
-                print(ro_credentials)
-        if self.current_token:
-            assert self.current_token != ro_credentials.token
-            print("check token")
+            except Exception as e:
+                raise e
+        if old_token is not None:
+            assert old_token != ro_credentials.token
 
         self.request_headers = {"Content-Type": "application/json"}
         self.request_headers.update({"Accept": "application/json"})

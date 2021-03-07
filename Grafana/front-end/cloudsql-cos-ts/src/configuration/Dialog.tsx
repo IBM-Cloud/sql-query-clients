@@ -13,13 +13,22 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import React from 'react';
-import { Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import React from "react";
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@material-ui/core";
+import { DataSourceInstanceSettings } from "@grafana/data";
 
-import { COSIBMDataSourceOptions } from '../types';
+import { COSIBMDataSourceOptions } from "../types";
 
-export function AlertDialog(props: DataSourceInstanceSettings<COSIBMDataSourceOptions>) {
+export function AlertDialog(
+  props: DataSourceInstanceSettings<COSIBMDataSourceOptions>
+) {
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
@@ -42,7 +51,9 @@ export function AlertDialog(props: DataSourceInstanceSettings<COSIBMDataSourceOp
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">{'Datasource setting info'}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">
+            {"Datasource setting info"}
+          </DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               URL {props.url} API Key {props.jsonData.apiKey}

@@ -13,26 +13,34 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import React, { memo, ChangeEvent, useState } from 'react';
+import React, { memo, ChangeEvent, useState } from "react";
 
 // Types
-import { ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { ExploreQueryFieldProps, SelectableValue } from "@grafana/data";
 
-import { COSIBMDataSource } from './DataSource';
+import { COSIBMDataSource } from "./DataSource";
 //import { FORMAT_OPTIONS, CloudSQLQuery, COSIBMDataSourceOptions, defaultMTSQuery } from './types';
-import { FORMAT_OPTIONS, CloudSQLQuery, COSIBMDataSourceOptions } from './types';
+import {
+  FORMAT_OPTIONS,
+  CloudSQLQuery,
+  COSIBMDataSourceOptions,
+} from "./types";
 
-import { CloudSQLQueryField } from './configuration/QueryFields';
+import { CloudSQLQueryField } from "./configuration/QueryFields";
 //import { QueryField } from '@grafana/ui';
 //import { defaults } from 'lodash';
 //import CloudSQLQueryField from './CloudSQLQueryField';
 //import { CloudSQLExploreExtraField } from './CloudSQLExploreExtraField';
-import { LegacyForms } from '@grafana/ui';
+import { LegacyForms } from "@grafana/ui";
 const { Select, FormField, Switch } = LegacyForms;
 
-import { CloudSQLHelp } from './sql/help';
+import { CloudSQLHelp } from "./sql/help";
 
-export type Props = ExploreQueryFieldProps<COSIBMDataSource, CloudSQLQuery, COSIBMDataSourceOptions>;
+export type Props = ExploreQueryFieldProps<
+  COSIBMDataSource,
+  CloudSQLQuery,
+  COSIBMDataSourceOptions
+>;
 // NOTE: It has those provided by QueryFieldProps
 // {from here
 //NOTE: .datasource: COSIBMDataSource
@@ -212,7 +220,9 @@ export function CloudSQLExploreQueryEditor(props: Props) {
           options={FORMAT_OPTIONS}
           onChange={onFormatChange}
           /*           value={FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0]} */
-          value={FORMAT_OPTIONS.find(option => option.value! === query.format)}
+          value={FORMAT_OPTIONS.find(
+            (option) => option.value! === query.format
+          )}
           //defaultValue =
         />
         <Switch
@@ -226,7 +236,7 @@ export function CloudSQLExploreQueryEditor(props: Props) {
           //onChange={event => {
           //  props.query.showingHelp = !props.query.showingHelp;
           //}}
-          onChange={event => {
+          onChange={(event) => {
             //props.query.showingHelp = !props.query.showingHelp;
             setShowingHelp(!showingHelp);
           }}
