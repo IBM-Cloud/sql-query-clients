@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
+import getpass
+import time
+from datetime import datetime
 
 import ibm_boto3
 import ibm_botocore
-from ibm_botocore.client import Config
-from datetime import datetime
-import getpass
+import requests
 
 
 def rename_keys(d, keys):
@@ -47,6 +48,7 @@ def static_vars(**kwargs):
 
     IMPORTANT: Inside the function, access to the variable should be using the function name, e.g. func.var_stat
     """
+
     def decorate(func):
         for k in kwargs:
             setattr(func, k, kwargs[k])
@@ -55,50 +57,116 @@ def static_vars(**kwargs):
     return decorate
 
 
-class IBMCloudAccess():
+class IBMCloudAccess:
     """
     This class provides APIs to get credentials to interact with IBM Cloud services, e.g. COS, SQL Query
+
+    Parameters
+    ----------
+    cloud_apikey : str, optional
+        an account-level API key [manage/Access (IAM)/IBM Cloud API keys]
+
+    client_info : str, optional
+        a description
+
+    thread_safe: bool, optional
+        a new Session object is created if not provided
+
+    session: ibm_boto3.session.Session, optional
+        provide a Session object so that it can be reused
+
+    staging: bool, optional
+        if True, then uses the test IAM endpoint
+    iam_max_tries: int, optional
+        Number of tries to connect to IAM service
     """
-    def __init__(self, cloud_apikey="", client_info="", staging=False):
+
+    def __init__(
+        self,
+        cloud_apikey="",
+        client_info="",
+        staging=False,
+        thread_safe=False,
+        session=None,
+        iam_max_tries: int = 1,
+    ):
         self.apikey = cloud_apikey
-        self.staging=staging
-        if client_info == '':
-            self.user_agent = 'IBMCloudAccess'
+        self.staging = staging
+        self._iam_max_tries = iam_max_tries
+        assert self._iam_max_tries >= 1
+        if client_info == "":
+            self.user_agent = "IBMCloudAccess"
         else:
             self.user_agent = client_info
-        self.request_headers = {'Content-Type': 'application/json'}
-        self.request_headers.update({'Accept': 'application/json'})
-        self.request_headers.update({'User-Agent': self.user_agent})
+        self.request_headers = {"Content-Type": "application/json"}
+        self.request_headers.update({"Accept": "application/json"})
+        self.request_headers.update({"User-Agent": self.user_agent})
         self.request_headers_xml_content = {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            "Content-Type": "application/x-www-form-urlencoded"
         }
+        self.current_token = None
 
         self.logged_on = False
         self.last_logon = None
-        self._session = self._get_default_session()
+        self._thread_safe = thread_safe
+        if session is None:
+            self._session = self.get_session()
+        else:
+            self._session = session
 
-        self.request_headers_xml_content.update({'Accept': 'application/json'})
-        self.request_headers_xml_content.update(
-            {'User-Agent': self.user_agent})
+        self.request_headers_xml_content.update({"Accept": "application/json"})
+        self.request_headers_xml_content.update({"User-Agent": self.user_agent})
+
+    @property
+    def cos_session(self):
+        return self._session
+
+    @property
+    def thread_safe(self):
+        return self._thread_safe
+
+    def get_session(self):
+        thread_safe = self._thread_safe
+        if thread_safe is False:
+            session = self._get_default_session()
+        else:
+            session = self._get_new_session()
+        return session
 
     def configure(self, cloud_apikey=None):
         """
         Update Cloud API key
         """
         if cloud_apikey is None:
-            self.apikey = getpass.getpass(
-                'Enter IBM Cloud API Key (leave empty to use previous one): '
-            ) or self.apikey
+            self.apikey = (
+                getpass.getpass(
+                    "Enter IBM Cloud API Key (leave empty to use previous one): "
+                )
+                or self.apikey
+            )
         else:
             self.apikey = cloud_apikey
-        self._session = self._get_default_session()
+        self._session._session.set_credentials(ibm_api_key_id=self.apikey)
         self.logged_on = False
         self.last_logon = None
+
+    def _get_new_session(self):
+        """return a new ibm_boto3.session.Session object"""
+        if self.staging:
+            return ibm_boto3.session.Session(
+                ibm_api_key_id=self.apikey,
+                ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+            )
+        else:
+            return ibm_boto3.session.Session(ibm_api_key_id=self.apikey,)
 
     def _get_default_session(self):
         # setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key
         if self.staging:
-            ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey, ibm_auth_endpoint='https://iam.test.cloud.ibm.com/identity/token')
+            ibm_boto3.setup_default_session(
+                ibm_api_key_id=self.apikey,
+                ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+            )
         else:
             ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey)
         return ibm_boto3._get_default_session()
@@ -115,29 +183,63 @@ class IBMCloudAccess():
 
         Raises
         ---------
-        ibm_botocore.exceptions.CredentialRetrievalError:
-           The exception is raised when the credential is incorrect.
+        AttributeError:
+           The exception is raised when the token cannot be retrieved using the current credential.
 
         """
-        if self.logged_on and not force and (datetime.now() -
-                                            self.last_logon).seconds < 300 and \
-                                            ('authorization' in self.request_headers and
-                                            'None' not in self.request_headers['authorization']):
+        if (
+            self.logged_on
+            and not force
+            and (datetime.now() - self.last_logon).seconds < 300
+            and (
+                "authorization" in self.request_headers
+                and "None" not in self.request_headers["authorization"]
+            )
+        ):
             return True
 
-        ## TODO refactor construction to avoid calling private method
+        # TODO refactor construction to avoid calling private method
         boto3_session = self._session
         # ibm_boto3._get_default_session()
-        try:
-            ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
-        except ibm_botocore.exceptions.CredentialRetrievalError as e:
-            print("Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available")
-            raise e
+        complete = False
+        count = 0
+        retry_delay = 2
+        old_token = self.current_token
+        ro_credentials = None
+        while not complete and count < self._iam_max_tries:
+            try:
+                ro_credentials = (
+                    boto3_session.get_credentials().get_frozen_credentials()
+                )
+                self.current_token = ro_credentials.token
+                complete = True
+            except ibm_botocore.exceptions.CredentialRetrievalError:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = (
+                        "Login fails: credential cannot be validated"
+                        "- check either (1) the key or (2) if IBM  cloud service is available"
+                    )
+                    raise AttributeError(msg)
+            except requests.exceptions.ReadTimeout:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = (
+                        "Increase iam_max_tries (current set to {}),"
+                        " or relaunch again as no response from IAM"
+                    ).format(self._iam_max_tries)
+                    raise AttributeError(msg)
+                time.sleep(retry_delay)
+            except Exception as e:
+                raise e
+        if old_token is not None:
+            assert old_token != ro_credentials.token
 
-        self.request_headers = {'Content-Type': 'application/json'}
-        self.request_headers.update({'Accept': 'application/json'})
-        self.request_headers.update({'User-Agent': self.user_agent})
+        self.request_headers = {"Content-Type": "application/json"}
+        self.request_headers.update({"Accept": "application/json"})
+        self.request_headers.update({"User-Agent": self.user_agent})
         self.request_headers.update(
-            {'authorization': 'Bearer {}'.format(ro_credentials.token)})
+            {"authorization": "Bearer {}".format(ro_credentials.token)}
+        )
         self.logged_on = True
         self.last_logon = datetime.now()

@@ -44,6 +44,14 @@ Magic module
    :undoc-members:
    :show-inheritance:
 
+Time-Series SQL Query module
+---------------------------------
+
+.. automodule:: ibmcloudsql.sql_query_ts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Utilities module
 ----------------------------
 

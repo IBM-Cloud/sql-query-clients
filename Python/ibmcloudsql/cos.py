@@ -13,22 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
-
-import ibmcloudsql
-import ibm_boto3
-from ibm_botocore.client import Config
-import xml.etree.ElementTree as ET
-import pandas as pd
+# flake8: noqa E203
 import getpass
 import time
-from datetime import datetime
-import requests
-from pprint import pformat
+import xml.etree.ElementTree as ET
 from collections import namedtuple
-try:
-    from exceptions import RateLimitedException
-except Exception:
-    from .exceptions import RateLimitedException
+from datetime import datetime
+from pprint import pformat
+
+import ibm_boto3
+import pandas as pd
+import requests
+from ibm_botocore.client import Config
+
 try:
     from utilities import IBMCloudAccess
 except Exception:
@@ -36,13 +33,14 @@ except Exception:
 from requests.exceptions import HTTPError
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 # ------------------------------------------------------------------------------
 # Helper class to interact with IBM Watson Studio projects
 # ------------------------------------------------------------------------------
-class ProjectLib():
+class ProjectLib:
     """
     This is used by SQLClient/COSClient via :py:meth:`read` and :py:meth:`write` methods
 
@@ -66,6 +64,7 @@ class ProjectLib():
 
         To support many files, we can switch to using dict such as self._data_out[file_name]
     """
+
     def __init__(self, project, file_name, file_type="json"):
         self._project = project
         self._target_filename = None
@@ -75,7 +74,7 @@ class ProjectLib():
 
     def _track_file(self, filename, file_type):
         """ map to real file name """
-        assert (file_type in ["json", "csv"])
+        assert file_type in ["json", "csv"]
         self._file_type = file_type
         self._target_filename = filename
         if not filename.endswith((".json", ".csv")):
@@ -125,13 +124,15 @@ class ProjectLib():
                         # import pandas as pd
                         # pd.read_json(my_file, nrows=10)
                         import json
+
                         self._data_out = json.load(file_content)
                     elif file_type == "csv":
                         # Read the CSV data file from the object storage into a pandas DataFrame
                         file_content.seek(0)
                         import pandas as pd
+
                         self._data_out = pd.read_csv(file_content, nrows=10)
-        if file_is_found == False:
+        if file_is_found is False:
             if file_type == "json":
                 self._data_out = dict()
             elif file_type == "csv":
@@ -170,16 +171,14 @@ class ProjectLib():
             file_name = self._track_file(file_name, file_type)
         if file_type == "json":
             out = json.dumps(self._data_out)
-            result = self._project.save_data(file_name,
-                                             out,
-                                             set_project_asset=True,
-                                             overwrite=True)
+            result = self._project.save_data(
+                file_name, out, set_project_asset=True, overwrite=True
+            )
         elif file_type == "csv":
             out = self._data_out.to_csv(index=False)
-            result = self._project.save_data(file_name,
-                                             out,
-                                             set_project_asset=True,
-                                             overwrite=True)
+            result = self._project.save_data(
+                file_name, out, set_project_asset=True, overwrite=True
+            )
         return result
 
 
@@ -189,8 +188,9 @@ class ProjectLib():
 class ParsedUrl(object):
     """Use this class to extract information from COS URL
 
-        `cos://<cos-name>/<bucket>/<prefix>/`
+    `cos://<cos-name>/<bucket>/<prefix>/`
     """
+
     def __init__(self):
         """
 
@@ -242,68 +242,67 @@ class ParsedUrl(object):
             "sjc04": "s3.sjc04.cloud-object-storage.appdomain.cloud",
             "sng01": "s3.sng01.cloud-object-storage.appdomain.cloud",
             "au-syd": "s3.au-syd.cloud-object-storage.appdomain.cloud",
-            "us-west": "s3.us-west.cloud-object-storage.test.appdomain.cloud"
+            "us-west": "s3.us-west.cloud-object-storage.test.appdomain.cloud",
         }
         # https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-endpoints
         self._dedicated_endpoints = [
-                "s3.us-south.cloud-object-storage.appdomain.cloud",
-                "s3.us-east.cloud-object-storage.appdomain.cloud",
-                "s3.eu-gb.cloud-object-storage.appdomain.cloud",
-                "s3.eu-de.cloud-object-storage.appdomain.cloud",
-                "s3.au-syd.cloud-object-storage.appdomain.cloud",
-                "s3.jp-tok.cloud-object-storage.appdomain.cloud",
-                "s3.us-west.cloud-object-storage.test.appdomain.cloud",
-                # cross-region
-                "s3.us.cloud-object-storage.appdomain.cloud",
-                "s3.eu.cloud-object-storage.appdomain.cloud",
-                "s3.ap.cloud-object-storage.appdomain.cloud",
-                # single DC
-                "s3.ams03.cloud-object-storage.appdomain.cloud",
-                "s3.che01.cloud-object-storage.appdomain.cloud",
-                "s3.hkg02.cloud-object-storage.appdomain.cloud",
-                "s3.mex01.cloud-object-storage.appdomain.cloud",
-                "s3.mil01.cloud-object-storage.appdomain.cloud",
-                "s3.mon01.cloud-object-storage.appdomain.cloud",
-                "s3.osl01.cloud-object-storage.appdomain.cloud",
-                "s3.par01.cloud-object-storage.appdomain.cloud",
-                "s3.sjc04.cloud-object-storage.appdomain.cloud",
-                "s3.sao01.cloud-object-storage.appdomain.cloud",
-                "s3.seo01.cloud-object-storage.appdomain.cloud",
-                "s3.sng01.cloud-object-storage.appdomain.cloud",
-                "s3.tor01.cloud-object-storage.appdomain.cloud"
-                ]
+            "s3.us-south.cloud-object-storage.appdomain.cloud",
+            "s3.us-east.cloud-object-storage.appdomain.cloud",
+            "s3.eu-gb.cloud-object-storage.appdomain.cloud",
+            "s3.eu-de.cloud-object-storage.appdomain.cloud",
+            "s3.au-syd.cloud-object-storage.appdomain.cloud",
+            "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+            "s3.us-west.cloud-object-storage.test.appdomain.cloud",
+            # cross-region
+            "s3.us.cloud-object-storage.appdomain.cloud",
+            "s3.eu.cloud-object-storage.appdomain.cloud",
+            "s3.ap.cloud-object-storage.appdomain.cloud",
+            # single DC
+            "s3.ams03.cloud-object-storage.appdomain.cloud",
+            "s3.che01.cloud-object-storage.appdomain.cloud",
+            "s3.hkg02.cloud-object-storage.appdomain.cloud",
+            "s3.mex01.cloud-object-storage.appdomain.cloud",
+            "s3.mil01.cloud-object-storage.appdomain.cloud",
+            "s3.mon01.cloud-object-storage.appdomain.cloud",
+            "s3.osl01.cloud-object-storage.appdomain.cloud",
+            "s3.par01.cloud-object-storage.appdomain.cloud",
+            "s3.sjc04.cloud-object-storage.appdomain.cloud",
+            "s3.sao01.cloud-object-storage.appdomain.cloud",
+            "s3.seo01.cloud-object-storage.appdomain.cloud",
+            "s3.sng01.cloud-object-storage.appdomain.cloud",
+            "s3.tor01.cloud-object-storage.appdomain.cloud",
+        ]
         self.endpoint = None
         self.bucket = None
         self.prefix = None
 
     def get_exact_url(self, cos_url):
-        """Convert COS URL from using alias to exact URL"""
+        """convert COS URL from using alias to exact URL"""
         key = cos_url.split("/")[2]
         x = cos_url.replace(key, self.endpoint_alias_mapping.get(key, key), 1)
         return x
 
     def get_endpoint(self, cos_url):
-        """ Return the endpoint string from COS URL"""
+        """return the endpoint string from COS URL"""
         self.endpoint = cos_url.split("/")[2]
-        self.endpoint = self.endpoint_alias_mapping.get(
-            self.endpoint, self.endpoint)
+        self.endpoint = self.endpoint_alias_mapping.get(self.endpoint, self.endpoint)
         return self.endpoint
 
     def get_bucket(self, cos_url):
-        """ Return the bucket name from COS URL"""
+        """return the bucket name from COS URL"""
         self.bucket = cos_url.split("/")[3]
         return self.bucket
 
     def get_prefix(self, cos_url):
-        """ Return the prefix part from COS URL"""
-        self.prefix = cos_url[cos_url.replace('/', 'X', 3).find('/') + 1:]
-        if len(self.prefix) > 0 and self.prefix[-1] == '*':
+        """return the prefix part from COS URL"""
+        self.prefix = cos_url[cos_url.replace("/", "X", 3).find("/") + 1 :]
+        if len(self.prefix) > 0 and self.prefix[-1] == "*":
             self.prefix = self.prefix[:-1]
-            self.fourth_slash = cos_url.replace('/', 'X', 3).find('/')
+            self.fourth_slash = cos_url.replace("/", "X", 3).find("/")
         return self.prefix
 
     def analyze_cos_url(self, cos_url):
-        """ Return a namedtuple containing the 3 fields
+        """return a namedtuple containing the 3 fields
 
         * bucket
         * endpoint
@@ -315,12 +314,15 @@ class ParsedUrl(object):
             COS URL
         """
         nt = namedtuple("COSURL", "endpoint bucket prefix")
-        mycontainer = nt(self.get_endpoint(cos_url), self.get_bucket(cos_url),
-                         self.get_prefix(cos_url))
+        mycontainer = nt(
+            self.get_endpoint(cos_url),
+            self.get_bucket(cos_url),
+            self.get_prefix(cos_url),
+        )
         return mycontainer
 
     def is_valid_cos_url(self, cos_url):
-        """ Validate if a string is COS URL
+        """Validate if a string is COS URL
 
         Returns
         ------
@@ -332,15 +334,17 @@ class ParsedUrl(object):
             return False
 
         cos_url = cos_url[6:]
-        if '/' not in cos_url:
+        if "/" not in cos_url:
             return False
-        if cos_url[-1] != '/':
-            cos_url += '/'
-        if cos_url.count('/') < 2:
+        if cos_url[-1] != "/":
+            cos_url += "/"
+        if cos_url.count("/") < 2:
             return False
         endpoint = self.get_endpoint(origin)
-        if not endpoint in self.endpoint_alias_mapping.values() and \
-        not endpoint in self._dedicated_endpoints:
+        if (
+            endpoint not in self.endpoint_alias_mapping.values()
+            and endpoint not in self._dedicated_endpoints
+        ):
             return False
 
         return True
@@ -368,6 +372,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
     client_info : str, optional
         User-defined string
 
+    thread_safe: bool, optional (=False)
+        If thread-safe is used, a new Session object is created upon this object creation
+
     See also
     ---------
 
@@ -375,12 +382,25 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         * https://ibm.github.io/ibm-cos-sdk-python/
         * https://cloud.ibm.com/docs/services/cloud-object-storage/iam?topic=cloud-object-storage-service-credentials
     """
-    def __init__(self, cloud_apikey="", cos_url="", client_info="COS Client", staging=False):
+
+    def __init__(
+        self,
+        cloud_apikey="",
+        cos_url="",
+        client_info="COS Client",
+        staging=False,
+        thread_safe=False,
+        iam_max_tries=1,
+    ):
         ParsedUrl.__init__(self)
-        IBMCloudAccess.__init__(self,
-                                cloud_apikey=cloud_apikey,
-                                client_info=client_info,
-                                staging=staging)
+        IBMCloudAccess.__init__(
+            self,
+            cloud_apikey=cloud_apikey,
+            client_info=client_info,
+            staging=staging,
+            iam_max_tries=iam_max_tries,
+            thread_safe=thread_safe,
+        )
 
         if cos_url is not None and len(cos_url) > 0:
             if not self.is_valid_cos_url(cos_url):
@@ -394,33 +414,63 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         self._project = None
 
     def _get_cos_client(self, endpoint):
-        return self._get_default_cos_client(endpoint)
+        """we make use via the existing session object -
+        not the default session object
 
-    def _get_default_cos_client(self, endpoint=None):
-        '''
-        Create a low-level service client of COS from the default session
-        '''
-        def _get_default_s3_client(endpoint=None):
-            '''
+        NOTE: The existing session object can also be a default session object
+        """
+
+        def _get_new_s3_client(endpoint=None):
+            """
             Create a low-level service client of COS from the default session
-            '''
+            """
             if endpoint is None:
                 endpoint = self.endpoint
-            assert (endpoint is not None)
-            return ibm_boto3.client('s3',
-                                    config=Config(signature_version='oauth'),
-                                    endpoint_url='https://{}'.format(endpoint))
+            assert endpoint is not None
+            return self._session.client(
+                "s3",
+                config=Config(signature_version="oauth"),
+                endpoint_url="https://{}".format(endpoint),
+            )
+
+        if self.thread_safe:
+            # So that we can avoid the issue of using single session
+            return _get_new_s3_client(endpoint)
+        else:
+            return self._get_default_cos_client(endpoint)
+
+    def _get_default_cos_client(self, endpoint=None):
+        """
+        Create a low-level service client of COS from the default session
+        """
+
+        def _get_default_s3_client(endpoint=None):
+            """
+            Create a low-level service client of COS from the default session
+            """
+            if endpoint is None:
+                endpoint = self.endpoint
+            assert endpoint is not None
+            return ibm_boto3.client(
+                "s3",
+                config=Config(signature_version="oauth"),
+                endpoint_url="https://{}".format(endpoint),
+            )
 
         return _get_default_s3_client(endpoint)
 
-    def list_cos_objects(self, cos_url):
+    def list_cos_objects(self, cos_url, size_unit=None):
         """
-        List all objects in the current COS URL.
+        List all objects in the current COS URL. Also, please read the note to see the role of trailing slash in the COS URL.
 
         Parameters
         ------------
         url: str
             A URI prefix. e.g., cos://us-south/<bucket-name>/object_path/
+
+        size_unit: str, optional ("B" = byte)
+            A value indicate the unit of "Size" column.
+            ["B", "KB", "MB", "GB"]
 
         Returns
         ----------
@@ -444,6 +494,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         ValueError
             if COS URL is invalid
         """
+        if size_unit is None:
+            size_unit = "B"
         if not self.is_valid_cos_url(cos_url):
             msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
@@ -451,27 +503,36 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
-        cos_client = self._get_default_cos_client(url_parsed.endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
         paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=url_parsed.bucket,
-                                           Prefix=url_parsed.prefix)
+        page_iterator = paginator.paginate(
+            Bucket=url_parsed.bucket, Prefix=url_parsed.prefix
+        )
 
         result = None
         for page in page_iterator:
             if "Contents" in page:
-                #print(page['Contents'])
-                page_df = pd.DataFrame.from_dict(page['Contents'],
-                                                 orient='columns')
+                # print(page['Contents'])
+                page_df = pd.DataFrame.from_dict(page["Contents"], orient="columns")
                 if result is None:
                     result = page_df
                 else:
                     result = result.append(page_df, sort=False)
         if result is not None:
-            result = result.drop(columns=['ETag', 'Owner']).rename(
-                columns={"Key": "Object"})
+            result = result.drop(columns=["ETag", "Owner"]).rename(
+                columns={"Key": "Object"}
+            )
+            mapping = {
+                "TB": pow(1024, 4),
+                "GB": 1024 * 1024 * 1024,
+                "MB": 1024 * 1024,
+                "KB": 1024,
+                "B": 1,
+            }
+            assert size_unit in ["B", "KB", "MB", "GB"]
+            result.Size = result.Size / mapping[size_unit]
         else:
             result = pd.DataFrame()
-            # result = pd.DataFrame(columns=['Object', 'LastModified', 'Size', 'StorageClass'])
         return result
 
     def delete_empty_objects(self, cos_url):
@@ -488,16 +549,15 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             raise ValueError(msg)
         result_objects = self.list_cos_objects(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
-        cos_client = self._get_default_cos_client(url_parsed.endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
         bucket = url_parsed.bucket
         max_row_index = len(result_objects)
         for row in range(0, max_row_index):
             if int(result_objects.Size[row]) == 0:
-                cos_client.delete_object(Bucket=bucket,
-                                         Key=result_objects.Object[row])
+                cos_client.delete_object(Bucket=bucket, Key=result_objects.Object[row])
 
     def delete_objects(self, cos_url, dry_run=False):
-        """Delete all objects stored at the given COS URL
+        """delete all objects stored at the given COS URL
 
         https://<cos-url>/<bucket>?prefix=<prefix-path>
 
@@ -555,58 +615,62 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         result_location = cos_url.replace("cos", "https", 1)
         url_parsed = self.analyze_cos_url(cos_url)
 
-        fourth_slash = result_location.replace('/', 'X', 3).find('/')
+        fourth_slash = result_location.replace("/", "X", 3).find("/")
 
-        http_string = result_location[:
-                                      fourth_slash] + '?prefix=' + result_location[
-                                          fourth_slash + 1:]
-        response = requests.get(
-            http_string,
-            headers=self.request_headers,
+        http_string = (
+            result_location[:fourth_slash]
+            + "?prefix="
+            + result_location[fourth_slash + 1 :]
         )
+        response = requests.get(http_string, headers=self.request_headers,)
         if dry_run is True:
             import pprint
+
             print("http request {}".format(http_string))
             pprint.pprint(" response = {}".format(response.content))
 
         if response.status_code == 200 or response.status_code == 201:
-            ns = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+            ns = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
             responseBodyXMLroot = ET.fromstring(response.content)
-            bucket_name = responseBodyXMLroot.find('s3:Name', ns).text
+            bucket_name = responseBodyXMLroot.find("s3:Name", ns).text
             bucket_objects = []
-            if responseBodyXMLroot.findall('s3:Contents', ns):
-                for contents in responseBodyXMLroot.findall('s3:Contents', ns):
-                    key = contents.find('s3:Key', ns)
-                    bucket_objects.append({'Key': key.text})
+            if responseBodyXMLroot.findall("s3:Contents", ns):
+                for contents in responseBodyXMLroot.findall("s3:Contents", ns):
+                    key = contents.find("s3:Key", ns)
+                    bucket_objects.append({"Key": key.text})
             else:
                 print(
-                    'There are no result objects for the COS URL {url}'.format(
-                        url=cos_url))
+                    "There are no result objects for the COS URL {url}".format(
+                        url=cos_url
+                    )
+                )
                 return
         else:
             print(
-                "Result object listing for COS URL at {} failed with http code {}"
-                .format(result_location, response.status_code))
+                "Result object listing for COS URL at {} failed with http code {}".format(
+                    result_location, response.status_code
+                )
+            )
             return
 
-        cos_client = self._get_default_cos_client(url_parsed.endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
 
         if dry_run is True:
             print(type(cos_client))
             print(cos_client)
-            deleted_list_df = pd.DataFrame(columns=['Deleted Object'])
+            deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
         else:
             response = cos_client.delete_objects(
-                Bucket=bucket_name, Delete={'Objects': bucket_objects})
+                Bucket=bucket_name, Delete={"Objects": bucket_objects}
+            )
 
-            deleted_list_df = pd.DataFrame(columns=['Deleted Object'])
-            for deleted_object in response['Deleted']:
+            deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
+            for deleted_object in response["Deleted"]:
                 deleted_list_df = deleted_list_df.append(
-                    [{
-                        'Deleted Object': deleted_object['Key']
-                    }],
+                    [{"Deleted Object": deleted_object["Key"]}],
                     ignore_index=True,
-                    sort=False)
+                    sort=False,
+                )
 
         return deleted_list_df
 
@@ -625,29 +689,30 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         cos_url = self.get_exact_url(cos_url)
         url_parsed = self.analyze_cos_url(cos_url)
-        cos_client = self._get_default_cos_client(url_parsed.endpoint)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
         paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=url_parsed.bucket,
-                                           Prefix=url_parsed.prefix)
+        page_iterator = paginator.paginate(
+            Bucket=url_parsed.bucket, Prefix=url_parsed.prefix
+        )
 
         result = None
         for page in page_iterator:
             if "Contents" in page:
-                #print(page['Contents'])
-                page_df = pd.DataFrame.from_dict(page['Contents'],
-                                                 orient='columns')
+                # print(page['Contents'])
+                page_df = pd.DataFrame.from_dict(page["Contents"], orient="columns")
                 if result is None:
                     result = page_df
                 else:
                     result = result.append(page_df, sort=False)
         if result is not None:
-            result = result.drop(columns=['ETag', 'Owner']).rename(
-                columns={"Key": "Object"})
+            result = result.drop(columns=["ETag", "Owner"]).rename(
+                columns={"Key": "Object"}
+            )
         else:
             result = pd.DataFrame()
         return result
 
-    def get_bucket_info(self, cos_url):
+    def get_bucket_info(self, cos_url):  # noqa: E501
         """ Return the information of the given bucket
 
         Raises
@@ -667,11 +732,14 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         .. code-block:: python
 
+            # NOTE: long strings are broken using ( sub1, sub2)
             {
             "name": "my-new-bucket",
-            "crn": "crn:v1:bluemix:public:cloud-object-storage:global:a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket",
+            "crn": ("crn:v1:bluemix:public:cloud-object-storage:global:"
+                "a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket"),
             "service_instance_id": "xxxxxxx-6c4f-4a62-a165-696756d63903",
-            "service_instance_crn": "crn:v1:bluemix:public:cloud-object-storage:global:a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::",
+            "service_instance_crn": ("crn:v1:bluemix:public:cloud-object-storage:global"
+                ":a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::"),
             "time_created": "2018-03-26T16:23:36.980Z",
             "time_updated": "2018-10-17T19:29:10.117Z",
             "object_count": 764265234,
@@ -686,6 +754,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             msg = "Not a valid COS URL: {}".format(cos_url)
             raise ValueError(msg)
         from cos_config.resource_configuration_v1 import ResourceConfigurationV1
+
         bucket = self.get_bucket(cos_url)
 
         if bucket in self.buckets_info:
@@ -735,8 +804,40 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         client = ResourceConfigurationV1(iam_apikey=api_key)
 
         client.update_bucket_config(
-            bucket,
-            firewall={"allowed_ip": ["10.142.175.0/22", "10.198.243.79"]})
+            bucket, firewall={"allowed_ip": ["10.142.175.0/22", "10.198.243.79"]}
+        )
+
+    def _get_object_stats(
+        self,
+        key,
+        smallest_size,
+        largest_size,
+        oldest_modification,
+        newest_modification,
+        smallest_object,
+        largest_object,
+    ):
+        """Return statistics for objects"""
+        size = int(key["Size"])
+        if size < smallest_size:
+            smallest_size = size
+            smallest_object = key["Key"]
+        if size > largest_size:
+            largest_size = size
+            largest_object = key["Key"]
+        modified = key["LastModified"].replace(tzinfo=None)
+        if modified < oldest_modification:
+            oldest_modification = modified
+        if modified > newest_modification:
+            newest_modification = modified
+        return (
+            smallest_size,
+            largest_size,
+            oldest_modification,
+            newest_modification,
+            smallest_object,
+            largest_object,
+        )
 
     def get_cos_summary(self, url):
         """
@@ -755,23 +856,29 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                 "total_objects"
                 "total_volume"
                 "url"
+        Notes
+        -----
+        Example: self.get_cos_summary_demo()
         """
-        def sizeof_fmt(num, suffix='B'):
-            for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+
+        def sizeof_fmt(num, suffix="B"):
+            for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
                 if abs(num) < 1024.0:
                     return "%3.1f %s%s" % (num, unit, suffix)
                 num /= 1024.0
-            return "%.1f %s%s" % (num, 'Y', suffix)
+            return "%.1f %s%s" % (num, "Y", suffix)
 
         self.logon()
 
-        if url[-1] != '/':
-            url = url + '/'
+        if url[-1] != "/":
+            url = url + "/"
         url_parsed = self.analyze_cos_url(url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
 
         paginator = cos_client.get_paginator("list_objects")
-        page_iterator = paginator.paginate(Bucket=url_parsed.bucket, Prefix=url_parsed.prefix)
+        page_iterator = paginator.paginate(
+            Bucket=url_parsed.bucket, Prefix=url_parsed.prefix
+        )
 
         total_size = 0
         smallest_size = 9999999999999999
@@ -784,35 +891,45 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         for page in page_iterator:
             if "Contents" in page:
-                for key in page['Contents']:
-                    size = int(key["Size"])
-                    total_size += size
-                    if size < smallest_size:
-                        smallest_size = size
-                        smallest_object = key["Key"]
-                    if size > largest_size:
-                        largest_size = size
-                        largest_object = key["Key"]
+                for key in page["Contents"]:
+                    (
+                        smallest_size,
+                        largest_size,
+                        oldest_modification,
+                        newest_modification,
+                        smallest_object,
+                        largest_object,
+                    ) = self._get_object_stats(
+                        key,
+                        smallest_size,
+                        largest_size,
+                        oldest_modification,
+                        newest_modification,
+                        smallest_object,
+                        largest_object,
+                    )
+                    total_size += int(key["Size"])
                     count += 1
-                    modified = key['LastModified'].replace(tzinfo=None)
-                    if modified < oldest_modification:
-                        oldest_modification = modified
-                    if modified > newest_modification:
-                        newest_modification = modified
 
         if count == 0:
-            smallest_size=None
-            oldest_modification=None
-            newest_modification=None
+            smallest_size = None
+            oldest_modification = None
+            newest_modification = None
         else:
             oldest_modification = oldest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
             newest_modification = newest_modification.strftime("%B %d, %Y, %HH:%MM:%SS")
 
-        return {'url': url, 'total_objects': count, 'total_volume': sizeof_fmt(total_size),
-                'oldest_object_timestamp': oldest_modification,
-                'newest_object_timestamp': newest_modification,
-                'smallest_object_size': sizeof_fmt(smallest_size), 'smallest_object': smallest_object,
-                'largest_object_size': sizeof_fmt(largest_size), 'largest_object': largest_object}
+        return {
+            "url": url,
+            "total_objects": count,
+            "total_volume": sizeof_fmt(total_size),
+            "oldest_object_timestamp": oldest_modification,
+            "newest_object_timestamp": newest_modification,
+            "smallest_object_size": sizeof_fmt(smallest_size),
+            "smallest_object": smallest_object,
+            "largest_object_size": sizeof_fmt(largest_size),
+            "largest_object": largest_object,
+        }
 
     # -----------------
     # The methods below are for interacting with a file stored as an asset in a Watson Studio's Project.
@@ -834,7 +951,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             self.read_project_lib_data(file_name)
 
     def read_project_lib_data(self, file_name=None):
-        """Read the content from the given file (via ProjectLib in IBM Watson Studio's COS bucket)
+        """read the content from the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------
@@ -842,12 +959,14 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             If not specified, use the one defined from the beginning
         """
         if self._project is None:
-            print("Please connect to your ProjectLib object with `connect_project_lib` API")
+            print(
+                "Please connect to your ProjectLib object with `connect_project_lib` API"
+            )
         else:
             self._project.read(file_name)
 
     def write_project_lib_data(self, file_name=None):
-        """Write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
+        """write the content to the given file (via ProjectLib in IBM Watson Studio's COS bucket)
 
         Parameters
         ----------
@@ -855,7 +974,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             If not specified, use the one defined from the beginning
         """
         if self._project is None:
-            print("Please connect to your ProjectLib object with `connect_project_lib` API")
+            print(
+                "Please connect to your ProjectLib object with `connect_project_lib` API"
+            )
         else:
             self._project.write(file_name)
 
@@ -864,11 +985,6 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """ Project: IBM Watson Studio ProjectLib object"""
         return self._project
 
-if __name__ == "__main__":
-    cos = COSClient()
-    cos_url = "cos://us-south/sql-query-cos-access-ts/aiops_test/Location=us-south/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/"
-    print("From: ", cos_url)
-    print("To : ", cos.get_exact_url(cos_url))
 
-    cos_url = "cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/aiops_test/Location=eu-de/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/"
-    cos.delete_objects(cos_url)
+if __name__ == "__main__":
+    pass

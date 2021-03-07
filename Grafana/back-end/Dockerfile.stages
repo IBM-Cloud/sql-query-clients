@@ -1,0 +1,251 @@
+FROM alpine:edge as builder
+
+ENV ALPINE_VERSION=edge PYTHON_VERSION=3.8.2
+
+# These are always installed. Notes:
+#   * dumb-init: a proper init system for containers, to reap zombie children
+#   * bash: For entrypoint, and debugging
+#   * ca-certificates: for SSL verification during Pip and easy_install
+#   * python: the binaries themselves
+ENV PACKAGES="\
+  dumb-init \
+  bash \
+  ca-certificates \
+  python3 \
+  python3-dev \
+  py3-setuptools \
+  gcc \
+  alpine-sdk \
+  libffi \
+  libffi-dev \
+  cmake \
+  openssl \
+  openssl-dev \
+  ninja \
+  libuv \
+  libuv-dev \
+  freetype \
+  openblas \
+  openblas-dev \
+  lapack \
+  lapack-dev \
+  blas \
+  blas-dev \
+  libstdc++ \
+  hdf5 \
+  hdf5-dev \
+  libzmq \
+  zeromq-dev \
+  libjpeg \
+  jpeg-dev \
+  thrift \
+  thrift-dev \
+  snappy \
+  snappy-dev \
+  gflags \
+  gflags-dev \
+  clang \
+  clang-extra-tools \
+  clang-dev \
+  rapidjson \
+  rapidjson-dev \
+  lz4-dev \
+  zstd-dev \
+  re2-dev \
+  bzip2-dev \
+  utf8proc-dev \
+  libexecinfo \
+  libexecinfo-dev \
+  libunwind \
+  libunwind-dev \
+  llvm-libunwind \
+"
+# https://github.com/PDAL/PDAL/issues/1904
+# backtrace ~ libunwind
+
+RUN echo \
+  # replacing default repositories with edge ones
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" > /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+  #&& echo "http://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/testing" > /etc/apk/repositories \
+  #&& echo "http://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/community" >> /etc/apk/repositories \
+  #&& echo "http://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/main" >> /etc/apk/repositories \
+  # Add the packages, with a CDN-breakage fallback if needed
+  && apk add $PACKAGES || \
+    (sed -i -e 's/dl-cdn/dl-4/g' /etc/apk/repositories && apk add $PACKAGES) \
+  && apk add --update py3-pip \
+  # turn back the clock -- so hacky!
+  #&& echo "http://dl-cdn.alpinelinux.org/alpine/v$ALPINE_VERSION/main/" > /etc/apk/repositories \
+  # && echo "@edge-testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+  # && echo "@edge-community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+  # && echo "@edge-main http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+  # make some useful symlinks that are expected to exist
+  # && if [[ ! -e /usr/bin/python ]];        then ln -sf /usr/bin/python2.7 /usr/bin/python; fi \
+  && if [[ ! -e /usr/bin/pip ]];        then ln -sf /usr/bin/pip3 /usr/bin/pip ; fi \
+  # && if [[ ! -e /usr/bin/python-config ]]; then ln -sf /usr/bin/python2.7-config /usr/bin/python-config; fi \
+  # && if [[ ! -e /usr/bin/easy_install ]];  then ln -sf /usr/bin/easy_install-2.7 /usr/bin/easy_install; fi \
+  # Install and upgrade Pip
+  #&& easy_install pip \
+  && pip install --upgrade pip \
+  && if [[ ! -e /usr/bin/pip ]]; then ln -sf /usr/bin/pip2.7 /usr/bin/pip; fi \
+  && echo
+
+# Copy in the entrypoint script -- this installs prerequisites on container start.
+COPY ./requirements.txt ./
+#COPY entrypoint.sh /entrypoint.sh
+
+RUN apk add --virtual .build-deps gcc musl-dev \
+  && pip install --no-cache-dir cython==0.29.21 \
+  && apk del .build-deps
+#RUN apk add cython-dev
+RUN pip3 install --no-cache-dir --upgrade wheel==0.35.1
+ENV PYTHON_ARCH=64
+ENV FREETYPEPY_BUNDLE_FT=1
+ENV MAKEFLAGS="-j$(nproc)"
+#RUN CFLAGS="-Os -g0 -Wl,--strip-all -Wno-error=maybe-uninitialized" pip3 install --no-build-isolation --compile --global-option=build_ext --global-option="-j 4" -r requirements.txt
+# RUN CFLAGS="-Os -g0 -Wl,--strip-all -Wno-error=maybe-uninitialized" pip3 install --no-use-pep517 --no-build-isolation --compile --global-option=build_ext --global-option="-j 4" --global-option="--inplace" freetype-py --no-binary freetype-py
+RUN CFLAGS="-Os -g0 -Wl,--strip-all -Wno-error=maybe-uninitialized" pip3 install --no-cache-dir --no-build-isolation --compile --global-option=build_ext --global-option="-j 4" numpy==1.19.4
+RUN pip3 install --no-cache-dir ibm-cos-sdk  sqlparse appnope pybind11
+RUN CFLAGS="-Os -g0 -Wl,--strip-all -Wno-error=maybe-uninitialized" pip3 install --no-cache-dir --no-build-isolation --compile --global-option=build_ext --global-option="-j 4" scipy==1.5.4
+RUN CFLAGS="-Os -g0 -Wl,--strip-all -Wno-error=maybe-uninitialized" pip3 install --no-cache-dir --no-build-isolation --compile --global-option=build_ext --global-option="-j 4" pandas==1.1.4
+RUN pip3 install --no-cache-dir -r requirements.txt
+ENV PACKAGES="\
+  thrift \
+  thrift-dev \
+  snappy \
+  snappy-dev \
+  gflags \
+  gflags-dev \
+  clang \
+  clang-extra-tools \
+  clang-dev \
+  rapidjson \
+  rapidjson-dev \
+  lz4-dev \
+  zstd-dev \
+  re2-dev \
+  bzip2-dev \
+  utf8proc-dev \
+  libexecinfo \
+  libexecinfo-dev \
+  libunwind \
+  libunwind-dev \
+  llvm-libunwind \
+  boost-dev \
+"
+RUN echo \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" > /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+  && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
+  && apk add $PACKAGES || \
+    (sed -i -e 's/dl-cdn/dl-4/g' /etc/apk/repositories && apk add $PACKAGES)
+# https://github.com/apache/arrow/archive/apache-arrow-0.17.1.tar.gz
+# https://github.com/apache/arrow/archive/apache-arrow-1.0.1.tar.gz
+#ARG ARROW_VER=0.15.1
+ARG ARROW_VER=2.0.0
+ARG ARROW_HOME=/usr/local
+ARG ARROW_BUILD_TYPE=release
+
+#RUN apk add brotli-libs flatbuffers flatbuffers-dev
+RUN cd / && wget https://github.com/apache/arrow/archive/apache-arrow-${ARROW_VER}.tar.gz \
+  && tar -xvf apache-arrow-${ARROW_VER}.tar.gz \
+  && cd arrow-apache-arrow-${ARROW_VER} \
+  && mkdir cpp/build \
+  && cd cpp/build \
+  && cmake -DCMAKE_BUILD_TYPE=$ARROW_BUILD_TYPE   -DOPENSSL_ROOT_DIR=/usr/local/ssl   \
+    -DCMAKE_INSTALL_LIBDIR=lib   -DCMAKE_INSTALL_PREFIX=$ARROW_HOME \
+    -DARROW_WITH_BZ2=ON   -DARROW_WITH_ZLIB=ON   -DARROW_WITH_ZSTD=ON   \
+    -DARROW_WITH_LZ4=ON   -DARROW_WITH_SNAPPY=ON   -DARROW_PARQUET=ON   \
+    -DARROW_PYTHON=ON   -DARROW_PLASMA=ON   -DARROW_BUILD_TESTS=OFF    -DARROW_WITH_BACKTRACE=OFF   .. \
+  && make \
+  && make install \
+  && cd ../../python \
+  && python3 setup.py build_ext --build-type=$ARROW_BUILD_TYPE --with-parquet \
+  && python3 setup.py install
+  && rm -rf /apache-arrow-${ARROW_VER}.tar.gz /apache-arrow-${ARROW_VER}
+
+#RUN pip3 install freetype-py --no-binary freetype-py
+
+## These packages are not installed immediately, but are added at runtime or ONBUILD to shrink the image as much as possible. Notes:
+##   * build-base: used so we include the basic development packages (gcc)
+##   * linux-headers: commonly needed, and an unusual package name from Alpine.
+##   * python-dev: are used for gevent e.g.
+##   * py-pip: provides pip, not needed once the software is built
+#ENV BUILD_PACKAGES="\
+#  build-base \
+#  linux-headers \
+#  python3-dev \
+#"
+#
+## This script installs APK and Pip prerequisites on container start, or ONBUILD. Notes:
+##   * Reads the -a flags and /apk-requirements.txt for install requests
+##   * Reads the -b flags and /build-requirements.txt for build packages -- removed when build is complete
+##   * Reads the -p flags and /requirements.txt for Pip packages
+##   * Reads the -r flag to specify a different file path for /requirements.txt
+##ENTRYPOINT ["/usr/bin/dumb-init", "bash", "/entrypoint.sh"]
+
+
+#FROM alpine:3.12
+#FROM nickgryg/alpine-pandas:3.8.5
+# Python 3.8.5 + pandas + Alpine 3.12
+#docker pull nickgryg/alpine-pandas:3.8.5
+FROM python:3.8-alpine3.12 as deploy
+# https://hub.docker.com/_/python
+ENV PACKAGES="\
+  dumb-init \
+"
+#RUN apk add --no-cache $PACKAGES
+RUN apk add bash
+
+WORKDIR /usr/src/app
+
+ENV PYTHON_SITEPKG /usr/local/lib/python3.8/site-packages
+COPY --from=builder /usr/lib/libopenblasp-r0.3.12.so /usr/lib/libopenblas.so.3
+COPY --from=builder /usr/lib/libgfortran.so.5.0.0 /usr/lib/libgfortran.so.5
+COPY --from=builder /usr/lib/libquadmath.so.0.0.0 /usr/lib/libquadmath.so.0
+COPY --from=builder /usr/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
+COPY --from=builder /usr/lib/libstdc++.so.6.0.28 /usr/lib/libstdc++.so.6
+
+COPY --from=builder /usr/lib/python3.8/site-packages/bottle.py $PYTHON_SITEPKG/
+COPY --from=builder /usr/lib/python3.8/site-packages/six.py $PYTHON_SITEPKG/
+COPY --from=builder /usr/lib/python3.8/site-packages/greenlet.cpython-38-x86_64-linux-gnu.so $PYTHON_SITEPKG/
+COPY --from=builder /usr/lib/python3.8/site-packages/numpy $PYTHON_SITEPKG/numpy
+COPY --from=builder /usr/lib/python3.8/site-packages/ibm_botocore $PYTHON_SITEPKG/ibm_botocore
+COPY --from=builder /usr/lib/python3.8/site-packages/ibm_s3transfer $PYTHON_SITEPKG/ibm_s3transfer
+COPY --from=builder /usr/lib/python3.8/site-packages/backoff $PYTHON_SITEPKG/backoff
+COPY --from=builder /usr/lib/python3.8/site-packages/requests $PYTHON_SITEPKG/requests
+COPY --from=builder /usr/lib/python3.8/site-packages/requests_oauthlib $PYTHON_SITEPKG/requests_oauthlib
+COPY --from=builder /usr/lib/python3.8/site-packages/urllib3 $PYTHON_SITEPKG/urllib3
+COPY --from=builder /usr/lib/python3.8/site-packages/chardet $PYTHON_SITEPKG/chardet
+COPY --from=builder /usr/lib/python3.8/site-packages/certifi $PYTHON_SITEPKG/certifi
+COPY --from=builder /usr/lib/python3.8/site-packages/idna $PYTHON_SITEPKG/idna
+COPY --from=builder /usr/lib/python3.8/site-packages/pandas $PYTHON_SITEPKG/pandas
+COPY --from=builder /usr/lib/python3.8/site-packages/pytz $PYTHON_SITEPKG/pytz
+COPY --from=builder /usr/lib/python3.8/site-packages/dateutil $PYTHON_SITEPKG/dateutil
+COPY --from=builder /usr/lib/python3.8/site-packages/jmespath $PYTHON_SITEPKG/jmespath
+COPY --from=builder /usr/lib/python3.8/site-packages/ibm_boto3 $PYTHON_SITEPKG/ibm_boto3
+COPY --from=builder /usr/lib/python3.8/site-packages/sqlparse $PYTHON_SITEPKG/sqlparse
+COPY --from=builder /usr/lib/python3.8/site-packages/joblib $PYTHON_SITEPKG/joblib
+COPY --from=builder /usr/lib/python3.8/site-packages/gevent $PYTHON_SITEPKG/gevent
+COPY --from=builder /usr/lib/python3.8/site-packages/zope $PYTHON_SITEPKG/zope
+COPY --from=builder /usr/lib/python3.8/site-packages/pyarrow-2.0.0-py3.8-linux-x86_64.egg/pyarrow $PYTHON_SITEPKG/pyarrow
+COPY --from=builder /usr/local/lib/libarrow.so.200.0.0 /usr/local/lib/libarrow.so.200
+COPY --from=builder /usr/local/lib/libarrow_python.so.200.0.0 /usr/local/lib/libarrow_python.so.200
+COPY --from=builder /usr/lib/libutf8proc.so.2.3.2 /usr/lib/libutf8proc.so.2
+COPY --from=builder /usr/lib/liblz4.so.1.9.2 /usr/lib/liblz4.so.1
+COPY --from=builder /usr/lib/libsnappy.so.1.1.8 /usr/lib/libsnappy.so.1
+COPY --from=builder /usr/lib/libzstd.so.1.4.5 /usr/lib/libzstd.so.1
+COPY --from=builder /usr/local/lib/libparquet.so.200.0.0 /usr/local/lib/libparquet.so.200
+COPY --from=builder /usr/lib/libthrift-0.13.0.so /usr/lib/libthrift-0.13.0.so
+
+COPY ./home/tmhoangt/cloud_sqlquery .
+RUN cd ./cloud_sqlquery && pip install -e . --no-deps
+RUN cd ./ibmcloudsql && pip install -e . --no-deps
+#RUN pip install ipython
+COPY ./app.py .
+
+EXPOSE 18081
+
+ENTRYPOINT ["python3", "app.py"]
+#ENTRYPOINT ["ls", "."]
