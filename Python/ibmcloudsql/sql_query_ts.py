@@ -20,9 +20,11 @@ import threading
 from isodate import ISO8601Error
 
 try:
-    from .SQLQuery import SQLQuery
+    from .sql_query import SQLClient
+    from .sql_magic import print_sql
 except Exception:
-    from SQLQuery import SQLQuery
+    from sql_query import SQLClient
+    from sql_magic import print_sql
 
 lock = threading.Lock()
 

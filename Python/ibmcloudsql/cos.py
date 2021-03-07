@@ -893,16 +893,16 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             if "Contents" in page:
                 for key in page["Contents"]:
                     (
-                        smallest_object,
-                        largest_object,
+                        smallest_size,
+                        largest_size,
                         oldest_modification,
                         newest_modification,
                         smallest_object,
                         largest_object,
                     ) = self._get_object_stats(
                         key,
-                        smallest_object,
-                        largest_object,
+                        smallest_size,
+                        largest_size,
                         oldest_modification,
                         newest_modification,
                         smallest_object,
