@@ -13,21 +13,31 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import _ from 'lodash';
-import LRU from 'lru-cache';
-import { Value } from 'slate';
+import _ from "lodash";
+import LRU from "lru-cache";
+import { Value } from "slate";
 
-import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
+import { dateTime, LanguageProvider, HistoryItem } from "@grafana/data";
+import {
+  CompletionItem,
+  TypeaheadInput,
+  TypeaheadOutput,
+  CompletionItemGroup,
+} from "@grafana/ui";
 
-import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
-import CloudSQLSyntax, { KEYWORDS, FUNCTIONS, RATE_RANGES } from './cloudsql';
+import {
+  parseSelector,
+  processLabels,
+  processHistogramLabels,
+  fixSummariesMetadata,
+} from "./language_utils";
+import CloudSQLSyntax, { KEYWORDS, FUNCTIONS, RATE_RANGES } from "./cloudsql";
 
-import { COSIBMDataSource } from '../DataSource';
-import { CloudSQLQuery, CloudSQLMetricsMetadata } from '../types';
+import { COSIBMDataSource } from "../DataSource";
+import { CloudSQLQuery, CloudSQLMetricsMetadata } from "../types";
 
-const DEFAULT_KEYS = ['job', 'instance'];
-const EMPTY_SELECTOR = '{}';
+const DEFAULT_KEYS = ["job", "instance"];
+const EMPTY_SELECTOR = "{}";
 const HISTORY_ITEM_COUNT = 5; //number of historical element to take
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
@@ -39,24 +49,29 @@ function wrapLabel(h: string): CompletionItem {
 
 // configure a kind
 const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.kind = 'function';
+  suggestion.kind = "function";
   if (suggestion.detail) {
-    suggestion.documentation += '. Example: \n ' + suggestion.detail;
+    suggestion.documentation += ". Example: \n " + suggestion.detail;
   }
   return suggestion;
 };
 const setKeywordKind = (suggestion: CompletionItem): CompletionItem => {
-  suggestion.kind = 'keyword';
+  suggestion.kind = "keyword";
   //suggestion.kind = 'function';
   if (suggestion.detail) {
-    suggestion.documentation += '. Example: \n ' + suggestion.detail;
+    suggestion.documentation += ". Example: \n " + suggestion.detail;
   }
   return suggestion;
 };
 
-export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
+export function addHistoryMetadata(
+  item: CompletionItem,
+  history: any[]
+): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
+  const historyForItem = history.filter(
+    (h) => h.ts > cutoffTs && h.query === item.label
+  );
   const count = historyForItem.length;
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
@@ -72,7 +87,10 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
   };
 }
 
-function addMetricsMetadata(metric: string, metadata?: CloudSQLMetricsMetadata): CompletionItem {
+function addMetricsMetadata(
+  metric: string,
+  metadata?: CloudSQLMetricsMetadata
+): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
     const { type, help } = metadata[metric][0];
@@ -100,7 +118,10 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
    */
   private labelsCache = new LRU<string, Record<string, string[]>>(10);
 
-  constructor(datasource: COSIBMDataSource, initialValues?: Partial<CloudSQLLanguageProvider>) {
+  constructor(
+    datasource: COSIBMDataSource,
+    initialValues?: Partial<CloudSQLLanguageProvider>
+  ) {
     super();
 
     this.datasource = datasource;
@@ -119,10 +140,7 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
     const last = parts.pop();
     if (last) {
-      return last
-        .trimLeft()
-        .replace(/"$/, '')
-        .replace(/^"/, '');
+      return last.trimLeft().replace(/"$/, "").replace(/^"/, "");
     } else {
       return s;
     }
@@ -138,7 +156,7 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
       //const res = await this.datasource.metadataRequest(url);
       //const body = await (res.data || res.json());
       //return body.data;
-      throw new Error('TODO error');
+      throw new Error("TODO error");
     } catch (error) {
       console.error(error);
     }
@@ -151,10 +169,12 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
+    this.metrics = await this.request("/api/v1/label/__name__/values", []);
     //TODO
     //this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request("/api/v1/metadata", {})
+    );
     this.processHistogramMetrics(this.metrics || []);
 
     return [];
@@ -163,8 +183,8 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
   processHistogramMetrics = (data: string[]) => {
     const { values } = processHistogramLabels(data);
 
-    if (values && values['__name__']) {
-      this.histogramMetrics = values['__name__'].slice().sort();
+    if (values && values["__name__"]) {
+      this.histogramMetrics = values["__name__"].slice().sort();
     }
   };
 
@@ -180,10 +200,13 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     // Local text properties
     const empty = value?.document?.text?.length === 0;
     const selectedLines = value?.document?.getTextsAtRange(value.selection);
-    const currentLine = selectedLines?.size === 1 ? selectedLines.first().getText() : null;
+    const currentLine =
+      selectedLines?.size === 1 ? selectedLines.first().getText() : null;
     let nextCharacter;
     if (value?.selection?.anchor.offset) {
-      nextCharacter = currentLine ? currentLine[value.selection.anchor.offset] : null;
+      nextCharacter = currentLine
+        ? currentLine[value.selection.anchor.offset]
+        : null;
     } else {
       nextCharacter = null;
     }
@@ -193,7 +216,7 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     const prefixUnrecognized = prefix && !tokenRecognized;
 
     // Prevent suggestions in `function(|suffix)`
-    const noSuffix = !nextCharacter || nextCharacter === ')';
+    const noSuffix = !nextCharacter || nextCharacter === ")";
 
     // Prefix is safe if it does not immediately follow a complete expression and has no text after it
     const safePrefix = prefix && !text.match(/^[\]})\s]+$/) && noSuffix;
@@ -203,13 +226,19 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     const isNextOperand = text.match(operatorsPattern);
 
     // Determine candidates by CSS context
-    if (wrapperClasses.includes('context-range')) {
+    if (wrapperClasses.includes("context-range")) {
       // Suggestions for metric[|]
       return this.getRangeCompletionItems();
-    } else if (wrapperClasses.includes('context-labels')) {
+    } else if (wrapperClasses.includes("context-labels")) {
       // Suggestions for metric{|} and metric{foo=|}, as well as metric-independent label queries like {|}
-      return this.getLabelCompletionItems({ prefix, text, value, labelKey, wrapperClasses });
-    } else if (wrapperClasses.includes('context-aggregation') && value) {
+      return this.getLabelCompletionItems({
+        prefix,
+        text,
+        value,
+        labelKey,
+        wrapperClasses,
+      });
+    } else if (wrapperClasses.includes("context-aggregation") && value) {
       // Suggestions for sum(metric) by (|)
       return this.getAggregationCompletionItems(value);
     } else if (empty) {
@@ -228,13 +257,20 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     };
   };
 
-  getBeginningCompletionItems = (context: { history: Array<HistoryItem<CloudSQLQuery>> }): TypeaheadOutput => {
+  getBeginningCompletionItems = (context: {
+    history: Array<HistoryItem<CloudSQLQuery>>;
+  }): TypeaheadOutput => {
     return {
-      suggestions: [...this.getEmptyCompletionItems(context).suggestions, ...this.getTermCompletionItems().suggestions],
+      suggestions: [
+        ...this.getEmptyCompletionItems(context).suggestions,
+        ...this.getTermCompletionItems().suggestions,
+      ],
     };
   };
 
-  getEmptyCompletionItems = (context: { history: Array<HistoryItem<CloudSQLQuery>> }): TypeaheadOutput => {
+  getEmptyCompletionItems = (context: {
+    history: Array<HistoryItem<CloudSQLQuery>>;
+  }): TypeaheadOutput => {
     const { history } = context;
     interface Suggestion {
       prefixMatch?: boolean;
@@ -246,21 +282,21 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
 
     if (history && history.length) {
       const historyItems = _.chain(history)
-        .map(h => h.query.queryText)
+        .map((h) => h.query.queryText)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         //.map(wrapLabel)
-        .map(h => {
+        .map((h) => {
           return { label: h } as CompletionItem;
         })
-        .map(item => addHistoryMetadata(item, history))
+        .map((item) => addHistoryMetadata(item, history))
         .value();
 
       suggestions.push({
         prefixMatch: true,
         skipSort: true,
-        label: 'History',
+        label: "History",
         items: historyItems,
       });
     }
@@ -280,19 +316,19 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     //CompletionItemGroup
     suggestions.push({
       prefixMatch: true,
-      label: 'Functions',
+      label: "Functions",
       items: FUNCTIONS.map(setFunctionKind),
     });
     suggestions.push({
       prefixMatch: true,
-      label: 'Clauses',
+      label: "Clauses",
       items: KEYWORDS.map(setKeywordKind),
     });
 
     if (metrics && metrics.length) {
       suggestions.push({
-        label: 'Metrics',
-        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
+        label: "Metrics",
+        items: metrics.map((m) => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -301,50 +337,66 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
 
   getRangeCompletionItems(): TypeaheadOutput {
     return {
-      context: 'context-range',
+      context: "context-range",
       suggestions: [
         {
-          label: 'Range vector',
+          label: "Range vector",
           items: [...RATE_RANGES],
         },
       ],
     };
   }
 
-  getAggregationCompletionItems = async (value: Value): Promise<TypeaheadOutput> => {
+  getAggregationCompletionItems = async (
+    value: Value
+  ): Promise<TypeaheadOutput> => {
     const suggestions: CompletionItemGroup[] = [];
 
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
-    const queryText = value.document.getBlocks().reduce((text: string | undefined, block) => {
-      const blockText = block?.getText();
-      if (text === undefined) {
-        text = '';
-      }
-      if (value.anchorBlock?.key === block?.key) {
-        // Newline characters are not accounted for but this is irrelevant
-        // for the purpose of extracting the selector string
-        queryOffset = value.selection.anchor.offset + text.length;
-      }
+    const queryText = value.document
+      .getBlocks()
+      .reduce((text: string | undefined, block) => {
+        const blockText = block?.getText();
+        if (text === undefined) {
+          text = "";
+        }
+        if (value.anchorBlock?.key === block?.key) {
+          // Newline characters are not accounted for but this is irrelevant
+          // for the purpose of extracting the selector string
+          queryOffset = value.selection.anchor.offset + text.length;
+        }
 
-      return text + blockText;
-    }, '');
+        return text + blockText;
+      }, "");
 
     // Try search for selector part on the left-hand side, such as `sum (m) by (l)`
-    const openParensAggregationIndex = queryText.lastIndexOf('(', queryOffset);
-    let openParensSelectorIndex = queryText.lastIndexOf('(', openParensAggregationIndex - 1);
-    let closeParensSelectorIndex = queryText.indexOf(')', openParensSelectorIndex);
+    const openParensAggregationIndex = queryText.lastIndexOf("(", queryOffset);
+    let openParensSelectorIndex = queryText.lastIndexOf(
+      "(",
+      openParensAggregationIndex - 1
+    );
+    let closeParensSelectorIndex = queryText.indexOf(
+      ")",
+      openParensSelectorIndex
+    );
 
     // Try search for selector part of an alternate aggregation clause, such as `sum by (l) (m)`
     if (openParensSelectorIndex === -1) {
-      const closeParensAggregationIndex = queryText.indexOf(')', queryOffset);
-      closeParensSelectorIndex = queryText.indexOf(')', closeParensAggregationIndex + 1);
-      openParensSelectorIndex = queryText.lastIndexOf('(', closeParensSelectorIndex);
+      const closeParensAggregationIndex = queryText.indexOf(")", queryOffset);
+      closeParensSelectorIndex = queryText.indexOf(
+        ")",
+        closeParensAggregationIndex + 1
+      );
+      openParensSelectorIndex = queryText.lastIndexOf(
+        "(",
+        closeParensSelectorIndex
+      );
     }
 
     const result = {
       suggestions,
-      context: 'context-aggregation',
+      context: "context-aggregation",
     };
 
     // Suggestions are useless for alternative aggregation clauses without a selector in context
@@ -355,13 +407,17 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     // Range vector syntax not accounted for by subsequent parse so discard it if present
     const selectorString = queryText
       .slice(openParensSelectorIndex + 1, closeParensSelectorIndex)
-      .replace(/\[[^\]]+\]$/, '');
+      .replace(/\[[^\]]+\]$/, "");
 
-    const selector = parseSelector(selectorString, selectorString.length - 2).selector;
+    const selector = parseSelector(selectorString, selectorString.length - 2)
+      .selector;
 
     const labelValues = await this.getLabelValues(selector);
     if (labelValues) {
-      suggestions.push({ label: 'Labels', items: Object.keys(labelValues).map(wrapLabel) });
+      suggestions.push({
+        label: "Labels",
+        items: Object.keys(labelValues).map(wrapLabel),
+      });
       //suggestions.push({ label: 'Labels', items: Object.keys(labelValues).map(h => (<CompletionItem>{label:h})) });
     }
     return result;
@@ -394,13 +450,13 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     let selector;
     let parsedSelector; // { labelKeys: any[]; selector: string };
     try {
-      parsedSelector = parseSelector(line || '', cursorOffset);
+      parsedSelector = parseSelector(line || "", cursorOffset);
       selector = parsedSelector.selector;
     } catch {
       selector = EMPTY_SELECTOR;
     }
 
-    const containsMetric = selector.includes('__name__=');
+    const containsMetric = selector.includes("__name__=");
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
     let labelValues;
@@ -410,15 +466,17 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
     }
 
     if (!labelValues) {
-      console.warn(`Server did not return any values for selector = ${selector}`);
+      console.warn(
+        `Server did not return any values for selector = ${selector}`
+      );
       return { suggestions };
     }
 
-    let context = '';
-    if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
+    let context = "";
+    if ((text && isValueStart) || wrapperClasses.includes("attr-value")) {
       // Label values
       if (labelKey && labelValues[labelKey]) {
-        context = 'context-label-values';
+        context = "context-label-values";
         suggestions.push({
           label: `Label values for "${labelKey}"`,
           items: labelValues[labelKey].map(wrapLabel),
@@ -427,14 +485,21 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
       }
     } else {
       // Label keys
-      const labelKeys = labelValues ? Object.keys(labelValues) : containsMetric ? null : DEFAULT_KEYS;
+      const labelKeys = labelValues
+        ? Object.keys(labelValues)
+        : containsMetric
+        ? null
+        : DEFAULT_KEYS;
 
       if (labelKeys) {
         const possibleKeys = _.difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
-          context = 'context-labels';
-          const newItems = possibleKeys.map(key => ({ label: key }));
-          const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
+          context = "context-labels";
+          const newItems = possibleKeys.map((key) => ({ label: key }));
+          const newSuggestion: CompletionItemGroup = {
+            label: `Labels`,
+            items: newItems,
+          };
           suggestions.push(newSuggestion);
         }
       }
@@ -475,22 +540,25 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
    * @param name
    * @param withName
    */
-  fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (
+    name: string,
+    withName?: boolean
+  ): Promise<Record<string, string[]>> => {
     //const tRange = this.datasource.getTimeRange();
     const tRange = { start: 0, end: 1 }; //TODO remove this
     const params = new URLSearchParams({
-      'match[]': name,
-      start: tRange['start'].toString(),
-      end: tRange['end'].toString(),
+      "match[]": name,
+      start: tRange["start"].toString(),
+      end: tRange["end"].toString(),
     });
     const url = `/api/v1/series?${params.toString()}`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    params.set('start', this.roundToMinutes(tRange['start']).toString());
-    params.set('end', this.roundToMinutes(tRange['end']).toString());
-    params.append('withName', withName ? 'true' : 'false');
+    params.set("start", this.roundToMinutes(tRange["start"]).toString());
+    params.set("end", this.roundToMinutes(tRange["end"]).toString());
+    params.append("withName", withName ? "true" : "false");
     const cacheKey = `/api/v1/series?${params.toString()}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
@@ -508,7 +576,9 @@ export default class CloudSQLLanguageProvider extends LanguageProvider {
    * fetchSeriesLabels.
    */
   fetchDefaultLabels = _.once(async () => {
-    const values = await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
+    const values = await Promise.all(
+      DEFAULT_KEYS.map((key) => this.fetchLabelValues(key))
+    );
     return values.reduce((acc, value) => ({ ...acc, ...value }), {});
   });
 }

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
-__version__ = '0.4.14'
-
+__version__ = "0.4.14"
+# flake8: noqa F401
 from .SQLQuery import SQLQuery
+from .sql_query_ts import SQLClientTimeSeries
 from .exceptions import RateLimitedException
 from .sql_magic import SQLMagic
-from .cos import COSClient

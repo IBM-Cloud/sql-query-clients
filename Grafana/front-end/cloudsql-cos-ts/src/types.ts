@@ -13,11 +13,11 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, SelectableValue } from "@grafana/data";
 
 export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
+  { label: "Time series", value: "time_series" },
+  { label: "Table", value: "table" },
 ];
 
 export interface CloudSQLQuery extends DataQuery {
@@ -37,7 +37,7 @@ export const defaultTSQuery: Partial<CloudSQLQuery> = {
   queryText: `WITH container_ts_table AS
   (SELECT field_name,
           ts
-   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=d778a83b-23ae-4be4-bbb8-43168fd63f1c STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
  tmp_table AS
 (
 SELECT field_name AS user_agent,
@@ -47,16 +47,16 @@ FROM container_ts_table)
  SELECT tt, log(value) as value
 FROM tmp_table
 WHERE user_agent LIKE "COS GO"
-INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET`,
-  format: 'time_series',
-  time_column: 'tt',
+INTO <COS_OUT_URL> STORED AS PARQUET`,
+  format: "time_series",
+  time_column: "tt",
 };
 export const defaultMTSQuery: Partial<CloudSQLQuery> = {
   //return multiple time-series
   queryText: `WITH container_ts_table AS
   (SELECT field_name,
           ts
-   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=d778a83b-23ae-4be4-bbb8-43168fd63f1c STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts),
  tmp_table AS
 (
 SELECT
@@ -65,25 +65,24 @@ SELECT
 FROM container_ts_table)
  SELECT tt, log(value) as value, user_agent
 FROM tmp_table
-INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET`,
-  format: 'time_series',
-  time_column: 'tt',
-  metrics_column: 'user_agent',
+INTO <COS_OUT_URL> STORED AS PARQUET`,
+  format: "time_series",
+  time_column: "tt",
+  metrics_column: "user_agent",
 };
 export const defaultQuery: Partial<CloudSQLQuery> = {
   queryText: `WITH container_ts_table AS
   (SELECT field_name,
           ts
-   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=d778a83b-23ae-4be4-bbb8-43168fd63f1c STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
+   FROM <COS_IN_URL> STORED AS PARQUET USING TIME_SERIES_FORMAT(KEY="field_name", timetick="time_stamp", value="observation") IN ts)
 SELECT field_name AS user_agent,
        ts_explode(ts_seg_sum(TS_SEGMENT_BY_TIME(ts, 604800000, 604800000))) AS (tt,
                                                                                 value)
-FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET`,
-  format: 'table',
+FROM container_ts_table INTO <COS_OUT_URL> STORED AS PARQUET`,
+  format: "table",
 };
 
-export interface ClousSQLQueryRequest extends CloudSQLQuery {
-}
+export interface ClousSQLQueryRequest extends CloudSQLQuery {}
 
 export interface CloudSQLMetricsMetadataItem {
   type: string;
@@ -96,11 +95,11 @@ export interface CloudSQLMetricsMetadata {
 }
 
 export const DataFormatTypeOptions = [
-  { value: 'JSON', label: 'JSON' },
-  { value: 'CSV', label: 'CSV' },
-  { value: 'PARQUET', label: 'PARQUET' },
-  { value: 'AVRO', label: 'AVRO' },
-  { value: 'ORC', label: 'ORC' },
+  { value: "JSON", label: "JSON" },
+  { value: "CSV", label: "CSV" },
+  { value: "PARQUET", label: "PARQUET" },
+  { value: "AVRO", label: "AVRO" },
+  { value: "ORC", label: "ORC" },
 ] as SelectableValue[];
 /**
  * These are options configured for each DataSource instance

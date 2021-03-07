@@ -1984,7 +1984,7 @@ class SQLClientTimeSeries(SQLQuery):
             result = query_day()
         return result
 
-    def human_form_to_machine_form(self):
+    def human_form_to_machine_form(self, sql_stmt):
         """ apply magic tricks to convert some useful names, e.g. hour, day, ... to the expected numeric value in [ms] - which is the expected input to TimeSeries functions in SQL
         """
         with lock:
@@ -1993,18 +1993,31 @@ class SQLClientTimeSeries(SQLQuery):
             self.format_()
             sql_stmt = self._sql_stmt
             self._sql_stmt = backup_stmt
+        return sql_stmt
 
     def execute_sql(self, *args, **kwargs):
-        self.human_form_to_machine_form()
-        super().execute_sql(*args, **kwargs)
+        sql_stmt = args[0]
+        tmp = list(args)
+        sql_stmt = self.human_form_to_machine_form(sql_stmt)
+        tmp[0] = sql_stmt
+        args = tuple(tmp)
+        return super().execute_sql(*args, **kwargs)
 
     def run_sql(self, *args, **kwargs):
-        self.human_form_to_machine_form()
-        super().run_sql(*args, **kwargs)
+        sql_stmt = args[0]
+        tmp = list(args)
+        sql_stmt = self.human_form_to_machine_form(sql_stmt)
+        tmp[0] = sql_stmt
+        args = tuple(tmp)
+        return super().run_sql(*args, **kwargs)
 
     def submit_sql(self, *args, **kwargs):
-        self.human_form_to_machine_form()
-        super().submit_sql(*args, **kwargs)
+        sql_stmt = args[0]
+        tmp = list(args)
+        sql_stmt = self.human_form_to_machine_form(sql_stmt)
+        tmp[0] = sql_stmt
+        args = tuple(tmp)
+        return super().submit_sql(*args, **kwargs)
 
 
 def test_run():

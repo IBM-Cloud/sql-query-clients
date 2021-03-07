@@ -21,8 +21,11 @@ import time
 import types
 import urllib
 import xml.etree.ElementTree as ET
+from collections import namedtuple
+from pprint import pformat
 
 import backoff
+import dateutil.parser
 import numpy as np
 import pandas as pd
 import requests
@@ -52,30 +55,22 @@ except Exception:
     )
 try:
     from .cos import COSClient
-except Exception:
-    from cos import COSClient
-try:
-    from sql_magic import SQLMagic, format_sql, print_sql
-except Exception:
-    from .sql_magic import SQLMagic, format_sql, print_sql
-try:
-    from .catalog_table import HiveMetastore
     from .utilities import rename_keys
-except Exception:
-    from catalog_table import HiveMetastore
+    from .sql_magic import SQLMagic, format_sql, print_sql
+    from .catalog_table import HiveMetastore
+except ImportError:
+    from cos import COSClient
     from utilities import rename_keys
-
+    from sql_magic import SQLMagic, format_sql, print_sql
+    from catalog_table import HiveMetastore
 import logging
-
-logger = logging.getLogger(__name__)
 from functools import wraps
 import json
 from json import JSONDecodeError
-import dateutil.parser
-from pprint import pformat
-from collections import namedtuple
 import inspect
 import re
+
+logger = logging.getLogger(__name__)
 
 
 def validate_job_status(f):
@@ -323,7 +318,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return self.jobs_tracking
 
     def configure(self, apikey=None, instance_crn=None, cos_out_url=None):
-        """ Update the configuration
+        """ update the configuration
         """
         COSClient.configure(self, apikey)
         if instance_crn is None:
@@ -355,7 +350,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     if self.is_valid_cos_url(cos_url):
                         break
         else:
-            self.cos_out_url = cos_out_url
+            self.target_cos_url = cos_out_url
         HiveMetastore.configure(self, self.target_cos_url)
         self.logon(force=True)
 
@@ -617,8 +612,16 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     def wait_for_job(self, jobId, sleep_time=2):
         """
-        It's possible that the job's failed because of Spark's internal error.
-        So "unknown" is added for such cases.
+        It's possible that the job's failed because of Spark's internal error
+        which does not have any status. So "unknown" is added for such cases.
+
+        Parameters
+        -----------
+        jobId: str
+            The job-id
+
+        sleep_time: int, optional
+            The time interval to sleep before making a new check if the job is done
 
         Returns
         -------
@@ -1063,7 +1066,6 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             cos_client.delete_object(
                 Bucket=result_objects.Bucket[0], Key=result_objects.Object[0]
             )
-
         return
 
     def rename_exact_result_joblist(self, job_list, wait=False):
@@ -1272,12 +1274,15 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         .. code-block:: console
 
-            job_id	status	user_id	statement	resultset_location	submit_time	end_time	rows_read	rows_returned	bytes_read	error	error_message
-            <long-string> completed	<email-here>	<query-string> 	<cos-url-result-location> 2020-02-21T16:19:03.638Z	2020-02-21T16:19:13.691Z	1760	29	41499	None	None
+            job_id	status	user_id	statement	resultset_location	submit_time	end_time	 ...
+            <long-string> completed	<email-here>	<query-string> 	<cos-url-result-location> 2020-02-21T16:19:03.638Z	2020-02-21T16:19:13.691Z
+
+            rows_read	rows_returned	bytes_read	error	error_message
+            1760	29	41499	None	None
 
         Notes
         -----
-            * get_jobs() is used by export_job_history(cos_out_url) which is used to save such data
+            * get_jobs() is used by `export_job_history`(cos_out_url) which is used to save such data
         """
         self.logon()
 
@@ -1382,7 +1387,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     @validate_job_status
     def get_jobs_with_status(self, job_id_list, status):
-        """ Return the list of job_id, among those provided, that have the given status
+        """ return the list of job_id, among those provided, that have the given status
 
         Parameters
         ----------
@@ -1405,7 +1410,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
     @validate_job_status
     def get_jobs_count_with_status(self, status):
-        """ Return the number of jobs in the SQL Query server for the given `status`
+        """ return the number of jobs in the SQL Query server for the given `status`
 
         It has the limitation as described in :meth:`.get_jobs`
         """

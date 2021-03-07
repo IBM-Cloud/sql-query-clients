@@ -13,12 +13,12 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import React, { useState, SyntheticEvent } from 'react';
-import { COSIBMDataSourceOptions, DataFormatTypeOptions } from '../types';
-import { LegacyForms, useTheme, stylesFactory } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
-import defaults from 'lodash/defaults';
+import React, { useState, SyntheticEvent } from "react";
+import { COSIBMDataSourceOptions, DataFormatTypeOptions } from "../types";
+import { LegacyForms, useTheme, stylesFactory } from "@grafana/ui";
+import { GrafanaTheme, SelectableValue } from "@grafana/data";
+import { css } from "emotion";
+import defaults from "lodash/defaults";
 const { FormField, Switch, Select } = LegacyForms;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -76,7 +76,10 @@ export const CloudSQLSettings = (props: Props) => {
   //  })
   //};
   //const onUpdateJsonDataOptionSelect = function(key: any): any {
-  const option_changeHandler = (key: keyof COSIBMDataSourceOptions, item: SelectableValue<string>) => {
+  const option_changeHandler = (
+    key: keyof COSIBMDataSourceOptions,
+    item: SelectableValue<string>
+  ) => {
     props.onChange({
       ...value,
       [key]: item.value!,
@@ -99,7 +102,7 @@ export const CloudSQLSettings = (props: Props) => {
             // A bit of a hack to prevent using default value for the width from FormField
             inputWidth={null}
             value={value.instance_crn}
-            onChange={changeHandler('instance_crn')}
+            onChange={changeHandler("instance_crn")}
             tooltip="SQL Query instance CRN"
             //placeholder="CRN of the SQL Query instance"
           />
@@ -112,7 +115,7 @@ export const CloudSQLSettings = (props: Props) => {
               labelWidth={8}
               inputWidth={30}
               value={value.apiKey}
-              onChange={changeHandler('apiKey')}
+              onChange={changeHandler("apiKey")}
               tooltip="IBM Cloud API key"
               //placeholder="Cloud API key"
             />
@@ -124,7 +127,7 @@ export const CloudSQLSettings = (props: Props) => {
             labelWidth={10}
             inputWidth={30}
             value={value.target_cos_url}
-            onChange={changeHandler('target_cos_url')}
+            onChange={changeHandler("target_cos_url")}
             tooltip="COS URL where the queried data is stored: if 'INTO' statement is ignored or $__dest macro is used"
             //placeholder="COS URL target"
           />
@@ -135,7 +138,7 @@ export const CloudSQLSettings = (props: Props) => {
             labelWidth={10}
             inputWidth={10}
             value={value.instance_rate_limit}
-            onChange={changeHandler('instance_rate_limit')}
+            onChange={changeHandler("instance_rate_limit")}
             tooltip="Max number of SQL Queries can be handled at a time"
           />
         </div>
@@ -145,7 +148,7 @@ export const CloudSQLSettings = (props: Props) => {
               label="Use Hive table"
               labelClass="width-10"
               checked={usingTable}
-              onChange={switch_changeHandler('using_table')}
+              onChange={switch_changeHandler("using_table")}
               tooltip="Select data source (to be used with $__source macro)"
             />
           </div>
@@ -158,17 +161,19 @@ export const CloudSQLSettings = (props: Props) => {
                 labelWidth={10}
                 inputWidth={30}
                 value={value.source_cos_url}
-                onChange={changeHandler('source_cos_url')}
+                onChange={changeHandler("source_cos_url")}
                 tooltip="(Optional) this datasource can be referenced in the query as $__source"
                 //placeholder="COS URL target"
               />
               <Select
                 className="width-7"
                 options={DataFormatTypeOptions}
-                value={DataFormatTypeOptions.find(o => o.value === value.format_type)}
+                value={DataFormatTypeOptions.find(
+                  (o) => o.value === value.format_type
+                )}
                 defaultValue={value.format_type}
-                onChange={option => {
-                  option_changeHandler('format_type', option);
+                onChange={(option) => {
+                  option_changeHandler("format_type", option);
                 }}
               />
             </div>
@@ -180,7 +185,7 @@ export const CloudSQLSettings = (props: Props) => {
                 labelWidth={10}
                 inputWidth={30}
                 value={value.table}
-                onChange={changeHandler('table')}
+                onChange={changeHandler("table")}
                 tooltip="(Optional) this datasource can be referenced in the query as $__source"
               />
             </div>

@@ -13,30 +13,35 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import defaults from 'lodash/defaults';
+import defaults from "lodash/defaults";
 
-import React, { PureComponent, ChangeEvent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import React, { PureComponent, ChangeEvent } from "react";
+import { LegacyForms } from "@grafana/ui";
 //import { Checkbox, LegacyForms } from '@grafana/ui';
 //import { LegacyForms, QueryField } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, HistoryItem } from '@grafana/data';
-import { COSIBMDataSource } from './DataSource';
-import { FORMAT_OPTIONS, CloudSQLQuery, COSIBMDataSourceOptions } from './types';
-import { CloudSQLHelp } from './sql/help';
+import { QueryEditorProps, SelectableValue, HistoryItem } from "@grafana/data";
+import { COSIBMDataSource } from "./DataSource";
+import {
+  FORMAT_OPTIONS,
+  CloudSQLQuery,
+  COSIBMDataSourceOptions,
+} from "./types";
+import { CloudSQLHelp } from "./sql/help";
 
 const { Select, FormField, Switch } = LegacyForms;
 
-type Props = QueryEditorProps<COSIBMDataSource, CloudSQLQuery, COSIBMDataSourceOptions>;
+type Props = QueryEditorProps<
+  COSIBMDataSource,
+  CloudSQLQuery,
+  COSIBMDataSourceOptions
+>;
 //NOTE: .datasource: COSIBMDataSource
 // .          .query: CloudSQLQuery
 // .           (some others .data: PanelData, .exploreMode: ExploreMode, .exploreId?: any, history?: HistoryItem[])
-import { CloudSQLQueryField } from './configuration/QueryFields';
+import { CloudSQLQueryField } from "./configuration/QueryFields";
 
 export interface State {
   //default legend formatting
-  // for Azure Monitor: resourceName{dimensionValue=dimensionName}.metricName
-  // . ... this long formatting can be changed using aliases
-  // https://grafana.com/docs/grafana/latest/features/datasources/azuremonitor/
   legendFormat: string;
   formatOption: SelectableValue<string>;
   interval: string;
@@ -73,14 +78,9 @@ export class QueryEditor extends PureComponent<Props, State> {
     }
   };
 
-  //onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //  const { onChange, query, onRunQuery } = this.props;
-  //  onChange({ ...query, constant: parseFloat(event.target.value) });
-  //  onRunQuery(); // executes the query
-  //};
 
   render() {
-    const query = defaults(this.props.query, '');
+    const query = defaults(this.props.query, "");
     const ds = this.props.datasource;
     query.name = ds.name;
     query.id = ds.id;
@@ -122,14 +122,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     return (
       <>
         <div className="gf-form">
-          {/*         <FormField
-          width={4}
-          value={constant}
-          onChange={this.onConstantChange}
-          label="Constant"
-          type="number"
-          step="0.1"
-        ></FormField> */}
           <div className="display:flex gf-form">
             <FormField
               width={13}
@@ -160,7 +152,9 @@ export class QueryEditor extends PureComponent<Props, State> {
               options={FORMAT_OPTIONS}
               onChange={onFormatChange}
               /*           value={FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0]} */
-              value={FORMAT_OPTIONS.find(option => option.value! === query.format)}
+              value={FORMAT_OPTIONS.find(
+                (option) => option.value! === query.format
+              )}
             />
             {/*}<Checkbox value={query.get_result} label="Get Queried Result" description="Checked means yes" onChange=/>*/}
             <Switch

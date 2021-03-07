@@ -13,10 +13,10 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import _ from 'lodash';
-import React, { ReactNode } from 'react';
+import _ from "lodash";
+import React, { ReactNode } from "react";
 
-import { Plugin } from 'slate';
+import { Plugin } from "slate";
 import {
   ButtonCascader,
   CascaderOption,
@@ -25,13 +25,16 @@ import {
   TypeaheadOutput,
   QueryField,
   BracesPlugin,
-} from '@grafana/ui';
+} from "@grafana/ui";
 
-import Prism from 'prismjs';
+import Prism from "prismjs";
 
 // dom also includes Element polyfills
 //import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
-import { CancelablePromise, makePromiseCancelable } from '../utils/CancelablePromise';
+import {
+  CancelablePromise,
+  makePromiseCancelable,
+} from "../utils/CancelablePromise";
 import {
   ExploreQueryFieldProps,
   QueryHint,
@@ -39,17 +42,21 @@ import {
   //toLegacyResponseData,
   HistoryItem,
   AbsoluteTimeRange,
-} from '@grafana/data';
-import { DOMUtil, SuggestionsState } from '@grafana/ui';
-import { COSIBMDataSource } from '../DataSource';
-import { CloudSQLQuery, COSIBMDataSourceOptions } from '../types';
+} from "@grafana/data";
+import { DOMUtil, SuggestionsState } from "@grafana/ui";
+import { COSIBMDataSource } from "../DataSource";
+import { CloudSQLQuery, COSIBMDataSourceOptions } from "../types";
 
-const HISTOGRAM_GROUP = '__histograms__';
-const PRISM_SYNTAX = 'cloudsql';
-export const RECORDING_RULES_GROUP = '__recording_rules__';
+const HISTOGRAM_GROUP = "__histograms__";
+const PRISM_SYNTAX = "cloudsql";
+export const RECORDING_RULES_GROUP = "__recording_rules__";
 
-function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metrics: string[]) {
-  return '(No metrics found)';
+function getChooserText(
+  metricsLookupDisabled: boolean,
+  hasSyntax: boolean,
+  metrics: string[]
+) {
+  return "(No metrics found)";
   //if (metricsLookupDisabled) {
   //  return '(Disabled)';
   //}
@@ -65,19 +72,21 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metr
   //return 'Metrics';
 }
 
-
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
+export function willApplySuggestion(
+  suggestion: string,
+  { typeaheadContext, typeaheadText }: SuggestionsState
+): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
-    case 'context-labels': {
+    case "context-labels": {
       const nextChar = DOMUtil.getNextCharacter();
-      if (!nextChar || nextChar === '}' || nextChar === ',') {
-        suggestion += '=';
+      if (!nextChar || nextChar === "}" || nextChar === ",") {
+        suggestion += "=";
       }
       break;
     }
 
-    case 'context-label-values': {
+    case "context-label-values": {
       // Always add quotes and remove existing ones instead
       if (!typeaheadText.match(/^(!?=~?"|")/)) {
         suggestion = `"${suggestion}`;
@@ -94,7 +103,11 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 }
 
 interface CloudSQLQueryFieldProps
-  extends ExploreQueryFieldProps<COSIBMDataSource, CloudSQLQuery, COSIBMDataSourceOptions> {
+  extends ExploreQueryFieldProps<
+    COSIBMDataSource,
+    CloudSQLQuery,
+    COSIBMDataSourceOptions
+  > {
   history: Array<HistoryItem<CloudSQLQuery>>;
   ExtraFieldElement?: ReactNode;
 }
@@ -105,7 +118,10 @@ interface CloudSQLQueryFieldState {
   hint: QueryHint | null;
 }
 
-export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldProps, CloudSQLQueryFieldState> {
+export class CloudSQLQueryField extends React.PureComponent<
+  CloudSQLQueryFieldProps,
+  CloudSQLQueryFieldState
+> {
   plugins: Plugin[];
   languageProviderInitializationPromise!: CancelablePromise<any>;
 
@@ -115,7 +131,7 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
     this.plugins = [
       BracesPlugin(),
       SlatePrism({
-        onlyIn: (node: any) => node.type === 'code_block',
+        onlyIn: (node: any) => node.type === "code_block",
         //onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
         getSyntax: (node: any) => PRISM_SYNTAX,
       }),
@@ -150,7 +166,10 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
 
     let refreshed = false;
     if (range && prevProps.range) {
-      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+      const absoluteRange: AbsoluteTimeRange = {
+        from: range.from.valueOf(),
+        to: range.to.valueOf(),
+      };
       const prevAbsoluteRange: AbsoluteTimeRange = {
         from: prevProps.range.from.valueOf(),
         to: prevProps.range.to.valueOf(),
@@ -162,7 +181,10 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
       }
     }
 
-    if (!refreshed && languageProvider !== prevProps.datasource.languageProvider) {
+    if (
+      !refreshed &&
+      languageProvider !== prevProps.datasource.languageProvider
+    ) {
       this.refreshMetrics();
     }
 
@@ -198,13 +220,17 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
     });
 
     Prism.languages[PRISM_SYNTAX] = languageProvider.syntax;
-    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
+    this.languageProviderInitializationPromise = makePromiseCancelable(
+      languageProvider.start()
+    );
     this.languageProviderInitializationPromise.promise
-      .then(remaining => {
-        remaining.map((task: Promise<any>) => task.then(this.onUpdateLanguage).catch(() => {}));
+      .then((remaining) => {
+        remaining.map((task: Promise<any>) =>
+          task.then(this.onUpdateLanguage).catch(() => {})
+        );
       })
       .then(() => this.onUpdateLanguage())
-      .catch(err => {
+      .catch((err) => {
         if (!err.isCanceled) {
           throw err;
         }
@@ -272,15 +298,23 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
     //TODO
     // Build metrics tree
     //const metricsByPrefix = groupMetricsByPrefix(metrics, metricsMetadata);
-    const metricsByPrefix = [''];
+    const metricsByPrefix = [""];
 
     let metricsOptions;
     if (histogramMetrics) {
-      const histogramOptions = histogramMetrics.map((hm: any) => ({ label: hm, value: hm }));
+      const histogramOptions = histogramMetrics.map((hm: any) => ({
+        label: hm,
+        value: hm,
+      }));
       metricsOptions =
         histogramMetrics.length > 0
           ? [
-              { label: 'Histograms', value: HISTOGRAM_GROUP, children: histogramOptions, isLeaf: false },
+              {
+                label: "Histograms",
+                value: HISTOGRAM_GROUP,
+                children: histogramOptions,
+                isLeaf: false,
+              },
               ...metricsByPrefix,
             ]
           : metricsByPrefix;
@@ -332,15 +366,27 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
     //TODO
-    const chooserText = getChooserText(datasource.lookupsDisabled, syntaxLoaded, metricsOptions);
+    const chooserText = getChooserText(
+      datasource.lookupsDisabled,
+      syntaxLoaded,
+      metricsOptions
+    );
     //const chooserText = '';
-    const buttonDisabled = !(syntaxLoaded && metricsOptions && metricsOptions.length > 0);
+    const buttonDisabled = !(
+      syntaxLoaded &&
+      metricsOptions &&
+      metricsOptions.length > 0
+    );
 
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
           <div className="gf-form flex-shrink-0 min-width-5">
-            <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
+            <ButtonCascader
+              options={metricsOptions}
+              disabled={buttonDisabled}
+              onChange={this.onChangeMetrics}
+            >
               {chooserText}
             </ButtonCascader>
           </div>
@@ -348,7 +394,7 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
-              query={query.queryText || ''}
+              query={query.queryText || ""}
               //query={query.expr}
               onTypeahead={this.onTypeahead}
               onWillApplySuggestion={willApplySuggestion}
@@ -365,7 +411,7 @@ export class CloudSQLQueryField extends React.PureComponent<CloudSQLQueryFieldPr
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">
-              {hint.label}{' '}
+              {hint.label}{" "}
               {hint.fix ? (
                 <a className="text-link muted" onClick={this.onClickHintFix}>
                   {hint.fix.label}

@@ -13,11 +13,11 @@
 //# See the License for the specific language governing permissions and
 //# limitations under the License.
 //# ------------------------------------------------------------------------------
-import React, { PureComponent } from 'react';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { CloudSQLSettings } from './configuration/CloudSQLSettings';
-import { COSIBMDataSourceOptions } from './types';
+import React, { PureComponent } from "react";
+import { DataSourceHttpSettings } from "@grafana/ui";
+import { DataSourcePluginOptionsEditorProps } from "@grafana/data";
+import { CloudSQLSettings } from "./configuration/CloudSQLSettings";
+import { COSIBMDataSourceOptions } from "./types";
 //import { COSIBMDataSourceOptions, COSIBMSecureJsonData } from './types';
 
 export type Props = DataSourcePluginOptionsEditorProps<COSIBMDataSourceOptions>;
@@ -39,7 +39,9 @@ export class ConfigEditor extends PureComponent<Props> {
         />
         <CloudSQLSettings
           value={options.jsonData}
-          onChange={newValue => onOptionsChange({ ...options, jsonData: newValue })}
+          onChange={(newValue) =>
+            onOptionsChange({ ...options, jsonData: newValue })
+          }
         />
       </>
     );
