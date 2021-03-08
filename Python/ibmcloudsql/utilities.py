@@ -236,8 +236,8 @@ class IBMCloudAccess:
         self.request_headers = {"Content-Type": "application/json"}
         self.request_headers.update({"Accept": "application/json"})
         self.request_headers.update({"User-Agent": self.user_agent})
+
         self.request_headers.update(
-            {"authorization": "Bearer {}".format(ro_credentials.token)}
-        )
+            {'authorization': 'Bearer {}'.format(ro_credentials.token)})
         self.logged_on = True
         self.last_logon = datetime.now()
