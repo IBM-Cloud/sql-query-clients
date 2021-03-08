@@ -10,7 +10,7 @@ This repository contains application client samples and blueprint code for the [
  * [Dremio](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Dremio) connector
  * [Grafana](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Grafana) connector
 
-** Documentation
+## Documentation
  * Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/sql-query?topic=sql-query-gettingstarted) for general information and turorial for this service.
  * [Python](https://ibm-cloud.github.io/sql-query-clients/)
 
