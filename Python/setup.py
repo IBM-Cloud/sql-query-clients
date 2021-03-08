@@ -49,7 +49,7 @@ setup(
         "ibm-cos-sdk-core>=2.7.0",
         "ibm-cos-sdk>=2.7.0",
         "numpy",
-        "pyarrow==0.15.1",
+        "pyarrow==0.16.0",
         "backoff==1.10.0",
         "sqlparse",
         "packaging",
