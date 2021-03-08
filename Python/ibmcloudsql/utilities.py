@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
+# flake8: noqa = W503
 import getpass
 import time
 from datetime import datetime
@@ -204,7 +205,6 @@ class IBMCloudAccess:
         complete = False
         count = 0
         retry_delay = 2
-        old_token = self.current_token
         ro_credentials = None
         while not complete and count < self._iam_max_tries:
             try:
@@ -232,8 +232,6 @@ class IBMCloudAccess:
                 time.sleep(retry_delay)
             except Exception as e:
                 raise e
-        if old_token is not None:
-            assert old_token != ro_credentials.token
 
         self.request_headers = {"Content-Type": "application/json"}
         self.request_headers.update({"Accept": "application/json"})
