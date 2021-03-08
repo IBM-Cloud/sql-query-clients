@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
+# flake8: noqa = W503
 import getpass
 import time
 from datetime import datetime
@@ -200,15 +201,42 @@ class IBMCloudAccess:
 
         # TODO refactor construction to avoid calling private method
         boto3_session = self._session
-        try:
-            ro_credentials = boto3_session.get_credentials().get_frozen_credentials()
-        except ibm_botocore.exceptions.CredentialRetrievalError as e:
-            print("Login fails: credential cannot be validated - check (1) the key is correct and (2) IBM cloud service is available")
-            raise e
+        # ibm_boto3._get_default_session()
+        complete = False
+        count = 0
+        retry_delay = 2
+        ro_credentials = None
+        while not complete and count < self._iam_max_tries:
+            try:
+                ro_credentials = (
+                    boto3_session.get_credentials().get_frozen_credentials()
+                )
+                self.current_token = ro_credentials.token
+                complete = True
+            except ibm_botocore.exceptions.CredentialRetrievalError:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = (
+                        "Login fails: credential cannot be validated"
+                        "- check either (1) the key or (2) if IBM  cloud service is available"
+                    )
+                    raise AttributeError(msg)
+            except requests.exceptions.ReadTimeout:
+                count += 1
+                if count > self._iam_max_tries:
+                    msg = (
+                        "Increase iam_max_tries (current set to {}),"
+                        " or relaunch again as no response from IAM"
+                    ).format(self._iam_max_tries)
+                    raise AttributeError(msg)
+                time.sleep(retry_delay)
+            except Exception as e:
+                raise e
 
-        self.request_headers = {'Content-Type': 'application/json'}
-        self.request_headers.update({'Accept': 'application/json'})
-        self.request_headers.update({'User-Agent': self.user_agent})
+        self.request_headers = {"Content-Type": "application/json"}
+        self.request_headers.update({"Accept": "application/json"})
+        self.request_headers.update({"User-Agent": self.user_agent})
+
         self.request_headers.update(
             {'authorization': 'Bearer {}'.format(ro_credentials.token)})
         self.logged_on = True
