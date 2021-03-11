@@ -1812,8 +1812,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             # total_objects = cos_result['total_objects']  #not exact
             r = self.list_results(job_id)
             seriesObj = r.apply(lambda x: True if int(x["Size"]) > 0 else False, axis=1)
-            total_objects = len(seriesObj[seriesObj is True].index)
-            return total_objects
+            return seriesObj.to_list().count(True)
 
         total_objects = get_total_objects()
 
