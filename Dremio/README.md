@@ -55,7 +55,7 @@ In the Dremio UI click the `+` option for `External Sources` in the bottom left 
 * API Key (IBM Cloud IAM API Key)
 * Target COS URL
     * Ex: `cos://{IBM cloud region alias}/{bucket name}/{prefix}`
-    * This is the IBM cloud object storage location where results for each SQL query are written. You can configure automatic [expliration](https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-expiry) if you want an automatic cleanup.
+    * This is the IBM cloud object storage location where results for each SQL query are written. You can configure automatic [expiration](https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-expiry) if you want an automatic cleanup.
     * This is the same value as in the field `Targert location` in your IBM SQL Query web console.
 
 Learn  about IBM SQL Query JDBC client properties [here](https://cloud.ibm.com/docs/sql-query?topic=sql-query-jdbc)
