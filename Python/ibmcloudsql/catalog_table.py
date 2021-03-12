@@ -445,7 +445,7 @@ class HiveMetastore:
                 self.run_sql(sql_stmt_create_partitioned)
             except Exception as e:
                 msg = str(e)
-                no_schema_error_msg = "Unable to infer schema for CSV"
+                no_schema_error_msg = "Unable to infer schema"
                 if no_schema_error_msg in msg:
                     msg = "Can't infer schema (explicit schema is needed) or the COS URL is wrong. Please check"
                     raise SqlQueryCreateTableException(msg)
