@@ -401,9 +401,6 @@ class HiveMetastore:
                 )
             )
 
-        if self.list_cos_objects(cos_url).empty:
-            raise ValueError("Please fix - the path {} does not exist".format(cos_url))
-
         if len(found) == 0 or force_recreate:
             if schema is None:
                 # auto-detection of scheme
