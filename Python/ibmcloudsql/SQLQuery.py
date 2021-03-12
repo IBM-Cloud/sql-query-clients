@@ -32,7 +32,7 @@ import requests
 from requests.exceptions import HTTPError
 
 try:
-    from exceptions import (
+    from .exceptions import (
         RateLimitedException,
         CosUrlNotFoundException,
         CosUrlInaccessibleException,
@@ -43,7 +43,7 @@ try:
         InternalError502Exception,
     )
 except Exception:
-    from .exceptions import (
+    from exceptions import (
         RateLimitedException,
         CosUrlNotFoundException,
         CosUrlInaccessibleException,
