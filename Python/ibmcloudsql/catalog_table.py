@@ -3,15 +3,15 @@ import time
 
 logger = logging.getLogger(__name__)
 try:
-    from .cos import ParsedUrl
-    from .exceptions import (
+    from cos import ParsedUrl
+    from exceptions import (
         SqlQueryDropTableException,
         SqlQueryFailException,
         SqlQueryCreateTableException,
     )
 except ImportError:
-    from cos import ParsedUrl
-    from exceptions import (
+    from .cos import ParsedUrl
+    from .exceptions import (
         SqlQueryDropTableException,
         SqlQueryFailException,
         SqlQueryCreateTableException,
