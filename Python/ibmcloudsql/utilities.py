@@ -200,6 +200,7 @@ class IBMCloudAccess:
             return True
 
         # TODO refactor construction to avoid calling private method
+        self.logged_on = False
         boto3_session = self._session
         # ibm_boto3._get_default_session()
         complete = False
@@ -238,6 +239,7 @@ class IBMCloudAccess:
         self.request_headers.update({"User-Agent": self.user_agent})
 
         self.request_headers.update(
-            {'authorization': 'Bearer {}'.format(ro_credentials.token)})
+            {"authorization": "Bearer {}".format(ro_credentials.token)}
+        )
         self.logged_on = True
         self.last_logon = datetime.now()
