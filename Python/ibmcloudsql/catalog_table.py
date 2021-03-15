@@ -3,11 +3,19 @@ import time
 
 logger = logging.getLogger(__name__)
 try:
-    from .cos import ParsedUrl
-    from .exceptions import SqlQueryDropTableException, SqlQueryFailException
-except ImportError:
     from cos import ParsedUrl
-    from exceptions import SqlQueryDropTableException, SqlQueryFailException
+    from exceptions import (
+        SqlQueryDropTableException,
+        SqlQueryFailException,
+        SqlQueryCreateTableException,
+    )
+except ImportError:
+    from .cos import ParsedUrl
+    from .exceptions import (
+        SqlQueryDropTableException,
+        SqlQueryFailException,
+        SqlQueryCreateTableException,
+    )
 
 
 class HiveMetastore:
@@ -148,9 +156,11 @@ class HiveMetastore:
         -------
         str:
             a job status
+
         Raises
         -------
-        SqlQueryFailException
+        SqlQueryDropTableException
+            when it cannot remove the given table name
         ValueError
         """
         if table_name is None and self.current_table_name is None:
@@ -163,16 +173,21 @@ class HiveMetastore:
         DROP TABLE {table_name}""".format(
             table_name=table_name
         )
-        _, job_id = self.execute_sql(sql_stmt_drop)
-        logger.debug(
-            "Job_id ({stmt}): {job_id}".format(stmt=sql_stmt_drop, job_id=job_id)
-        )
-        job_status = self.wait_for_job(job_id)
-        if job_status != "completed":
-            return job_status
         try:
+            _, job_id = self.execute_sql(sql_stmt_drop)
+            logger.debug(
+                "Job_id ({stmt}): {job_id}".format(stmt=sql_stmt_drop, job_id=job_id)
+            )
+            job_status = self.wait_for_job(job_id)
+            if job_status != "completed":
+                raise SqlQueryDropTableException(
+                    "table name {} removed failed".format(table_name)
+                )
             self.partitioned_tables.remove(table_name)
             self.regular_tables.remove(table_name)
+        except SqlQueryFailException:
+            msg = "Wrong table name"
+            logger.warning(msg)
         except KeyError:
             pass
         return "completed"
@@ -211,6 +226,7 @@ class HiveMetastore:
         -------
             none if job "failed"
             otherwise returns
+
         Raises
         -------
         ValueError:
@@ -220,6 +236,8 @@ class HiveMetastore:
 
         SqlQueryDropTableException
             when it cannot remove the given table name
+        SqlQueryCreateTableException
+            when it cannot create the given table name
 
         """
         self._is_valid_target_url(cos_url)
@@ -267,9 +285,7 @@ class HiveMetastore:
             # if logger.getEffectiveLevel() == logging.DEBUG:
             #     display(df)
             if len(found) > 0 and force_recreate:
-                job_status = self.drop_table(table_name)
-                if job_status != "completed":
-                    raise SqlQueryDropTableException(table_name)
+                self.drop_table(table_name)
             self.regular_tables.add(table_name)
             if len(found) == 0 or force_recreate:
                 if schema is None:
@@ -390,9 +406,7 @@ class HiveMetastore:
             # not found
             found = []
         if len(found) > 0 and force_recreate:
-            job_status = self.drop_table(table_name)
-            if job_status != "completed":
-                raise SqlQueryFailException(table_name, " table name removed failed")
+            self.drop_table(table_name)
         self.partitioned_tables.add(table_name)
         if format_type.upper() not in self.supported_format_types:
             raise ValueError(
@@ -427,7 +441,17 @@ class HiveMetastore:
                     schema=schema,
                 )
             logger.debug(sql_stmt_create_partitioned)
-            self.run_sql(sql_stmt_create_partitioned)
+            try:
+                self.run_sql(sql_stmt_create_partitioned)
+            except Exception as e:
+                msg = str(e)
+                no_schema_error_msg = "Unable to infer schema"
+                if no_schema_error_msg in msg:
+                    msg = "Can't infer schema (explicit schema is needed) or the COS URL is wrong. Please check"
+                    raise SqlQueryCreateTableException(msg)
+                else:
+                    raise e
+
             time.sleep(2)
             self.recover_table_partitions(table_name)
 

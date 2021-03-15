@@ -253,7 +253,7 @@ print(jobhist_df[['job_id','status']])
 
 print("Running EU test with individual method invocation and Parquet target:")
 try:
-    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credential.result_location, client_info='ibmcloudsql test')
+    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
     sqlClient_eu.logon()
     jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
     sqlClient_eu.wait_for_job(jobId)

@@ -93,8 +93,19 @@ class SqlQueryFailException(Exception):
         self.original_exception = original_exception
 
 
-class SqlQueryDropTableException(Exception):
-    """The error raised when a running sql job fails, e.g. timeout"""
+class SqlQueryCreateTableException(SqlQueryFailException):
+    """The error raised when a running create-table sql job fails"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+
+class SqlQueryDropTableException(SqlQueryFailException):
+    """The error raised when a running drop-table sql job fails"""
 
     def __init__(self, msg, original_exception=None):
         if original_exception is not None:
