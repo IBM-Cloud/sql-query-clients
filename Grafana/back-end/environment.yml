@@ -1,4 +1,4 @@
-name: cloud_cos_sql
+name: cloudsql_cos_ts
 channels:
   - anaconda
   - brian-team
