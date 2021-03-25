@@ -160,3 +160,5 @@ dependencies:
     - zipp
     - zope-event
     - zope-interface
+    - regex
+    - ibm_cos_sdk
