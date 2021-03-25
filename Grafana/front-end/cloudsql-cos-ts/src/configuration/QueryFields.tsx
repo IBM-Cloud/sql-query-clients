@@ -25,6 +25,8 @@ import {
   TypeaheadOutput,
   QueryField,
   BracesPlugin,
+  DOMUtil,
+  SuggestionsState,
 } from "@grafana/ui";
 
 import Prism from "prismjs";
@@ -43,7 +45,6 @@ import {
   HistoryItem,
   AbsoluteTimeRange,
 } from "@grafana/data";
-import { DOMUtil, SuggestionsState } from "@grafana/ui";
 import { COSIBMDataSource } from "../DataSource";
 import { CloudSQLQuery, COSIBMDataSourceOptions } from "../types";
 

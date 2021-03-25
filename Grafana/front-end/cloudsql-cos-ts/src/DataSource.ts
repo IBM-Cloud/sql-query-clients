@@ -40,7 +40,7 @@ import CloudSQLLanguageProvider from "./sql/language_provider";
 //export const CLOUDSQL_ENDPOINT = '/cloudsql/api/v1';
 
 function extend(obj: any, src: any) {
-  Object.keys(src).forEach(function(key) {
+  Object.keys(src).forEach(function (key) {
     obj[key] = src[key];
   });
   return obj;
