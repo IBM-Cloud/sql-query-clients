@@ -145,6 +145,7 @@ logging.basicConfig(
 )
 
 DEBUG = False
+MAX_TRIES = 100
 
 
 def get_parser():
@@ -184,7 +185,7 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         if rerun:
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=True)
             df, job_id = res.data, res.job_id
         else:
             df, job_id = _query_data_with_result(key, sql_stmt, sqlClient)
@@ -201,7 +202,7 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         else:
             job_id = grafanaPluginInstances.get_job_id(key, key_refId)
             if job_id is None:
-                job_id = sqlClient.submit_sql(sql_stmt, blocking=True)
+                job_id = sqlClient.submit_sql(sql_stmt)
                 grafanaPluginInstances.save_job_id(key, key_refId, job_id)
             job_status = sqlClient.wait_for_job(job_id, sleep_time=10)
             df = None
@@ -225,7 +226,7 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         #     # doesn't support rerun on a system with time-out
         #     assert(0)
         #     sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-        #     res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+        #     res = sqlClient.execute_sql(sql_stmt, get_result=True)
         #     df, job_id = res.data, res.job_id
         # else:
         #     df, job_id = _query_data_with_result(key, sql_stmt)
@@ -242,7 +243,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
             # doesn't support rerun on a system with time-out
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=False)
             job_id = res.job_id
         else:
             job_id = _query_data_noresultback(key, sql_stmt, sqlClient)
@@ -253,7 +254,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
             assert cmd_args.time_out is None
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=False)
             job_id = res.job_id
         else:
             job_id = _query_data_noresultback(key, sql_stmt, sqlClient)
@@ -264,7 +265,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
 def _query_data_with_result(key, sql_stmt, sqlClient=None):
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+    res = sqlClient.execute_sql(sql_stmt, get_result=True)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.data, res.job_id
 
@@ -274,7 +275,7 @@ def _query_data_noresultback(key, sql_stmt, sqlClient=None):
     """return job_id"""
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+    res = sqlClient.execute_sql(sql_stmt, get_result=False)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.job_id
 
@@ -623,18 +624,19 @@ class CloudSQLDB(dict):
                 print("Found SqlClient... ", sqlClient)
             else:
                 sqlClient = SQLClient(
-                    cloud_apikey=apiKey,
-                    sqlquery_instance_crn=instance_crn,
-                    cos_out_url=target_cos_url,
+                    api_key=apiKey,
+                    instance_crn=instance_crn,
+                    target_cos_url=target_cos_url,
+                    max_tries=MAX_TRIES,
                 )
                 grafanaPluginInstancesSqlClient[key] = sqlClient
         else:
             sqlClient = SQLClient(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
                 thread_safe=True,
-                max_tries=100,
+                max_tries=MAX_TRIES,
             )
             print("Create thread-safe SqlClient... ", sqlClient)
 
@@ -650,7 +652,10 @@ class CloudSQLDB(dict):
             else:
                 return " {} ".format(table)
         else:
-            cos_in = self[key]["source_cos_url"]
+            try:
+                cos_in = self[key]["source_cos_url"]
+            except KeyError:
+                return ""
             if len(cos_in.strip()) == 0:
                 return ""
             else:
@@ -666,7 +671,10 @@ class CloudSQLDB(dict):
             else:
                 return " {} ".format(table)
         else:
-            cos_in = self[key]["source_cos_url"]
+            try:
+                cos_in = self[key]["source_cos_url"]
+            except KeyError:
+                return ""
             if len(cos_in.strip()) == 0:
                 return ""
             else:
@@ -875,8 +883,8 @@ grafanaPluginInstancesSqlClient = {}
 # data_schema = {}
 
 # default_sql_client = None
-# aiOps = SQLClient(cloud_apikey=ref_cloud_apikey, sqlquery_instance_crn=ref_instance_crn, cos_out_url=ref_target_cos_url)
-##aiOps = SQLClient(cloud_apikey=cloud_apikey_raghu, sqlquery_instance_crn=instnacecrn, cos_out_url=target_cos_url, max_concurrent_jobs=4)
+# aiOps = SQLClient(api_key=ref_cloud_apikey, instance_crn=ref_instance_crn, target_cos_url=ref_target_cos_url)
+##aiOps = SQLClient(api_key=cloud_apikey_raghu, instance_crn=instnacecrn, target_cos_url=target_cos_url, max_concurrent_jobs=4)
 # aiOps.logon()
 
 # sqlClient = aiOps
@@ -1107,9 +1115,10 @@ def login():
     if key not in grafanaPluginInstancesSqlClient.keys():
         # TODO: consider add max_concurrent_jobs info from `instance_rate_limit`
         sqlClient = SQLClient(
-            cloud_apikey=apiKey,
-            sqlquery_instance_crn=instance_crn,
-            cos_out_url=target_cos_url,
+            api_key=apiKey,
+            instance_crn=instance_crn,
+            target_cos_url=target_cos_url,
+            max_tries=MAX_TRIES,
         )
         grafanaPluginInstancesSqlClient[key] = sqlClient
         if DEBUG:
@@ -1125,9 +1134,10 @@ def login():
         except AttributeError:
             # recreate
             sqlClient = SQLClient(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
+                max_tries=MAX_TRIES,
             )
             grafanaPluginInstancesSqlClient[key] = sqlClient
             if DEBUG:
@@ -1144,9 +1154,9 @@ def login():
             if DEBUG:
                 print("HTTP input: ", instance_crn, "  \n", apiKey)
             sqlClient.configure(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
             )
 
         # test API key
