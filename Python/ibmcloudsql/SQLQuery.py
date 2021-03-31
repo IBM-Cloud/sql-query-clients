@@ -629,9 +629,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
 
         def wait_for_job(jobId):
-            self.logon()
-
             while True:
+                self.logon()
                 response = requests.get(
                     "https://{}/v2/sql_jobs/{}?instance_crn={}".format(
                         self.api_hostname, jobId, self.instance_crn

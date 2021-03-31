@@ -52,10 +52,10 @@ Open a new console and run
 ```console
 # ONLY ONCE
 cd <path/to>/sql-query-clients/Grafana/back-end/
-conda env create -f environment.txt
+conda env create -f environment.yml
 
 # EACH TIME the back-end is run
-conda activate cloud_cos_sql
+conda activate cloudsql_cos_ts
 python app.py
 ```
 

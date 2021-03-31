@@ -15,6 +15,7 @@
 # ------------------------------------------------------------------------------
 # flake8: noqa = W503
 import getpass
+import sys
 import time
 from datetime import datetime
 
@@ -56,6 +57,21 @@ def static_vars(**kwargs):
         return func
 
     return decorate
+
+
+def confirm_action(action_name=None):
+    """
+    Ask user to enter Y or N (case-insensitive).
+    :return: True if the answer is Y.
+    :rtype: bool
+    """
+    answer = ""
+    msg = "OK to push to continue [Y/N]? "
+    if action_name is not None:
+        msg = "OK to {} [Y/N]? ".format(action_name)
+    while answer not in ["y", "n"]:
+        answer = input(msg).lower()
+    return answer == "y"
 
 
 class IBMCloudAccess:
@@ -209,6 +225,10 @@ class IBMCloudAccess:
         ro_credentials = None
         while not complete and count < self._iam_max_tries:
             try:
+                # set this to ensure a new token is retrieved
+                boto3_session.get_credentials().token_manager._expiry_time = (
+                    boto3_session.get_credentials().token_manager._time_fetcher()
+                )
                 ro_credentials = (
                     boto3_session.get_credentials().get_frozen_credentials()
                 )
@@ -230,9 +250,11 @@ class IBMCloudAccess:
                         " or relaunch again as no response from IAM"
                     ).format(self._iam_max_tries)
                     raise AttributeError(msg)
-                time.sleep(retry_delay)
             except Exception as e:
                 raise e
+            finally:
+                time.sleep(retry_delay)
+                retry_delay = min(retry_delay + 1, 10)
 
         self.request_headers = {"Content-Type": "application/json"}
         self.request_headers.update({"Accept": "application/json"})
