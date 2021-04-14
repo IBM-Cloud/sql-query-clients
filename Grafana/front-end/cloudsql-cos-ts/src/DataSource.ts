@@ -297,22 +297,25 @@ export class COSIBMDataSource extends DataSourceApi<
     };
   }
 
-  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(
+    query: string,
+    options?: any
+  ): Promise<MetricFindValue[]> {
     //metricFindQuery(query: string, options?: any): any
     if (!query) {
       return Promise.resolve([]);
     }
     var result = this.doRequest({
-      url: this.url + '/variable',
+      url: this.url + "/variable",
       data: {
         //query: query,
         options: options,
       },
-      method: 'POST',
+      method: "POST",
     });
-    return result.then(response => {
+    return result.then((response) => {
       let data = response.data[0]; //the first and only TableData
-      return data.rows.map(c => {
+      return data.rows.map((c) => {
         return c.length === 0
           ? {
               text: c[0],
