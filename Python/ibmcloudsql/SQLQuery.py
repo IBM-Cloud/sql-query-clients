@@ -521,7 +521,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
 
         def INTO_is_present(sql_text):
             """ check if INTO keyword is present in the SQL query"""
-            return (" INTO " in sql_text.upper()) or ("\nINTO " in sql_text.upper())
+            tmp = sql_text.replace("\n", " ")
+            return (" INTO " in tmp.upper()) or ("\nINTO " in tmp.upper())
 
         # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
         if pagesize or pagesize == 0:
@@ -629,9 +630,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
 
         def wait_for_job(jobId):
-            self.logon()
-
             while True:
+                self.logon()
                 response = requests.get(
                     "https://{}/v2/sql_jobs/{}?instance_crn={}".format(
                         self.api_hostname, jobId, self.instance_crn

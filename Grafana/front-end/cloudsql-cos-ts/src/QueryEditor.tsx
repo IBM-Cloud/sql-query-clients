@@ -78,7 +78,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     }
   };
 
-
   render() {
     const query = defaults(this.props.query, "");
     const ds = this.props.datasource;

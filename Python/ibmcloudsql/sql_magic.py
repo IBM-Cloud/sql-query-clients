@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
+# flake8: noqa E203
+import re
+from functools import wraps
 
 import sqlparse
-from functools import wraps
-import re
+
 try:
     from exceptions import UnsupportedStorageFormatException
 except Exception:
     from .exceptions import UnsupportedStorageFormatException
+
 
 def format_sql(sql_stmt):
     """format SQL string to ensure proper content for string comparison
@@ -29,36 +32,36 @@ def format_sql(sql_stmt):
     ----------
     sql_stmt: str
     """
-    url = re.search(r'(cos)://[^\s]*', sql_stmt)
+    url = re.search(r"(cos)://[^\s]*", sql_stmt)
     mapping = {}
     key_template = "key_{num}"
     index = 0
     while url:
         key = key_template.format(num=index)
         mapping[key] = url.group(0)
-        sql_stmt = re.sub(r'(cos)://[^\s]*',
-                          "{" + key + "}",
-                          sql_stmt.rstrip(),
-                          count=1)
-        url = re.search(r'(cos)://[^\s]*', sql_stmt)
+        sql_stmt = re.sub(
+            r"(cos)://[^\s]*", "{" + key + "}", sql_stmt.rstrip(), count=1
+        )
+        url = re.search(r"(cos)://[^\s]*", sql_stmt)
         index = index + 1
     sql_stmt = sqlparse.format(
-        sql_stmt,
-        keyword_case="upper",
-        strip_comments=True,
-        reindent=True,
+        sql_stmt, keyword_case="upper", strip_comments=True, reindent=True,
     )
-    sql_stmt = sql_stmt.format(**mapping)
+    if mapping:
+        sql_stmt = sql_stmt.format(**mapping)
     return sql_stmt
+
 
 def print_sql(sql_stmt):
     print(format_sql(sql_stmt))
 
-class TimeSeriesTransformInput():
+
+class TimeSeriesTransformInput:
     """
     This class contains methods that supports the transformation of a user-friendly arguments in time-series functions
     to IBM CloudSQL compatible values.
     """
+
     @classmethod
     def transform_sql(cls, f):
         """
@@ -68,22 +71,24 @@ class TimeSeriesTransformInput():
         -----
         Syntax: https://cloud.ibm.com/docs/sql-query
         """
+
         @wraps(f)
         def wrapped(*args, **kwargs):
             self = args[0]
             self._sql_stmt = TimeSeriesTransformInput.ts_segment_by_time(self._sql_stmt)
             result = f(*args, **kwargs)
             return result
+
         return wrapped
 
     @classmethod
     def ts_segment_by_time(cls, sql_stmt):
         """
-        Revise arguments of TS_SEGMENT function to comply with IBM CloudSQL
+        Revise arguments of TS_SEGMENT_BY_TIME function to comply with IBM CloudSQL
 
         Notes
         -----
-        The TS_SEGMENT supported by IBM CloudSQL accepts value in number, which is not user-friendly
+        The TS_SEGMENT_BY_TIME supported by IBM CloudSQL accepts value in number, which is not user-friendly
         for units like hour, days, minutes. SQLMagic alllows constructing SQL query string using
         the below values.
 
@@ -112,16 +117,31 @@ class TimeSeriesTransformInput():
 
         as ts_segment_by_time operates at mili-seconds level, hour=60*60*1000 miliseconds
         """
-        sql_stmt = re.sub(r'ts_segment_by_time', 'TS_SEGMENT_BY_TIME', sql_stmt, flags=re.IGNORECASE)
+        sql_stmt = re.sub(
+            r"ts_segment_by_time", "TS_SEGMENT_BY_TIME", sql_stmt, flags=re.IGNORECASE
+        )
+
         def handle_str_str(sql_stmt):
-            h = re.compile(r'TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[a-zA-Z][a-zA-Z_0-9]+)', re.MULTILINE)
+            h = re.compile(
+                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[0-9]*[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]*[a-zA-Z][a-zA-Z_0-9]+)",
+                re.MULTILINE,
+            )
             return h
+
         def handle_str_number(sql_stmt):
-            h = re.compile(r'TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]+)', re.MULTILINE)
+            h = re.compile(
+                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]+)",
+                re.MULTILINE,
+            )
             return h
+
         def handle_number_str(sql_stmt):
-            h = re.compile(r'TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[0-9]+)[\s]?,[\s]?(?P<step>[a-zA-Z][a-zA-Z_0-9]+)', re.MULTILINE)
+            h = re.compile(
+                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[0-9]+)[\s]?,[\s]?(?P<step>[a-zA-Z][a-zA-Z_0-9]+)",
+                re.MULTILINE,
+            )
             return h
+
         def handle_result(h, sql_stmt):
             result = h.search(sql_stmt)
             while result:
@@ -129,26 +149,43 @@ class TimeSeriesTransformInput():
                 num = {}
                 for i in [2, 3]:
                     if not result.group(i).isdigit():
-                        if result.group(i).strip().lower() in ["per_hour", "hour"]:
+                        p = re.compile(r"[0-9]*minute")
+                        p2 = re.compile(r"[0-9]+minute")
+                        granularity = result.group(i).strip().lower()
+                        if p.match(granularity):
+                            level = "minute"
+                            num[i] = 1
+                            if p2.match(granularity):
+                                temp = re.findall(r"\d+", granularity)
+                                num_min = list(map(int, temp))[0]
+                                num[i] = num_min
+                                assert 60 % num_min == 0
+                        elif result.group(i).strip().lower() in ["per_hour", "hour"]:
                             num[i] = 60
                         elif result.group(i).strip().lower() in ["per_day", "day"]:
-                            num[i] = 60*24
+                            num[i] = 60 * 24
                         elif result.group(i).strip().lower() in ["per_week", "week"]:
-                            num[i] = 60*24*7
+                            num[i] = 60 * 24 * 7
                         else:
                             try:
                                 import isodate
+
                                 x = isodate.parse_duration(result.group(i).strip())
-                                num[i] = int(x.total_seconds()/60)  # (minute)
+                                num[i] = int(x.total_seconds() / 60)  # (minute)
                             except ISO8601Error:
                                 print("%s unsupported" % result.group(i))
-                                assert(0)
-                        num[i] = num[i] * 60 * 1000 # (milliseconds)
+                                assert 0
+                        num[i] = num[i] * 60 * 1000  # (milliseconds)
                     else:
                         num[i] = result.group(i)
                     start_end[i] = result.span(i)
-                sql_stmt = sql_stmt[:start_end[2][0]] + str(num[2]) + sql_stmt[start_end[2][1]:start_end[3][0]] + \
-                    str(num[3]) +  sql_stmt[start_end[3][1]:]
+                sql_stmt = (
+                    sql_stmt[: start_end[2][0]]
+                    + str(num[2])
+                    + sql_stmt[start_end[2][1] : start_end[3][0]]
+                    + str(num[3])
+                    + sql_stmt[start_end[3][1] :]
+                )
                 result = h.search(sql_stmt)
             return sql_stmt
 
@@ -160,11 +197,13 @@ class TimeSeriesTransformInput():
         sql_stmt = handle_result(h, sql_stmt)
         return sql_stmt
 
-class TimeSeriesSchema():
+
+class TimeSeriesSchema:
     """
     The class tracks the columns that is useful in time-series handling.
     Currently, it tracks column names whose values are in UNIX time format
     """
+
     def __init__(self):
         # the list of column in unix-tme format
         """9999999999999 (13 digits) means Sat Nov 20 2286 17:46:39 UTC
@@ -176,9 +215,10 @@ class TimeSeriesSchema():
         self._unixtime_columns = []
 
     @property
-    def columns_in_unixtime(self ):
+    def columns_in_unixtime(self):
         """Return the name of columns whose values are in UNIX timestamp"""
         return self._unixtime_columns
+
     @columns_in_unixtime.setter
     def columns_in_unixtime(self, column_list):
         """Assign the name of columns whose values are in UNIX timestamp"""
@@ -200,6 +240,7 @@ class SQLMagic(TimeSeriesSchema):
         self._has_select_clause = False
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
         self._has_from_clause = False
+        self._current_vtable_name = ""
 
     def print_sql(self):
         """print() sql string"""
@@ -223,13 +264,18 @@ class SQLMagic(TimeSeriesSchema):
     def with_(self, table_name, sql_stmt):
         """WITH <table> AS <sql> [, <table AS <sql>]"""
         if "WITH" not in self._sql_stmt:
-            self._sql_stmt = self._sql_stmt + " WITH " + table_name + " AS (" + sql_stmt  + "\n) "
+            self._sql_stmt = (
+                self._sql_stmt + " WITH " + table_name + " AS (" + sql_stmt + "\n) "
+            )
             self._has_with_clause = True
         else:
-            self._sql_stmt = self._sql_stmt + ", " + table_name + " AS (" + sql_stmt  + "\n) "
+            self._sql_stmt = (
+                self._sql_stmt + ", " + table_name + " AS (" + sql_stmt + "\n) "
+            )
+        self._current_vtable_name = table_name
         return self
 
-    def select_(self,  columns):
+    def select_(self, columns):
         """
         SELECT <columns>
 
@@ -238,7 +284,7 @@ class SQLMagic(TimeSeriesSchema):
         columns: str
             a string representing a comma-separated list of columns
         """
-        assert(self._has_select_clause is False)
+        assert self._has_select_clause is False
         self._sql_stmt = self._sql_stmt + "SELECT " + columns
         self._has_select_clause = True
         return self
@@ -309,18 +355,43 @@ class SQLMagic(TimeSeriesSchema):
             ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
             "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
         """
-        self.supported_join_types = ["INNER", "CROSS", "OUTER", "LEFT", "LEFT OUTER", "LEFT SEMI",
-                "RIGHT", "RIGHT OUTER", "FULL", "FULL OUTER", "ANTI", "LEFT ANTI"]
+        self.supported_join_types = [
+            "INNER",
+            "CROSS",
+            "OUTER",
+            "LEFT",
+            "LEFT OUTER",
+            "LEFT SEMI",
+            "RIGHT",
+            "RIGHT OUTER",
+            "FULL",
+            "FULL OUTER",
+            "ANTI",
+            "LEFT ANTI",
+        ]
         import re
-        type = re.sub(' +', ' ', type)
+
+        type = re.sub(" +", " ", type)
         if type.upper() not in self.supported_join_types:
             msg = "Wrong 'type', use a value in " + str(self.supported_join_types)
             raise ValueError(msg)
 
         if alias is None:
-            self._sql_stmt = self._sql_stmt + " " + type + " JOIN " + table + " ON " + condition
+            self._sql_stmt = (
+                self._sql_stmt + " " + type + " JOIN " + table + " ON " + condition
+            )
         else:
-            self._sql_stmt = self._sql_stmt + " " + type + " JOIN " + table + " AS " + alias + " ON " + condition
+            self._sql_stmt = (
+                self._sql_stmt
+                + " "
+                + type
+                + " JOIN "
+                + table
+                + " AS "
+                + alias
+                + " ON "
+                + condition
+            )
         return self
 
     def order_by_(self, columns):
@@ -353,12 +424,14 @@ class SQLMagic(TimeSeriesSchema):
             self._sql_stmt = self._sql_stmt + " INTO " + cos_url
             self._has_stored_location = True
         else:
-            assert(0)
+            assert 0
         if len(format_type) > 0 and format_type.upper() in self.supported_format_types:
             self._sql_stmt = self._sql_stmt + " STORED AS " + format_type.upper()
         else:
             if format_type.upper() not in self.supported_format_types:
-                raise UnsupportedStorageFormatException("ERROR: unsupported type {}".format(format_type))
+                raise UnsupportedStorageFormatException(
+                    "ERROR: unsupported type {}".format(format_type)
+                )
         return self
 
     # def store_as_(self, format_type="parquet"):
@@ -372,10 +445,13 @@ class SQLMagic(TimeSeriesSchema):
         """
         PARTITIONED BY <columns>
         """
-        if " PARTITION " not in self._sql_stmt and " PARTITIONED " not in self._sql_stmt:
+        if (
+            " PARTITION " not in self._sql_stmt
+            and " PARTITIONED " not in self._sql_stmt
+        ):
             self._sql_stmt += " PARTITIONED BY " + str(columns)
         else:
-            assert(0)
+            assert 0
         return self
 
     def partition_objects_(self, num_objects):
@@ -383,9 +459,11 @@ class SQLMagic(TimeSeriesSchema):
         PARTITIONED INTO <num>  OBJECTS
         """
         if "PARTITION" not in self._sql_stmt:
-            self._sql_stmt = self._sql_stmt + " PARTITIONED INTO " + str(num_objects) + " OBJECTS"
+            self._sql_stmt = (
+                self._sql_stmt + " PARTITIONED INTO " + str(num_objects) + " OBJECTS"
+            )
         else:
-            assert(0)
+            assert 0
         return self
 
     def partition_rows_(self, num_rows):
@@ -393,9 +471,11 @@ class SQLMagic(TimeSeriesSchema):
         PARTITIONED INTO <num> ROWS
         """
         if "PARTITION" not in self._sql_stmt:
-            self._sql_stmt = self._sql_stmt + " PARTITIONED INTO " + str(num_rows) + " ROWS"
+            self._sql_stmt = (
+                self._sql_stmt + " PARTITIONED INTO " + str(num_rows) + " ROWS"
+            )
         else:
-            assert(0)
+            assert 0
         return self
 
     @TimeSeriesTransformInput.transform_sql

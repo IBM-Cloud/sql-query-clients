@@ -47,6 +47,18 @@ https://stackoverflow.com/questions/32799808/python-web-application-project-stru
 22. add new macro: '$__timeFilterColumn(col-name, [type])' - user can explicitly specify
     the column containing timestamp-data, and need to provide its type
     (string or long/timestamp or empty) [Feb 12, 2021]
+23. add iam_max_tries
+24. add and use the thin-version of query-data so that the memcached no long cache the data - only tracks the job_id (just like the get_result=False scenarion) and use this to pull the data from COS
+25. enhance column extraction: support the present of 'distinct' and 'all' in the select column
+26. func_get_macro_mapping argument: now can be either the string or a function that returns a string
+27. save data is now guaranteed to be safe from interrupt, e.g. Ctrl-C
+28. job_id is now part of the saving to the state of CloudSQLDB.
+29. if a query is switched from get_result=True to False, it won't be rerun, based on change in (24).
+30. stop using (24) as the default - cache the whole data. The reason is that request the data from COS is still having significant delay.
+31. add singletonSqlClient: apply TS-related query transformation before using that content for tracking query.
+32. TooManyRowsException: add the check for number of rows limit: prevent Grafana client from waiting for transferring too large data
+33. NoResultException: add the check for query without any returned data
+
 
 CHANGED BEHAVIOR:
     * [grafana] revise conf. setting so that $__source is optional - with tooltips to explain why user should provide
@@ -74,6 +86,7 @@ TODO:
 
 BUG fixes:
     1. when metrics name is not a string
+    2. detect column name properly when a comment is right after it
 """
 try:
     # A gevent-based server is actually not asynchronous, but massively multi-threaded.
@@ -115,6 +128,7 @@ from sqlparse.tokens import Keyword
 import logging
 import pandas as pd
 import threading
+from threading import Thread
 from joblib import Memory
 
 
@@ -144,7 +158,9 @@ logging.basicConfig(
     handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
 )
 
+IAM_MAX_TRIES = 5
 DEBUG = False
+MAX_TRIES = 100
 
 
 def get_parser():
@@ -168,6 +184,9 @@ def get_parser():
 lock = threading.Lock()
 lock_savejob = threading.Lock()
 
+# use this to transform TS-related queryto CloudSQL-compliant form
+singletonSqlClient = SQLClient()
+
 # command-line argument
 cmd_args = get_parser()
 
@@ -184,9 +203,11 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         if rerun:
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=True)
             df, job_id = res.data, res.job_id
         else:
+            with lock:
+                sql_stmt = singletonSqlClient.human_form_to_machine_form(sql_stmt)
             df, job_id = _query_data_with_result(key, sql_stmt, sqlClient)
         if isinstance(df, str):
             df = None
@@ -201,7 +222,7 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         else:
             job_id = grafanaPluginInstances.get_job_id(key, key_refId)
             if job_id is None:
-                job_id = sqlClient.submit_sql(sql_stmt, blocking=True)
+                job_id = sqlClient.submit_sql(sql_stmt)
                 grafanaPluginInstances.save_job_id(key, key_refId, job_id)
             job_status = sqlClient.wait_for_job(job_id, sleep_time=10)
             df = None
@@ -225,7 +246,7 @@ def query_data(key, key_refId, sql_stmt, rerun=False, sqlClient=None):
         #     # doesn't support rerun on a system with time-out
         #     assert(0)
         #     sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-        #     res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+        #     res = sqlClient.execute_sql(sql_stmt, get_result=True)
         #     df, job_id = res.data, res.job_id
         # else:
         #     df, job_id = _query_data_with_result(key, sql_stmt)
@@ -242,7 +263,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
             # doesn't support rerun on a system with time-out
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=False)
             job_id = res.job_id
         else:
             job_id = _query_data_noresultback(key, sql_stmt, sqlClient)
@@ -253,7 +274,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
             assert cmd_args.time_out is None
             if sqlClient is None:
                 sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-            res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+            res = sqlClient.execute_sql(sql_stmt, get_result=False)
             job_id = res.job_id
         else:
             job_id = _query_data_noresultback(key, sql_stmt, sqlClient)
@@ -264,7 +285,7 @@ def query_data_noresultback(key, sql_stmt, rerun=False, sqlClient=None):
 def _query_data_with_result(key, sql_stmt, sqlClient=None):
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    res = sqlClient.execute_sql(sql_stmt, get_result=True, blocking=True)
+    res = sqlClient.execute_sql(sql_stmt, get_result=True)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.data, res.job_id
 
@@ -274,7 +295,7 @@ def _query_data_noresultback(key, sql_stmt, sqlClient=None):
     """return job_id"""
     if sqlClient is None:
         sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
-    res = sqlClient.execute_sql(sql_stmt, get_result=False, blocking=True)
+    res = sqlClient.execute_sql(sql_stmt, get_result=False)
     # print("SQL URL: ", sqlClient.sql_ui_link())
     return res.job_id
 
@@ -417,6 +438,15 @@ def get_columns_from_single_select(sql):
 
       1. not a SELECT statement
       2. SELECT * is used
+
+    History
+    -------
+    Mar, 23, 2021: can detect proper column name when comment is used, e.g.
+
+        select distinct col1 -- some comment
+
+        select distinct col1
+        -- some comment
     """
 
     def get_columns(stmt):
@@ -456,17 +486,52 @@ def get_columns_from_single_select(sql):
         raise e
     if stmt.get_type() != "SELECT":
         return columns
+    is_present_distinct_all = False
     for token in stmt.tokens:
         if isinstance(token, IdentifierList):
             for identifier in token.get_identifiers():
                 res = get_columns(str(identifier))
                 columns = append(columns, res)
         if isinstance(token, Identifier):
-            res = get_columns(str(token))
+            lines = str(token).splitlines()  # ('-- ')
+            pre_comment = str(token)
+            for line in lines:
+                if line.strip().startswith("--"):
+                    pass
+                else:
+                    line = line.split(" --")[0]
+                    pre_comment = line
+                    break
+            res = get_columns(pre_comment)
             columns = append(columns, res)
-        if token.ttype is Keyword:  # from
+            is_present_distinct_all = False
+        if str(token).lower() in ["distinct", "all"]:
+            is_present_distinct_all = True
+        if token.ttype is Keyword and is_present_distinct_all is False:  # from
             break
     return columns
+
+
+class TooManyRowsException(Exception):
+    """The error when the query returns too many rows"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+
+class NoResultException(Exception):
+    """The error when the query returns nothing"""
+
+    def __init__(self, msg, original_exception=None):
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
 
 
 class SourceType(Enum):
@@ -608,6 +673,11 @@ class CloudSQLDB(dict):
             for k, v in _content.items():
                 self[k] = v
 
+    def save_no_interrupt(self):
+        a = Thread(target=self.save)
+        a.start()
+        a.join()
+
     def save(self):
         if len(self.keys()) > 0:
             with open(self.db_file, "w") as write_file:
@@ -623,18 +693,21 @@ class CloudSQLDB(dict):
                 print("Found SqlClient... ", sqlClient)
             else:
                 sqlClient = SQLClient(
-                    cloud_apikey=apiKey,
-                    sqlquery_instance_crn=instance_crn,
-                    cos_out_url=target_cos_url,
+                    api_key=apiKey,
+                    instance_crn=instance_crn,
+                    target_cos_url=target_cos_url,
+                    iam_max_tries=IAM_MAX_TRIES,
+                    max_tries=MAX_TRIES,
                 )
                 grafanaPluginInstancesSqlClient[key] = sqlClient
         else:
             sqlClient = SQLClient(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
                 thread_safe=True,
-                max_tries=100,
+                iam_max_tries=IAM_MAX_TRIES,
+                max_tries=MAX_TRIES,
             )
             print("Create thread-safe SqlClient... ", sqlClient)
 
@@ -650,7 +723,10 @@ class CloudSQLDB(dict):
             else:
                 return " {} ".format(table)
         else:
-            cos_in = self[key]["source_cos_url"]
+            try:
+                cos_in = self[key]["source_cos_url"]
+            except KeyError:
+                return ""
             if len(cos_in.strip()) == 0:
                 return ""
             else:
@@ -666,7 +742,10 @@ class CloudSQLDB(dict):
             else:
                 return " {} ".format(table)
         else:
-            cos_in = self[key]["source_cos_url"]
+            try:
+                cos_in = self[key]["source_cos_url"]
+            except KeyError:
+                return ""
             if len(cos_in.strip()) == 0:
                 return ""
             else:
@@ -818,6 +897,7 @@ class CloudSQLDB(dict):
                 if "refId" not in self[key]:
                     self[key]["refId"] = {}
         self[key]["refId"][refId] = job_id
+        self.save_no_interrupt()
 
     def get_cos_source_prev(self, key, refId):
         """get COS URL from the output of a previous query
@@ -875,8 +955,8 @@ grafanaPluginInstancesSqlClient = {}
 # data_schema = {}
 
 # default_sql_client = None
-# aiOps = SQLClient(cloud_apikey=ref_cloud_apikey, sqlquery_instance_crn=ref_instance_crn, cos_out_url=ref_target_cos_url)
-##aiOps = SQLClient(cloud_apikey=cloud_apikey_raghu, sqlquery_instance_crn=instnacecrn, cos_out_url=target_cos_url, max_concurrent_jobs=4)
+# aiOps = SQLClient(api_key=ref_cloud_apikey, instance_crn=ref_instance_crn, target_cos_url=ref_target_cos_url)
+##aiOps = SQLClient(api_key=cloud_apikey_raghu, instance_crn=instnacecrn, target_cos_url=target_cos_url, max_concurrent_jobs=4)
 # aiOps.logon()
 
 # sqlClient = aiOps
@@ -1107,9 +1187,12 @@ def login():
     if key not in grafanaPluginInstancesSqlClient.keys():
         # TODO: consider add max_concurrent_jobs info from `instance_rate_limit`
         sqlClient = SQLClient(
-            cloud_apikey=apiKey,
-            sqlquery_instance_crn=instance_crn,
-            cos_out_url=target_cos_url,
+            api_key=apiKey,
+            instance_crn=instance_crn,
+            target_cos_url=target_cos_url,
+            iam_max_tries=IAM_MAX_TRIES,
+            max_tries=MAX_TRIES,
+            max_concurrent_jobs=instance_rate_limit,
         )
         grafanaPluginInstancesSqlClient[key] = sqlClient
         if DEBUG:
@@ -1125,9 +1208,12 @@ def login():
         except AttributeError:
             # recreate
             sqlClient = SQLClient(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
+                iam_max_tries=IAM_MAX_TRIES,
+                max_tries=MAX_TRIES,
+                max_concurrent_jobs=instance_rate_limit,
             )
             grafanaPluginInstancesSqlClient[key] = sqlClient
             if DEBUG:
@@ -1144,9 +1230,9 @@ def login():
             if DEBUG:
                 print("HTTP input: ", instance_crn, "  \n", apiKey)
             sqlClient.configure(
-                cloud_apikey=apiKey,
-                sqlquery_instance_crn=instance_crn,
-                cos_out_url=target_cos_url,
+                api_key=apiKey,
+                instance_crn=instance_crn,
+                target_cos_url=target_cos_url,
             )
 
         # test API key
@@ -1349,9 +1435,10 @@ def query():
     logger.debug("========= END PRINT body of REQUEST ============")
     # check to see if it's safe to launch
     query = body["targets"][0]
-    id = query["id"]
+    # id = query["id"]
+    id_name = "dummy_string"
     name = query["name"]
-    key = gen_key(id, name)
+    key = gen_key(id_name, name)
     key_refId = gen_key_refId(body["dashboardId"], body["panelId"], query["refId"])
     sql_stmt = query["queryText"]
     sleep_time = max(2.0, min(15.0, 2 * len(body["targets"])))
@@ -1426,9 +1513,10 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
     logger.debug("========= PRINT sql_stmt ============")
     logger.debug(sql_stmt)
     logger.debug("========= END PRINT sql_stmt ============")
-    id = fullquery["id"]
+    # id = fullquery["id"]
+    id_name = "dummy_string"
     name = fullquery["name"]
-    key = gen_key(id, name)
+    key = gen_key(id_name, name)
     # TODO : calculate these and check if SQL query uses
     # 'DAY' 'MONTH' 'YEAR' to replace it with:
     #   DAY between day_from and day_to
@@ -1639,7 +1727,7 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
             try:
                 sql_stmt = format_sql(sql_stmt)
                 sql_stmt = sql_stmt.replace("\\'", '"')
-                print(sql_stmt)
+                logger.info("Query to be issued:\n", sql_stmt)
                 # TODO: convert this to a function with
                 # and decorate the function with @functools.lru_cache
                 # https://docs.python.org/3.4/library/functools.html#functools.lru_cache
@@ -1657,7 +1745,7 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
                 rerun = False
                 if sqlClient:
                     assert old_key == key
-                if fullquery["get_result"] is False:
+                if "get_result" in fullquery and fullquery["get_result"] is False:
                     job_id = query_data_noresultback(
                         key, sql_stmt, rerun=rerun, sqlClient=sqlClient
                     )
@@ -1685,7 +1773,27 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
                 break
             except RateLimitedException:
                 sleep(10)
-        if fullquery["get_result"] is False:
+            except TooManyRowsException as e:
+                msg = "The query returns too many rows - please revise it"
+                return (
+                    None,
+                    HTTPResponse(
+                        body=json.dumps({"error": msg}),
+                        status=403,
+                        headers={"Content-type": "application/json"},
+                    ),
+                )
+            except NoResultException as e:
+                msg = "The query returns nothing - please revise it"
+                return (
+                    None,
+                    HTTPResponse(
+                        body=json.dumps({"error": msg}),
+                        status=403,
+                        headers={"Content-type": "application/json"},
+                    ),
+                )
+        if "get_result" in fullquery and fullquery["get_result"] is False:
             return None, None
 
     except CosUrlInaccessibleException as e:
@@ -1859,9 +1967,9 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
             tmp = fullquery["time_column"].strip()
             if len(tmp) > 0:
                 time_col = tmp
-            if time_col in columns_from_to:
-                time_col = columns_from_to[time_col]
-            df = revise_time_column(time_col, df)
+                if time_col in columns_from_to:
+                    time_col = columns_from_to[time_col]
+                df = revise_time_column(time_col, df)
         mdict = {}
         mdict["columns"] = []
         y = build_table_schema(df)
@@ -1896,6 +2004,544 @@ def process_query(fullquery, body, sqlClient=None, old_key=None):
             pprint.pprint(result["columns"], width=1)
             pprint.pprint(len(result["rows"]))
             # pprint.pprint(result['rows'][1:5], width=1, depth=1)
+
+    return result, None
+
+
+@app.post("/variable")
+def variable():
+    """Handle the query from Grafana that read the content for a variable which can be
+
+    * list of values
+    * list of label/value pair
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    # if key in grafanaPluginInstances.keys():
+    #   body = grafanaPluginInstances[key]
+    # else:
+    #   grafanaPluginInstances[key] = body
+    print("========= Variable content ============")
+    print(request)
+    body = request.body.read().decode("utf-8")
+    body = json.loads(body)
+    import pprint
+
+    print("========= PRINT body of REQUEST ============")
+    pprint.pprint(body, width=1)
+    print("========= END PRINT body of REQUEST ============")
+    query = body["options"]["variable"]
+    key = None
+    # check to see if it's safe to launch
+    # query = body["targets"][0]
+    id_name = "dummy_string"
+    name = query["datasource"]
+    key = gen_key(id_name, name)
+    sqlClient = grafanaPluginInstances.get_sqlclient(key, thread_safe=True)
+    if 0:
+        key_refId = gen_key_refId("dummy", "dummy", query["id"])
+        sql_stmt = query["query"]
+        sleep_time = 2  # seconds
+        if not grafanaPluginInstances.should_sql_stmt_be_run(
+            key, key_refId, sql_stmt, sleep_time
+        ):
+            # don't launch any
+            body = json_dumps([])
+            return HTTPResponse(body=body, headers={"Content-Type": "application/json"})
+
+    # launch now
+    # loop through all queries and process it
+    resp_body = []
+    # NOTE: There can be multiple query variables defined; but they are sent individually to here
+    # if "hide" in query and query["hide"] is True:
+    #     continue
+    # res, error_obj = process_query(query, body, sqlClient=sqlClient, old_key=key)
+    sql_stmt = query["query"]
+    data_type = "TableData"
+    res, error_obj = process_query_variable(query, key, sqlClient)
+    if error_obj is not None:
+        raise error_obj
+    if isinstance(res, list):
+        for r in res:
+            resp_body.append(r)
+    if res is None:
+        # get_result <- False
+        assert 0
+    else:
+        resp_body.append(res)
+    # must be an array
+    body = json_dumps(resp_body)
+    return HTTPResponse(body=body, headers={"Content-Type": "application/json"})
+
+
+def process_query_variable(
+    fullquery,
+    key,
+    sqlClient=None,
+    dt_from=None,
+    dt_to=None,
+    sdt_from=None,
+    sdt_to=None,
+):
+    sql_stmt = fullquery["query"]
+    data_type = "TableData"
+    if len(sql_stmt.strip()) == 0:
+        return None, None
+    logger.debug("========= PRINT sql_stmt ============")
+    logger.debug(sql_stmt)
+    logger.debug("========= END PRINT sql_stmt ============")
+    # logger.debug('------------------')
+    # logger.debug(grafanaPluginInstances)
+    # # store the object connecting to SQL Client service
+    # logger.debug(grafanaPluginInstancesSqlClient)
+    # logger.debug('------------------')
+    # id = fullquery["id"]
+    # TODO : calculate these and check if SQL query uses
+    # 'DAY' 'MONTH' 'YEAR' to replace it with:
+    #   DAY between day_from and day_to
+    #   MONTH between month_from and month_to
+    #   YEAR between year_from and year_to
+    #
+
+    if len(get_columns_from_single_select(sql_stmt)) == 0 and re.search(
+        r"(?i)^\s*select", sql_stmt
+    ):
+        msg = "The 'SELECT *' is being used: Not accepted in the query with Id {}".format(
+            fullquery["id"]
+        )
+        return (
+            None,
+            HTTPResponse(
+                body=json.dumps({"error": msg}),
+                status=403,
+                headers={"Content-type": "application/json"},
+            ),
+        )
+
+    columns = parse_sql_columns(sql_stmt)
+    columns_from_to = find_column_mapping(sql_stmt, columns)
+    if len(columns) > 0:
+        # find the column containing time - for time replacement
+        # when $__timeFilter() is used
+        time_col = columns[0]
+        if "time_column" in fullquery:
+            tmp = fullquery["time_column"].strip()
+            if len(tmp) > 0:
+                time_col = tmp
+            if time_col not in columns:
+                msg = "The name for time-column {} doesn't match with the column(s) in the query with Id {}".format(
+                    time_col, fullquery["refId"]
+                )
+                return (
+                    None,
+                    HTTPResponse(
+                        body=json.dumps({"error": msg}),
+                        status=403,
+                        headers={"Content-type": "application/json"},
+                    ),
+                )
+
+        sql_stmt = process_macro_timeFilterColumn(
+            p_timeFilterColumn, sql_stmt, sdt_from, sdt_to
+        )
+        patterns = p_timeFilter.findall(sql_stmt)
+        for pattern in patterns:
+            pattern = p_timeFilter.search(sql_stmt)
+            if pattern:
+                # the $__timeFilter is used
+                appname = pattern.group(1).strip().lower()
+                substr = ""
+                if "aiops" == appname:
+                    # process for AIOps data
+                    substr += get_datetime_conditions_aiops(dt_from, dt_to) + "  AND "
+
+                # process for regular data
+                type_of_column = appname
+                if "string" == type_of_column:
+                    # the type is string
+                    # if {time_col} is in timestamp
+                    substr += """ to_timestamp({time_col}) BETWEEN to_timestamp("{dt_from}") and to_timestamp("{dt_to}")""".format(
+                        time_col=time_col, dt_from=sdt_from, dt_to=sdt_to
+                    )
+                else:
+                    # flake8: noqa = E501
+                    # substr += """ {time_col} >= to_date("{dt_from}") and {time_col} <= to_date("{dt_to}")""".format(time_col=time_col, dt_from=sdt_from, dt_to=sdt_to)
+                    # substr += """ {time_col} BETWEEN "{dt_from}" and "{dt_to}" """.format(time_col=time_col, dt_from=sdt_from, dt_to=sdt_to)
+                    substr += """ cast({time_col}/1000 as long) BETWEEN to_unix_timestamp(to_timestamp("{dt_from}")) and to_unix_timestamp(to_timestamp("{dt_to}"))""".format(
+                        time_col=time_col, dt_from=sdt_from, dt_to=sdt_to
+                    )  # noqa = E501
+
+                sql_stmt = p_timeFilter.sub(substr, sql_stmt, count=1)
+    sql_stmt = process_macro_data_source(
+        p_cos_in, grafanaPluginInstances.get_cos_source, key, sql_stmt
+    )
+    sql_stmt = process_macro_data_source(
+        p_cos_in_using, grafanaPluginInstances.get_cos_source_using, key, sql_stmt
+    )
+    # p_reg = p_cos_in
+    # patterns = p_reg.findall(sql_stmt)
+    # try:
+    #    substr = grafanaPluginInstances.get_cos_source(key)
+    # except KeyError:
+    #  # TODO: maybe we want to resend the credential each time - as when deploying to CodeEngine - the storage is not permanent?
+    #  msg = "The webapp doesn't hold CloudSQL info - you may want to revalidate in the datasource setting"
+    #  return None, HTTPResponse(
+    #    body=json.dumps({'error': msg}),
+    #    status=403,
+    #    headers={'Content-type': 'application/json'}
+    #  )
+    # if len(patterns) > 0 and len(substr) == 0:
+    #  msg = "Can't use $__source (default value has not been configured yet)"
+    #  raise HTTPResponse(
+    #      body=json.dumps({'error': msg}),
+    #      status=403,
+    #      headers={'Content-type': 'application/json'}
+    #  )
+    # for pattern in patterns:
+    #  pattern = p_reg.search(sql_stmt)
+    #  if pattern:
+    #    # the $__source is used
+    #    sql_stmt = p_reg.sub(substr, sql_stmt, count=1)
+    # get test_data
+    p_reg = p_cos_in_test
+    patterns = p_reg.findall(sql_stmt)
+    for pattern in patterns:
+        pattern = p_reg.search(sql_stmt)
+        if pattern.group(1) is None:
+            # $__source_test
+            ts_form = ""
+        else:
+            # $__source_test()
+            ts_form = re.sub(r"\(|\)", "", pattern.group(1).strip().lower())
+        substr = ""
+        if ts_form in ["ts", ""]:  # single time-series"
+            substr = grafanaPluginInstances.get_sts_random_data(key, dt_from, dt_to)
+        if "mts" == ts_form:  # multipletime-series"
+            substr = grafanaPluginInstances.get_mts_random_data(key, dt_from, dt_to)
+        if pattern:
+            # the $__source_test is used
+            sql_stmt = p_reg.sub(substr, sql_stmt, count=1)
+    # get source COS URL as the output of a previous query
+    p_reg = p_cos_in_prev
+    patterns = p_reg.findall(sql_stmt)
+    for pattern in patterns:
+        pattern = p_reg.search(sql_stmt)
+        if pattern.group(1) is None:
+            # $__source_prev
+            msg = "Need to specify refId name in $__source_prev, e.g. $__source_prev(A)"
+            return (
+                None,
+                HTTPResponse(
+                    body=json.dumps({"error": msg}),
+                    status=403,
+                    headers={"Content-type": "application/json"},
+                ),
+            )
+        else:
+            # $__source_prev()
+            prev_refId_name = re.sub(r"\(|\)", "", pattern.group(1).strip())
+        substr = ""
+        if len(prev_refId_name) == 0:
+            msg = "Need to specify refId name in $__source_prev, e.g. $__source_prev(A)"
+            return (
+                None,
+                HTTPResponse(
+                    body=json.dumps({"error": msg}),
+                    status=403,
+                    headers={"Content-type": "application/json"},
+                ),
+            )
+        # TODO
+        # May extend here to allow reading data from another panel and/or dashboard
+        # key_refId = gen_key_refId(body["dashboardId"], body["panelId"], prev_refId_name)
+        key_refId = gen_key_refId("dummy", "dummy", prev_refId_name)
+        try:
+            substr = grafanaPluginInstances.get_cos_source_prev(key, key_refId)
+        except KeyError:
+            msg = (
+                "The name {} used in $__source_prev()"
+                "does not exist or is not the prior sql statement in the chain"
+            ).format(prev_refId_name)
+            return (
+                None,
+                HTTPResponse(
+                    body=json.dumps({"error": msg}),
+                    status=403,
+                    headers={"Content-type": "application/json"},
+                ),
+            )
+
+        if pattern:
+            # the $__source_test is used
+            sql_stmt = p_reg.sub(substr, sql_stmt, count=1)
+    # get target COS URL
+    p_reg = p_cos_out
+    patterns = p_reg.findall(sql_stmt)
+    for _ in patterns:
+        pattern = p_reg.search(sql_stmt)
+        substr = ""
+        if pattern.group(1) is None:
+            # $__dest
+            substr = ""
+        else:
+            # $__dest()
+            # $__dest(<format> [,suffix])
+            # Example:
+            #     $__dest(parquet)
+            #     $__dest(parquet, a/b/c)
+            args_str = re.sub(r"\(|\)", "", pattern.group(1).strip())
+            if len(args_str) > 0:
+                arg_list = args_str.split(",")
+                if len(arg_list) > 2:
+                    msg = "$__dest() can't have more than two arguments"
+                    return (
+                        None,
+                        HTTPResponse(
+                            body=json.dumps({"error": msg}),
+                            status=403,
+                            headers={"Content-type": "application/json"},
+                        ),
+                    )
+                if len(arg_list) == 1:
+                    # must be format type
+                    format_type = arg_list[0].upper()
+                    suffix = ""
+                else:
+                    format_type = arg_list[0].upper()
+                    suffix = arg_list[1].strip()
+
+                if format_type not in ["PARQUET", "AVRO", "CSV", "JSON", "ORC"]:
+                    pass
+                    msg = "Invalid format of data used in $__dest macro"
+                    return (
+                        None,
+                        HTTPResponse(
+                            body=json.dumps({"error": msg}),
+                            status=403,
+                            headers={"Content-type": "application/json"},
+                        ),
+                    )
+                substr = grafanaPluginInstances.get_cos_dest(key, suffix, format_type)
+        if pattern:
+            # the $__source_test is used
+            sql_stmt = p_reg.sub(substr, sql_stmt, count=1)
+    # print(sql_stmt)
+
+    try:
+        while True:
+            try:
+                sql_stmt = format_sql(sql_stmt)
+                sql_stmt = sql_stmt.replace("\\'", '"')
+                print("Query to be issued:\n", sql_stmt)
+                # TODO: convert this to a function with
+                # and decorate the function with @functools.lru_cache
+                # https://docs.python.org/3.4/library/functools.html#functools.lru_cache
+                df = None
+                key_refId = gen_key_refId("dummy", "dummy", fullquery["id"])
+                # for some reason Grafana sends twice, and this to prevent from running twice on Cloud SQL
+                # there is a chance that a new query will be sent shortly which override the current
+                # one - as we can't cancel a launched SQL Query --> so we put in the queue and
+                # wait a little before before really launch it
+                # if not grafanaPluginInstances.should_sql_stmt_be_run(key, key_refId, sql_stmt):
+                #     break
+                # TODO - consider allow users to request 'rerun
+                rerun = False
+                # FIXME - the refId can be changed - so it's not a consistent way to track
+                job_id = None
+                if "get_result" in fullquery and fullquery["get_result"] is False:
+                    job_id = query_data_noresultback(
+                        key, sql_stmt, rerun=rerun, sqlClient=sqlClient
+                    )
+                else:
+                    df, job_id = query_data(
+                        key, key_refId, sql_stmt, rerun=rerun, sqlClient=sqlClient
+                    )
+                    if 0:
+                        # FIXME: 'key' and 'key_refId' are not capable of distuingishing
+                        # queries from two panels
+                        # TODO - it's possibel that user decide to change from 'noresult' to
+                        # 'get-result' so we should avoid rerun if possible
+                        # FIXME - the refId can be changed - so it's not a consistent way to track
+                        job_id = grafanaPluginInstances.get_job_id(key, key_refId)
+                        if job_id is None:
+                            df, job_id = query_data(
+                                key,
+                                key_refId,
+                                sql_stmt,
+                                rerun=rerun,
+                                sqlClient=sqlClient,
+                            )
+                        else:
+                            if sqlClient is None:
+                                sqlClient = grafanaPluginInstances.get_sqlclient(
+                                    key, thread_safe=True
+                                )
+                            job_status = sqlClient.wait_for_job(job_id, sleep_time=10)
+                            if job_status == "completed":
+                                df = sqlClient.get_result(job_id)
+                    if df is None:
+                        msg = "Query {}: no data returned or query failed due to timeout".format(
+                            fullquery["id"]
+                        )
+                        return (
+                            None,
+                            HTTPResponse(
+                                body=json.dumps({"error": msg}),
+                                status=403,
+                                headers={"Content-type": "application/json"},
+                            ),
+                        )
+                # a unique reference needs dashboardId + panelid + refid
+                # TODO : When the webapp is shared by multiple instances of Grafana
+                # --> maybe the dashboardId and panelId can be the same for those from
+                # two Grafana instance --> need to resolve this
+                assert job_id is not None
+                grafanaPluginInstances.save_job_id(key, key_refId, job_id)
+                break
+            except RateLimitedException:
+                sleep(10)
+            except TooManyRowsException as e:
+                msg = "The query returns too many rows - please revise it"
+                return (
+                    None,
+                    HTTPResponse(
+                        body=json.dumps({"error": msg}),
+                        status=403,
+                        headers={"Content-type": "application/json"},
+                    ),
+                )
+            except NoResultException as e:
+                msg = "The query returns nothing - please revise it"
+                return (
+                    None,
+                    HTTPResponse(
+                        body=json.dumps({"error": msg}),
+                        status=403,
+                        headers={"Content-type": "application/json"},
+                    ),
+                )
+        if "get_result" in fullquery and fullquery["get_result"] is False:
+            return None, None
+        # job_id = sqlClient.submit_sql(sql_stmt, blocking=True)
+        # ok = False
+        # while not ok:
+        #  gevent.sleep(20)
+        #  ok = sqlClient.check_job_completion(job_id)
+
+    except CosUrlInaccessibleException as e:
+        msg = "Query {}: Check if you use the right data-source: {}".format(
+            fullquery["refId"], str(e)
+        )
+        return (
+            None,
+            HTTPResponse(
+                body=json.dumps({"error": msg}),
+                status=403,
+                headers={"Content-type": "application/json"},
+            ),
+        )
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        msg = "Query {}: unknown error {}".format(fullquery["id"], str(e))
+        return (
+            None,
+            HTTPResponse(
+                body=json.dumps({"error": msg}),
+                status=403,
+                headers={"Content-type": "application/json"},
+            ),
+        )
+    logger.info("RESULT is available")
+    if df is None:
+        # no data returned
+        msg = "Query {}: No data returned: check the time rang".format(fullquery["id"])
+        return (
+            None,
+            HTTPResponse(
+                body=json.dumps({"error": msg}),
+                status=403,
+                headers={"Content-type": "application/json"},
+            ),
+        )
+
+    # make NaN to empty string to so that client can understand
+    df.replace(np.nan, "", regex=True, inplace=True)
+
+    # [TableData] body must be a list, an element is a dict with 3 fields
+    # .  'type': 'table' or 'timeseries'
+    # .  'columns': a list of len = number of columns, each element is a dict of 2 entries:
+    #        'text' : field-name, 'type': a string representatin of 'time',
+    #        'string', 'number' [a value provided by FieldType in Grafana]
+    # . 'rows' : a list, of len = number of rows, and each entry is a list of values in one row
+    # 'series A': [{
+    #      "columns":[
+    #        {"text":"Time","type":"time"},
+    #        {"text":"Country","type":"string"},
+    #        {"text":"Number","type":"number"}
+    #      ],
+    #      "rows":[
+    #        [1234567,"SE",123],
+    #        [1234567,"DE",231],
+    #        [1234567,"US",321]
+    #      ],
+    #      "type":"table"
+    #      }],
+    # body = json_dumps(tabular_data[series])
+    time_col = ""
+    if "time_column" in fullquery:
+        tmp = fullquery["time_column"].strip()
+        if len(tmp) > 0:
+            time_col = tmp
+            if time_col in columns_from_to:
+                time_col = columns_from_to[time_col]
+            df = revise_time_column(time_col, df)
+    mdict = {}
+    # mdict["columns"] = [
+    #           {"text":"user_agent","type":"string"},
+    #           {"text":"Time","type":"time"},
+    #           {"text":"value","type":"number"}
+    #       ]
+    # TableData
+    mdict["columns"] = []
+    y = build_table_schema(df)
+    for col in y["fields"]:
+        if col["name"] == "index":
+            continue
+        x = {}
+        x["text"] = col["name"]
+        stype = ""
+        if col["type"] in ["integer", "number"]:
+            stype = "number"
+        elif col["type"] in ["datetime"] or col["name"] == time_col:
+            stype = "time"
+        elif col["type"] in ["string"]:
+            stype = "string"
+        elif col["type"] in ["boolean"]:
+            stype = "boolean"
+        else:
+            print("col: ", col["type"])
+            logger.info("col: ", col["type"])
+            assert 0
+        x["type"] = stype
+        mdict["columns"].append(x)
+    mdict["rows"] = df.values.tolist()
+    result = mdict
+    if DEBUG:
+        logger.debug("=====")
+        logger.debug(".. print first 5 rows")
+        # don't print too long result
+        import pprint
+
+        print(type(result))
+        print(result)
+        pprint.pprint(result["columns"], width=1)
+        pprint.pprint(len(result["rows"]))
+        # pprint.pprint(result['rows'][1:5], width=1, depth=1)
 
     return result, None
 

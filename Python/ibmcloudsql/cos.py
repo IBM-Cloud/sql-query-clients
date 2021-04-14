@@ -27,9 +27,9 @@ import requests
 from ibm_botocore.client import Config
 
 try:
-    from utilities import IBMCloudAccess
+    from utilities import IBMCloudAccess, confirm_action
 except Exception:
-    from .utilities import IBMCloudAccess
+    from .utilities import IBMCloudAccess, confirm_action
 from requests.exceptions import HTTPError
 import json
 import logging
@@ -459,7 +459,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
         return _get_default_s3_client(endpoint)
 
-    def list_cos_objects(self, cos_url, size_unit=None):
+    def list_cos_objects(self, cos_url, size_unit=None, sort_by_size=False):
         """
         List all objects in the current COS URL. Also, please read the note to see the role of trailing slash in the COS URL.
 
@@ -533,6 +533,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             result.Size = result.Size / mapping[size_unit]
         else:
             result = pd.DataFrame()
+        if sort_by_size is True:
+            result.sort_values("Size", inplace=True, ascending=False)
         return result
 
     def delete_empty_objects(self, cos_url):
@@ -556,10 +558,56 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             if int(result_objects.Size[row]) == 0:
                 cos_client.delete_object(Bucket=bucket, Key=result_objects.Object[row])
 
-    def delete_objects(self, cos_url, dry_run=False):
+    def _get_objects(self, http_string, result_location):
+        """
+        return upt-to-1000 objects [as constrained by
+        https://ibm.github.io/ibm-cos-sdk-python/reference/services/s3.html]
+
+        Returns:
+        -------
+        list of dict
+            The element in the list is a dict which contains a single key "Key",
+            with value as the suffix (after the bucketname until the end of COS URL)
+
+            Return empty list if there is no object or can't read the COS URL
+
+        """
+        response = requests.get(http_string, headers=self.request_headers,)
+
+        bucket_objects = []
+        if response.status_code == 200 or response.status_code == 201:
+            ns = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
+            responseBodyXMLroot = ET.fromstring(response.content)
+            bucket_name = responseBodyXMLroot.find("s3:Name", ns).text
+            bucket_objects = []
+            if responseBodyXMLroot.findall("s3:Contents", ns):
+                for contents in responseBodyXMLroot.findall("s3:Contents", ns):
+                    key = contents.find("s3:Key", ns)
+                    bucket_objects.append({"Key": key.text})
+        else:
+            print(
+                "Result object listing for COS URL at {} failed with http code {}".format(
+                    result_location, response.status_code
+                )
+            )
+        return bucket_objects
+
+    def delete_objects(self, cos_url, dry_run=False, confirm=False, get_result=True):
         """delete all objects stored at the given COS URL
 
         https://<cos-url>/<bucket>?prefix=<prefix-path>
+
+        Parameters
+        ----------
+        confirm: bool, default=False
+            confirm before deleting
+        get_result: bool, default=True
+            return the result, can be slow on large number of objects
+
+        Returns
+        -------
+        pd.DataFrame
+            A single column dataframe: ["Deleted Object"]
 
         Notes
         ------
@@ -622,49 +670,50 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             + "?prefix="
             + result_location[fourth_slash + 1 :]
         )
-        response = requests.get(http_string, headers=self.request_headers,)
         if dry_run is True:
             import pprint
 
             print("http request {}".format(http_string))
             pprint.pprint(" response = {}".format(response.content))
+            deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
+            return deleted_list_df
 
-        if response.status_code == 200 or response.status_code == 201:
-            ns = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
-            responseBodyXMLroot = ET.fromstring(response.content)
-            bucket_name = responseBodyXMLroot.find("s3:Name", ns).text
-            bucket_objects = []
-            if responseBodyXMLroot.findall("s3:Contents", ns):
-                for contents in responseBodyXMLroot.findall("s3:Contents", ns):
-                    key = contents.find("s3:Key", ns)
-                    bucket_objects.append({"Key": key.text})
-            else:
-                print(
-                    "There are no result objects for the COS URL {url}".format(
-                        url=cos_url
+        answer = True
+        if confirm is True:
+            answer = confirm_action("delete {}".format(cos_url))
+
+        deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
+        if answer is True:
+            cos_client = self._get_cos_client(url_parsed.endpoint)
+            bucket_name = self.get_bucket(cos_url)
+            first_check = True
+            while True:
+                bucket_objects = self._get_objects(http_string, result_location)
+                if len(bucket_objects) > 0:
+                    first_check = False
+                    deleted_list_df = self._delete_objects(
+                        cos_client, bucket_name, bucket_objects, deleted_list_df
                     )
-                )
-                return
-        else:
-            print(
-                "Result object listing for COS URL at {} failed with http code {}".format(
-                    result_location, response.status_code
-                )
-            )
-            return
+                else:
+                    if first_check is True:
+                        print(
+                            "There are no result objects for the COS URL {url}".format(
+                                url=cos_url
+                            )
+                        )
+                    break
+        return deleted_list_df
 
-        cos_client = self._get_cos_client(url_parsed.endpoint)
+    def _delete_objects(
+        self, cos_client, bucket_name, bucket_objects, deleted_list_df=None
+    ):
+        """ delete up-to 1000 objects
+        """
+        response = cos_client.delete_objects(
+            Bucket=bucket_name, Delete={"Objects": bucket_objects}
+        )
 
-        if dry_run is True:
-            print(type(cos_client))
-            print(cos_client)
-            deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
-        else:
-            response = cos_client.delete_objects(
-                Bucket=bucket_name, Delete={"Objects": bucket_objects}
-            )
-
-            deleted_list_df = pd.DataFrame(columns=["Deleted Object"])
+        if deleted_list_df is not None:
             for deleted_object in response["Deleted"]:
                 deleted_list_df = deleted_list_df.append(
                     [{"Deleted Object": deleted_object["Key"]}],
@@ -862,6 +911,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         """
 
         def sizeof_fmt(num, suffix="B"):
+            if num is None:
+                return None
             for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
                 if abs(num) < 1024.0:
                     return "%3.1f %s%s" % (num, unit, suffix)

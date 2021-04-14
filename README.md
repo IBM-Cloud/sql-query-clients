@@ -11,8 +11,9 @@ This repository contains application client samples and blueprint code for the [
  * [Grafana](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Grafana) connector
 
 ## Documentation
- * Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/sql-query?topic=sql-query-gettingstarted) for general information and turorial for this service.
- * [Python](https://ibm-cloud.github.io/sql-query-clients/)
+ * Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/sql-query?topic=sql-query-getting-started) for general information and turorial for this service.
+ * The documentation for [ibmcloudsql Python API](https://ibm-cloud.github.io/sql-query-clients/)
+ * How to use `ibmcloudsql` in a [Python Notebook](https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d)
 
 ## How to generate docs
 

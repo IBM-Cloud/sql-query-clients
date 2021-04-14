@@ -31,6 +31,7 @@ import {
   DataSourceInstanceSettings,
   MutableDataFrame,
   FieldType,
+  MetricFindValue,
   //DefaultTimeRange,
 } from "@grafana/data";
 
@@ -40,7 +41,7 @@ import CloudSQLLanguageProvider from "./sql/language_provider";
 //export const CLOUDSQL_ENDPOINT = '/cloudsql/api/v1';
 
 function extend(obj: any, src: any) {
-  Object.keys(src).forEach(function(key) {
+  Object.keys(src).forEach(function (key) {
     obj[key] = src[key];
   });
   return obj;
@@ -296,38 +297,35 @@ export class COSIBMDataSource extends DataSourceApi<
     };
   }
 
-  testDatasource_old() {
-    //another way to issue Rest API is using the functionality provided by Grafana
-    return getBackendSrv()
-      .datasourceRequest({
-        url: "/api/tsdb/query",
-        method: "POST",
-        data: {
-          from: "5m",
-          to: "now",
-          queries: [
-            {
-              refId: "A",
-              intervalMs: 1,
-              maxDataPoints: 1,
-              datasourceId: this.id,
-              rawSql: "SELECT 1",
-              format: "table",
-            },
-          ],
-        },
-      })
-      .then((res: any) => {
-        return { status: "success", message: "Database Connection OK" };
-      })
-      .catch((err: any) => {
-        console.log(err);
-        if (err.data && err.data.message) {
-          return { status: "error", message: err.data.message };
-        } else {
-          return { status: "error", message: err.status };
-        }
+  async metricFindQuery(
+    query: string,
+    options?: any
+  ): Promise<MetricFindValue[]> {
+    //metricFindQuery(query: string, options?: any): any
+    if (!query) {
+      return Promise.resolve([]);
+    }
+    var result = this.doRequest({
+      url: this.url + "/variable",
+      data: {
+        //query: query,
+        options: options,
+      },
+      method: "POST",
+    });
+    return result.then((response) => {
+      let data = response.data[0]; //the first and only TableData
+      return data.rows.map((c) => {
+        return c.length === 0
+          ? {
+              text: c[0],
+            }
+          : {
+              text: c[0],
+              value: c[1],
+            };
       });
+    });
   }
 }
 //export default COSIBMDataSource;

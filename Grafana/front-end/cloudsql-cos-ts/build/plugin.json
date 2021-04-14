@@ -1,0 +1,40 @@
+{
+  "type": "datasource",
+  "name": "cloudsql-cos-ts",
+  "id": "ibm-cloudsql-cos-ts-datasource",
+  "metrics": true,
+  "info": {
+    "description": "TimeSeries stored in IBM COS via IBM CloudSQL",
+    "author": {
+      "name": "Tuan M. Hoang Trong",
+      "url": "http://www.research.ibm.com/labs/watson/"
+    },
+    "keywords": [
+      "timeseries",
+      "IBM",
+      "COS",
+      "CloudSQL"
+    ],
+    "logos": {
+      "small": "img/logo.png",
+      "large": "img/logo.png"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.ibm.com/Common-TimeSeries-Analytics-Library/cloud_sqlquery/tree/master/grafana-plugins/cloudsql-cos-ts"
+      },
+      {
+        "name": "License",
+        "url": "https://github.ibm.com/Common-TimeSeries-Analytics-Library/cloud_sqlquery/tree/master/grafana-plugins/cloudsql-cos-ts/LICENSE"
+      }
+    ],
+    "screenshots": [],
+    "version": "0.0.3",
+    "updated": "2021-04-07"
+  },
+  "dependencies": {
+    "grafanaVersion": "7.4.x",
+    "plugins": []
+  }
+}
