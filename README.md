@@ -1,4 +1,4 @@
-# sql-query-clients [![Build Status](https://travis-ci.org/IBM-Cloud/sql-query-clients.svg?branch=master)](https://travis-ci.org/IBM-Cloud/sql-query-clients) [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Python%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions) [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Node.js%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions)
+# sql-query-clients [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Python%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions) [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Node.js%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions)
 
 This repository contains application client samples and blueprint code for the [IBM Cloud SQL Query service](https://cloud.ibm.com/catalog/services/sql-query#about).
 
