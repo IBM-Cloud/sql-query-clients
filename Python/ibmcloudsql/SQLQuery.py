@@ -1230,6 +1230,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         if (
             job_id in self.jobs_tracking
             and self.jobs_tracking[job_id].get("status") != "running"
+            and self.jobs_tracking[job_id].get("status") != "queued"
         ):
             result = self.jobs_tracking[job_id]
         else:
