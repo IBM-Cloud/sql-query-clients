@@ -1082,7 +1082,8 @@ def login():
     # instance_rate_limit = request.forms.get('instance_rate_limit')
     print("Handling /login request")
 
-    key = gen_key(body.get("id"), body.get("name"))
+    id_name = "dummy_string"
+    key = gen_key(id_name, body.get("name"))
     # always update
     data_exist = False
     if key in grafanaPluginInstances.keys():
