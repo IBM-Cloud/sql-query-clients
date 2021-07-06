@@ -18,7 +18,7 @@ import getpass
 import time
 import xml.etree.ElementTree as ET
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pformat
 
 import ibm_boto3
@@ -458,6 +458,69 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             )
 
         return _get_default_s3_client(endpoint)
+
+    def copy_daily_objects(self, source_cos_url, target_cos_url, buffer_days=1):
+        """
+        Copy all objects from a source location in a per day folder on a target location, with a sliding window buffer of days.
+
+        Parameters
+        ------------
+        source_cos_url: str
+            Your source data in format cos://us-south/<bucket-name>/object_path/
+
+        source_cos_url: str
+            Your target data in format cos://us-south/<bucket-name>/object_path/
+
+        buffer_days: sint
+            Number of additional days before and after each day for which to copy the landed objects into the single target day folder.
+
+        Returns
+        ----------
+        None
+
+        Raises
+        -------
+        ValueError
+            if COS URL is invalid
+        """
+
+        if not self.is_valid_cos_url(source_cos_url):
+            msg = "Not a valid COS URL: {}".format(source_cos_url)
+            raise ValueError(msg)
+        if not self.is_valid_cos_url(target_cos_url):
+            msg = "Not a valid COS URL: {}".format(target_cos_url)
+            raise ValueError(msg)
+
+        source_cos_url = self.get_exact_url(source_cos_url)
+        source_url_parsed = self.analyze_cos_url(source_cos_url)
+        target_cos_url = self.get_exact_url(target_cos_url)
+        target_url_parsed = self.analyze_cos_url(target_cos_url)
+        target_prefix=target_url_parsed.prefix
+        if len(target_prefix) > 0:
+            if target_prefix[-1] != '/':
+                target_prefix = target_prefix + "/"
+        cos_client = self._get_cos_client(target_url_parsed.endpoint)
+
+        source_objects = self.list_cos_objects(source_cos_url)
+        source_objects["LastModified"] = source_objects["LastModified"].dt.date
+        start_date = source_objects.LastModified.min()
+        end_date = source_objects.LastModified.max()
+        for n in range(int((end_date - start_date).days)):
+            current_date = start_date + timedelta(n)
+            current_objects = source_objects[(source_objects['LastModified'] >= current_date - timedelta(days=buffer_days)) &
+                                             (source_objects['LastModified'] <= current_date + timedelta(days=buffer_days))]
+
+            for source_index, source_object in current_objects.iterrows():
+                current_source = source_url_parsed.bucket + "/" + source_object['Object']
+                current_target_object = current_source[len(source_url_parsed.prefix):]
+                current_target_prefix = "{}_date_landed={}".format(target_prefix, current_date)
+                cos_client.copy_object(
+                    Bucket=target_url_parsed.bucket,
+                    CopySource=current_source,
+                    Key=current_target_prefix + "/" + current_target_object
+                )
+            if len(current_objects)>0:
+                print("Copied {} objects to bucket {} into folder {}.".format(len(current_objects), target_url_parsed.bucket, current_target_prefix))
 
     def list_cos_objects(self, cos_url, size_unit=None, sort_by_size=False):
         """
