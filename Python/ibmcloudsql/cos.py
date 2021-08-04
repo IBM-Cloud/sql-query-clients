@@ -511,8 +511,8 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         source_objects["LastModified"] = source_objects["LastModified"].dt.date
         start_date = source_objects.LastModified.min()
         end_date = source_objects.LastModified.max()
-        for n in range(int((end_date - start_date).days)):
-            current_date = start_date + timedelta(n)
+        for n in range(int((end_date - start_date).days) + 1):
+            current_date = start_date + timedelta(n-1)
             current_objects = source_objects[(source_objects['LastModified'] >= current_date - timedelta(days=buffer_days)) &
                                              (source_objects['LastModified'] <= current_date + timedelta(days=buffer_days))]
 
@@ -526,6 +526,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                     Key=current_target_prefix + "/" + current_target_object
                 )
             if len(current_objects)>0:
+                cos_client.put_object(Body='', Bucket=target_url_parsed.bucket, Key=current_target_prefix + "/_SUCCESS")
                 print("Copied {} objects to bucket {} into folder {}.".format(len(current_objects), target_url_parsed.bucket, current_target_prefix))
 
     def list_cos_objects(self, cos_url, size_unit=None, sort_by_size=False):
