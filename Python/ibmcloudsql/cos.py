@@ -518,7 +518,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
 
             for source_index, source_object in current_objects.iterrows():
                 current_source = source_url_parsed.bucket + "/" + source_object['Object']
-                current_target_object = current_source[len(source_url_parsed.prefix):]
+                if "/_schema_as_json" in current_source or "/_checkpoint/" in current_source:
+                    continue # Don't copy SQL Query stream data landing checkpoint and schema objects.
+                current_target_object = source_object['Object'][len(source_url_parsed.prefix):]
                 current_target_prefix = "{}_date_landed={}".format(target_prefix, current_date)
                 cos_client.copy_object(
                     Bucket=target_url_parsed.bucket,
