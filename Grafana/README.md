@@ -8,6 +8,8 @@ This is a community based IBM SQL Query Grafana connector. The connector has 2 p
 The plugin provides the capability to launch one or many SQL-based queries to the CloudSQL service instance. The returned data can be categorized into either: TimeSeries or Table.
 With TimeSeries, there must be a column holding timestamp data, and a column holding observation/measurement data. With Multi-TimeSeries, there must be a third column as metrics.
 
+A tutorial is available at [IBM Cloud's Blog](https://www.ibm.com/cloud/blog/time-series-analytics-for-ibm-virtual-private-cloud-flows-using-grafana)
+
 What is Grafana?
 -----------
 
