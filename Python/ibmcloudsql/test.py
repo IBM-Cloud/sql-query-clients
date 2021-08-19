@@ -251,20 +251,20 @@ jobhist_df = sqlClient.run_sql("SELECT * FROM {} STORED AS PARQUET LIMIT 10 INTO
 )
 print(jobhist_df[['job_id','status']])
 
-print("Running EU test with individual method invocation and Parquet target:")
-try:
-    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
-    sqlClient_eu.logon()
-    jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
-    sqlClient_eu.wait_for_job(jobId)
-    result_df = sqlClient_eu.get_result(jobId)
-    print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
-    print(result_df.head(200))
-    print("EU SQL UI Link:")
-    sqlClient_eu.sql_ui_link()
-except AttributeError as _:
-    print(".. no configuration available")
-    pass
+#print("Running EU test with individual method invocation and Parquet target:")
+#try:
+#    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
+#    sqlClient_eu.logon()
+#    jobId = sqlClient_eu.submit_sql("SELECT * FROM cos://us-geo/sql/employees.parquet STORED AS PARQUET LIMIT 10 INTO {} STORED AS PARQUET".format(test_credentials.eu_result_location))
+#    sqlClient_eu.wait_for_job(jobId)
+#    result_df = sqlClient_eu.get_result(jobId)
+#    print("jobId {} restults are stored in {}. Result set is:".format(jobId, sqlClient_eu.get_job(jobId)['resultset_location']))
+#    print(result_df.head(200))
+#    print("EU SQL UI Link:")
+#    sqlClient_eu.sql_ui_link()
+#except AttributeError as _:
+#    print(".. no configuration available")
+#    pass
 
 print("Force rate limiting:")
 try:
