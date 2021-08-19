@@ -20,11 +20,11 @@ import threading
 from isodate import ISO8601Error
 
 try:
-    from .SQLQuery import SQLQuery
-    from .sql_magic import print_sql
-except Exception:
     from SQLQuery import SQLQuery
     from sql_magic import print_sql
+except Exception:
+    from .SQLQuery import SQLQuery
+    from .sql_magic import print_sql
 
 lock = threading.Lock()
 
@@ -35,8 +35,8 @@ class SQLClientTimeSeries(SQLQuery):
 
     def __init__(
         self,
-        api_key,
-        instance_crn,
+        api_key="",
+        instance_crn="",
         target_cos_url=None,
         max_concurrent_jobs=4,
         max_tries=1,
@@ -1517,13 +1517,15 @@ class SQLClientTimeSeries(SQLQuery):
                 {extra_where}
                 """
         view_stmt = ""
-        if self._has_with_clause and not self._has_select_clause:
+        if self._has_with_clause and self._has_select_clause:
             # don't support this path
+            logger.error("Please reset with `.reset_()`")
             assert 0
             # self._sql_stmt = self._sql_stmt + select_stmt
-        else:
+        elif self._has_with_clause:
             # self._sql_stmt = select_stmt
-            view_stmt = select_stmt
+            # view_stmt = select_stmt
+            view_stmt = self._sql_stmt
         result = None
         # if dry_run:
         #    print_sql(self._sql_stmt)
@@ -1537,6 +1539,7 @@ class SQLClientTimeSeries(SQLQuery):
             select_stmt += """
             INTO {cos_out} STORED AS PARQUET {partition_clause}
             """
+            select_stmt = view_stmt + select_stmt
             select_stmt = select_stmt.format(
                 table_name=table_name,
                 cos_out=tmp_cos,
@@ -1567,8 +1570,16 @@ class SQLClientTimeSeries(SQLQuery):
             )
             # cos_in = select_container_id_full_location
             # self._sql_stmt = "WITH table_A AS (" + select_stmt + ")"
-            view_stmt = "WITH table_A AS (" + select_stmt + ")"
-            cos_in = "table_A"
+            if len(view_stmt) > 0:
+                view_stmt = view_stmt + ", {tmp_table} AS ({sql})".format(
+                    tmp_table="table_A", sql=select_stmt
+                )
+                # cos_in = self._current_vtable_name
+                cos_in = "table_A"
+                # view_stmt = "WITH table_A AS (" + select_stmt + ")"
+            else:
+                view_stmt = "WITH table_A AS (" + select_stmt + ")"
+                cos_in = "table_A"
 
         def query_day():
             """
