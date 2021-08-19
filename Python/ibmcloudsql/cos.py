@@ -730,7 +730,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             raise ValueError(msg)
         self.logon()
 
-        print("COS URL: {}\n".format(cos_url))
+        #print("COS URL: {}\n".format(cos_url))
         cos_url = self.get_exact_url(cos_url)
         result_location = cos_url.replace("cos", "https", 1)
         url_parsed = self.analyze_cos_url(cos_url)
