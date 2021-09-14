@@ -51,7 +51,7 @@ setup(
         "numpy",
         "pyarrow",
         "backoff==1.10.0",
-        "sqlparse",
+        "sqlparse>=0.4.2",
         "packaging",
         "pre-commit",
         "isodate",
