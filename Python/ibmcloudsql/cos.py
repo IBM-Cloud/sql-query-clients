@@ -219,6 +219,7 @@ class ParsedUrl(object):
             "ca-tor": "s3.ca-tor.cloud-object-storage.appdomain.cloud",
             "jp-tok": "s3.jp-tok.cloud-object-storage.appdomain.cloud",
             "jp-osa": "s3.jp-osa.cloud-object-storage.appdomain.cloud",
+            "br-sao": "s3.br-sao.cloud-object-storage.appdomain.cloud",
             "ap-geo": "s3.ap.cloud-object-storage.appdomain.cloud",
             "ap": "s3.ap.cloud-object-storage.appdomain.cloud",
             "tok-ap-geo": "s3.tok.ap.cloud-object-storage.appdomain.cloud",
@@ -256,6 +257,7 @@ class ParsedUrl(object):
             "s3.ca-tor.cloud-object-storage.appdomain.cloud",
             "s3.jp-tok.cloud-object-storage.appdomain.cloud",
             "s3.jp-osa.cloud-object-storage.appdomain.cloud",
+            "s3.br-sao.cloud-object-storage.appdomain.cloud",
             "s3.us-west.cloud-object-storage.test.appdomain.cloud",
             # cross-region
             "s3.us.cloud-object-storage.appdomain.cloud",
