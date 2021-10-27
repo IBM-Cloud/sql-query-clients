@@ -611,6 +611,58 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             result.sort_values("Size", inplace=True, ascending=False)
         return result
 
+    def _get_tags_for_objects(self, bucket, endpoint, cos_objects_df):
+        cos_client = self._get_cos_client(endpoint)
+        objects_tags = pd.DataFrame(columns=['Object', 'Tag_Key', 'Tag_Value'])
+        for ind in cos_objects_df.index:
+            object=cos_objects_df['Object'][ind]
+            response = cos_client.get_object_tagging(Bucket=bucket, Key=object)
+            tags_df = pd.DataFrame.from_dict(response['TagSet'])
+            tags_df = tags_df.rename(columns={"Key": "Tag_Key", "Value": "Tag_Value"})
+            tags_df.insert(0, 'Object', object)
+            objects_tags = pd.concat([objects_tags, tags_df], ignore_index=True)
+        return objects_tags
+
+    def export_tags_for_cos_objects(self, cos_url, export_target_cos_file):
+        cos_url = self.get_exact_url(cos_url)
+        url_parsed = self.analyze_cos_url(cos_url)
+        cos_objects_df = self.list_cos_objects(cos_url)
+        objects_tags_df = self._get_tags_for_objects(url_parsed.bucket, url_parsed.endpoint, cos_objects_df)
+
+        import pyarrow
+        import tempfile
+        from packaging import version
+        tmpfile = tempfile.NamedTemporaryFile()
+        tempfilename = tmpfile.name
+        if version.parse(pd.__version__) >= version.parse("1.0.0"):
+            objects_tags_df.to_parquet(
+                engine="pyarrow",
+                path=tempfilename,
+                compression="snappy",
+                index=False,
+            )
+        else:
+            objects_tags_df.to_parquet(
+                engine="pyarrow",
+                fname=tempfilename,
+                compression="snappy",
+                index=False,
+            )
+        export_target_cos_file = self.get_exact_url(export_target_cos_file)
+        export_target_url_parsed = self.analyze_cos_url(export_target_cos_file)
+        cos_client = self._get_cos_client(export_target_url_parsed.endpoint)
+        cos_client.upload_file(
+            Bucket=export_target_url_parsed.bucket, Filename=tempfilename, Key=export_target_url_parsed.prefix
+        )
+        print("Exported {} object tags to {} for {} objects in location {}.".format(
+            objects_tags_df["Object"].count(),
+            export_target_cos_file,
+            cos_objects_df["Object"].count(),
+            cos_url
+        ))
+        tmpfile.close()
+
+
     def delete_empty_objects(self, cos_url):
         """
         Delete zero-size objects. Reference to :meth:`.list_cos_objects` for further details.

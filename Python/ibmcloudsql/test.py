@@ -251,6 +251,9 @@ jobhist_df = sqlClient.run_sql("SELECT * FROM {} STORED AS PARQUET LIMIT 10 INTO
 )
 print(jobhist_df[['job_id','status']])
 
+print("Exporting tags")
+sqlClient.export_tags_for_cos_objects('cos://us-geo/cdl/iotmessages/', 'cos://us-geo/results/foo/tags.parquet')
+
 #print("Running EU test with individual method invocation and Parquet target:")
 #try:
 #    sqlClient_eu = ibmcloudsql.SQLQuery(test_credentials.apikey, test_credentials.eu_instance_crn, target_cos_url=test_credentials.result_location, client_info='ibmcloudsql test')
