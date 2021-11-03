@@ -25,7 +25,7 @@ help:
 
 $(BUILDDIR)/html:
 	mkdir $(BUILDDIR)
-	cd $(BUILDDIR); git clone https://github.com/IBM-Cloud/sql-query-clients.git html; cd html; git checkout -b gh-pages remotes/origin/gh-pages
+	cd $(BUILDDIR); git clone git@github.com:IBM-Cloud/sql-query-clients.git html; cd html; git checkout -b gh-pages remotes/origin/gh-pages
 
 html: | $(BUILDDIR)/html
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
