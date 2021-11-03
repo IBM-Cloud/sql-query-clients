@@ -38,13 +38,13 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLBuilder Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../includeme.html">Github Repository</a></li>
@@ -107,6 +107,7 @@
 <span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pformat</span>
 
 <span class="kn">import</span> <span class="nn">ibm_boto3</span>
@@ -115,9 +116,9 @@
 <span class="kn">from</span> <span class="nn">ibm_botocore.client</span> <span class="kn">import</span> <span class="n">Config</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">utilities</span> <span class="kn">import</span> <span class="n">IBMCloudAccess</span>
+    <span class="kn">from</span> <span class="nn">utilities</span> <span class="kn">import</span> <span class="n">IBMCloudAccess</span><span class="p">,</span> <span class="n">confirm_action</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.utilities</span> <span class="kn">import</span> <span class="n">IBMCloudAccess</span>
+    <span class="kn">from</span> <span class="nn">.utilities</span> <span class="kn">import</span> <span class="n">IBMCloudAccess</span><span class="p">,</span> <span class="n">confirm_action</span>
 <span class="kn">from</span> <span class="nn">requests.exceptions</span> <span class="kn">import</span> <span class="n">HTTPError</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -304,7 +305,10 @@
             <span class="s2">&quot;mil&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.mil.eu.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;us-south&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.us-south.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;us-east&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.us-east.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ca-tor&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.ca-tor.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;jp-tok&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.jp-tok.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;jp-osa&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.jp-osa.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;br-sao&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.br-sao.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;ap-geo&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.ap.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;ap&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.ap.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;tok-ap-geo&quot;</span><span class="p">:</span> <span class="s2">&quot;s3.tok.ap.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
@@ -339,7 +343,10 @@
             <span class="s2">&quot;s3.eu-gb.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;s3.eu-de.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;s3.au-syd.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s3.ca-tor.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;s3.jp-tok.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s3.jp-osa.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s3.br-sao.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="s2">&quot;s3.us-west.cloud-object-storage.test.appdomain.cloud&quot;</span><span class="p">,</span>
             <span class="c1"># cross-region</span>
             <span class="s2">&quot;s3.us.cloud-object-storage.appdomain.cloud&quot;</span><span class="p">,</span>
@@ -401,6 +408,8 @@
 <span class="sd">        cos_url : str</span>
 <span class="sd">            COS URL</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">cos_url</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">):</span>
+            <span class="n">cos_url</span> <span class="o">+=</span> <span class="s2">&quot;/&quot;</span>
         <span class="n">nt</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;COSURL&quot;</span><span class="p">,</span> <span class="s2">&quot;endpoint bucket prefix&quot;</span><span class="p">)</span>
         <span class="n">mycontainer</span> <span class="o">=</span> <span class="n">nt</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_endpoint</span><span class="p">(</span><span class="n">cos_url</span><span class="p">),</span>
@@ -547,9 +556,102 @@
 
         <span class="k">return</span> <span class="n">_get_default_s3_client</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
 
-<div class="viewcode-block" id="COSClient.list_cos_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.list_cos_objects">[docs]</a>    <span class="k">def</span> <span class="nf">list_cos_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">size_unit</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="COSClient.copy_daily_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.copy_daily_objects">[docs]</a>    <span class="k">def</span> <span class="nf">copy_daily_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_cos_url</span><span class="p">,</span> <span class="n">target_cos_url</span><span class="p">,</span> <span class="n">buffer_days</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        List all objects in the current COS URL.</span>
+<span class="sd">        Copy all objects from a source location in a per day folder on a target location, with a sliding window buffer of days.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        source_cos_url: str</span>
+<span class="sd">            Your source data in format cos://us-south/&lt;bucket-name&gt;/object_path/</span>
+
+<span class="sd">        source_cos_url: str</span>
+<span class="sd">            Your target data in format cos://us-south/&lt;bucket-name&gt;/object_path/</span>
+
+<span class="sd">        buffer_days: sint</span>
+<span class="sd">            Number of additional days before and after each day for which to copy the landed objects into the single target day folder.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            if COS URL is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">source_cos_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_cos_url</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">target_cos_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target_cos_url</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">source_cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">source_cos_url</span><span class="p">)</span>
+        <span class="n">source_url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">source_cos_url</span><span class="p">)</span>
+        <span class="n">target_cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">target_cos_url</span><span class="p">)</span>
+        <span class="n">target_url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">target_cos_url</span><span class="p">)</span>
+        <span class="n">target_prefix</span> <span class="o">=</span> <span class="n">target_url_parsed</span><span class="o">.</span><span class="n">prefix</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">target_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+                <span class="n">target_prefix</span> <span class="o">=</span> <span class="n">target_prefix</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">target_url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+
+        <span class="n">source_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cos_objects</span><span class="p">(</span><span class="n">source_cos_url</span><span class="p">)</span>
+        <span class="n">source_objects</span><span class="p">[</span><span class="s2">&quot;LastModified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">source_objects</span><span class="p">[</span><span class="s2">&quot;LastModified&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">date</span>
+        <span class="n">start_date</span> <span class="o">=</span> <span class="n">source_objects</span><span class="o">.</span><span class="n">LastModified</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">end_date</span> <span class="o">=</span> <span class="n">source_objects</span><span class="o">.</span><span class="n">LastModified</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="n">end_date</span> <span class="o">-</span> <span class="n">start_date</span><span class="p">)</span><span class="o">.</span><span class="n">days</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">current_date</span> <span class="o">=</span> <span class="n">start_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">current_objects</span> <span class="o">=</span> <span class="n">source_objects</span><span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="n">source_objects</span><span class="p">[</span><span class="s2">&quot;LastModified&quot;</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="n">current_date</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">buffer_days</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">source_objects</span><span class="p">[</span><span class="s2">&quot;LastModified&quot;</span><span class="p">]</span>
+                    <span class="o">&lt;=</span> <span class="n">current_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">buffer_days</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">source_index</span><span class="p">,</span> <span class="n">source_object</span> <span class="ow">in</span> <span class="n">current_objects</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">current_source</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">source_url_parsed</span><span class="o">.</span><span class="n">bucket</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">source_object</span><span class="p">[</span><span class="s2">&quot;Object&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="s2">&quot;/_schema_as_json&quot;</span> <span class="ow">in</span> <span class="n">current_source</span>
+                    <span class="ow">or</span> <span class="s2">&quot;/_checkpoint/&quot;</span> <span class="ow">in</span> <span class="n">current_source</span>
+                <span class="p">):</span>
+                    <span class="k">continue</span>  <span class="c1"># Don&#39;t copy SQL Query stream data landing checkpoint and schema objects.</span>
+                <span class="n">current_target_object</span> <span class="o">=</span> <span class="n">source_object</span><span class="p">[</span><span class="s2">&quot;Object&quot;</span><span class="p">][</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">source_url_parsed</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:</span>
+                <span class="p">]</span>
+                <span class="n">current_target_prefix</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_date_landed=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">target_prefix</span><span class="p">,</span> <span class="n">current_date</span>
+                <span class="p">)</span>
+                <span class="n">cos_client</span><span class="o">.</span><span class="n">copy_object</span><span class="p">(</span>
+                    <span class="n">Bucket</span><span class="o">=</span><span class="n">target_url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span>
+                    <span class="n">CopySource</span><span class="o">=</span><span class="n">current_source</span><span class="p">,</span>
+                    <span class="n">Key</span><span class="o">=</span><span class="n">current_target_prefix</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">current_target_object</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_objects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">cos_client</span><span class="o">.</span><span class="n">put_object</span><span class="p">(</span>
+                    <span class="n">Body</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">Bucket</span><span class="o">=</span><span class="n">target_url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span>
+                    <span class="n">Key</span><span class="o">=</span><span class="n">current_target_prefix</span> <span class="o">+</span> <span class="s2">&quot;/_SUCCESS&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;Copied </span><span class="si">{}</span><span class="s2"> objects to bucket </span><span class="si">{}</span><span class="s2"> into folder </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">current_objects</span><span class="p">),</span>
+                        <span class="n">target_url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span>
+                        <span class="n">current_target_prefix</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span></div>
+
+<div class="viewcode-block" id="COSClient.list_cos_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.list_cos_objects">[docs]</a>    <span class="k">def</span> <span class="nf">list_cos_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">size_unit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sort_by_size</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List all objects in the current COS URL. Also, please read the note to see the role of trailing slash in the COS URL.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ------------</span>
@@ -582,13 +684,13 @@
 <span class="sd">        ValueError</span>
 <span class="sd">            if COS URL is invalid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">size_unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">size_unit</span> <span class="o">=</span> <span class="s2">&quot;B&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">cos_url</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
-            <span class="n">cos_url</span> <span class="o">=</span> <span class="n">cos_url</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
@@ -619,10 +721,64 @@
             <span class="p">}</span>
             <span class="k">assert</span> <span class="n">size_unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;KB&quot;</span><span class="p">,</span> <span class="s2">&quot;MB&quot;</span><span class="p">,</span> <span class="s2">&quot;GB&quot;</span><span class="p">]</span>
             <span class="n">result</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Size</span> <span class="o">/</span> <span class="n">mapping</span><span class="p">[</span><span class="n">size_unit</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-            <span class="c1"># result = pd.DataFrame(columns=[&#39;Object&#39;, &#39;LastModified&#39;, &#39;Size&#39;, &#39;StorageClass&#39;])</span>
+        <span class="k">if</span> <span class="n">sort_by_size</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Size&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_tags_for_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">cos_objects_df</span><span class="p">):</span>
+        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
+        <span class="n">objects_tags</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Object&#39;</span><span class="p">,</span> <span class="s1">&#39;Tag_Key&#39;</span><span class="p">,</span> <span class="s1">&#39;Tag_Value&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">cos_objects_df</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">=</span><span class="n">cos_objects_df</span><span class="p">[</span><span class="s1">&#39;Object&#39;</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">get_object_tagging</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+            <span class="n">tags_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;TagSet&#39;</span><span class="p">])</span>
+            <span class="n">tags_df</span> <span class="o">=</span> <span class="n">tags_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Key&quot;</span><span class="p">:</span> <span class="s2">&quot;Tag_Key&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">:</span> <span class="s2">&quot;Tag_Value&quot;</span><span class="p">})</span>
+            <span class="n">tags_df</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Object&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+            <span class="n">objects_tags</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">objects_tags</span><span class="p">,</span> <span class="n">tags_df</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objects_tags</span>
+
+<div class="viewcode-block" id="COSClient.export_tags_for_cos_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.export_tags_for_cos_objects">[docs]</a>    <span class="k">def</span> <span class="nf">export_tags_for_cos_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">export_target_cos_file</span><span class="p">):</span>
+        <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+        <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+        <span class="n">cos_objects_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_cos_objects</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+        <span class="n">objects_tags_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tags_for_objects</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">cos_objects_df</span><span class="p">)</span>
+
+        <span class="kn">import</span> <span class="nn">pyarrow</span>
+        <span class="kn">import</span> <span class="nn">tempfile</span>
+        <span class="kn">from</span> <span class="nn">packaging</span> <span class="kn">import</span> <span class="n">version</span>
+        <span class="n">tmpfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+        <span class="n">tempfilename</span> <span class="o">=</span> <span class="n">tmpfile</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">):</span>
+            <span class="n">objects_tags_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span>
+                <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyarrow&quot;</span><span class="p">,</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">tempfilename</span><span class="p">,</span>
+                <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;snappy&quot;</span><span class="p">,</span>
+                <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objects_tags_df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span>
+                <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyarrow&quot;</span><span class="p">,</span>
+                <span class="n">fname</span><span class="o">=</span><span class="n">tempfilename</span><span class="p">,</span>
+                <span class="n">compression</span><span class="o">=</span><span class="s2">&quot;snappy&quot;</span><span class="p">,</span>
+                <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">export_target_cos_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">export_target_cos_file</span><span class="p">)</span>
+        <span class="n">export_target_url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">export_target_cos_file</span><span class="p">)</span>
+        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">export_target_url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+        <span class="n">cos_client</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span>
+            <span class="n">Bucket</span><span class="o">=</span><span class="n">export_target_url_parsed</span><span class="o">.</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Filename</span><span class="o">=</span><span class="n">tempfilename</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="n">export_target_url_parsed</span><span class="o">.</span><span class="n">prefix</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exported </span><span class="si">{}</span><span class="s2"> object tags to </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2"> objects in location </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">objects_tags_df</span><span class="p">[</span><span class="s2">&quot;Object&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="n">export_target_cos_file</span><span class="p">,</span>
+            <span class="n">cos_objects_df</span><span class="p">[</span><span class="s2">&quot;Object&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="n">cos_url</span>
+        <span class="p">))</span>
+        <span class="n">tmpfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
 
 <div class="viewcode-block" id="COSClient.delete_empty_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_empty_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_empty_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -645,10 +801,56 @@
             <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Size</span><span class="p">[</span><span class="n">row</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">cos_client</span><span class="o">.</span><span class="n">delete_object</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Key</span><span class="o">=</span><span class="n">result_objects</span><span class="o">.</span><span class="n">Object</span><span class="p">[</span><span class="n">row</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="COSClient.delete_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">http_string</span><span class="p">,</span> <span class="n">result_location</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        return upt-to-1000 objects [as constrained by</span>
+<span class="sd">        https://ibm.github.io/ibm-cos-sdk-python/reference/services/s3.html]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of dict</span>
+<span class="sd">            The element in the list is a dict which contains a single key &quot;Key&quot;,</span>
+<span class="sd">            with value as the suffix (after the bucketname until the end of COS URL)</span>
+
+<span class="sd">            Return empty list if there is no object or can&#39;t read the COS URL</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">http_string</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">,)</span>
+
+        <span class="n">bucket_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">201</span><span class="p">:</span>
+            <span class="n">ns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;s3&quot;</span><span class="p">:</span> <span class="s2">&quot;http://s3.amazonaws.com/doc/2006-03-01/&quot;</span><span class="p">}</span>
+            <span class="n">responseBodyXMLroot</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="n">bucket_name</span> <span class="o">=</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;s3:Name&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">bucket_objects</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;s3:Contents&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">contents</span> <span class="ow">in</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;s3:Contents&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">):</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;s3:Key&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
+                    <span class="n">bucket_objects</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;Key&quot;</span><span class="p">:</span> <span class="n">key</span><span class="o">.</span><span class="n">text</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;Result object listing for COS URL at </span><span class="si">{}</span><span class="s2"> failed with http code </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">result_location</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">bucket_objects</span>
+
+<div class="viewcode-block" id="COSClient.delete_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.delete_objects">[docs]</a>    <span class="k">def</span> <span class="nf">delete_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">confirm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;delete all objects stored at the given COS URL</span>
 
 <span class="sd">        https://&lt;cos-url&gt;/&lt;bucket&gt;?prefix=&lt;prefix-path&gt;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        confirm: bool, default=False</span>
+<span class="sd">            confirm before deleting</span>
+<span class="sd">        get_result: bool, default=True</span>
+<span class="sd">            return the result, can be slow on large number of objects</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            A single column dataframe: [&quot;Deleted Object&quot;]</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        ------</span>
@@ -699,7 +901,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;COS URL: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
+        <span class="c1">#print(&quot;COS URL: {}\n&quot;.format(cos_url))</span>
         <span class="n">cos_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
         <span class="n">result_location</span> <span class="o">=</span> <span class="n">cos_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;cos&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
@@ -711,49 +913,50 @@
             <span class="o">+</span> <span class="s2">&quot;?prefix=&quot;</span>
             <span class="o">+</span> <span class="n">result_location</span><span class="p">[</span><span class="n">fourth_slash</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
         <span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">http_string</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request_headers</span><span class="p">,)</span>
         <span class="k">if</span> <span class="n">dry_run</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="kn">import</span> <span class="nn">pprint</span>
 
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;http request </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">http_string</span><span class="p">))</span>
             <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="s2">&quot; response = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+            <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Deleted Object&quot;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">deleted_list_df</span>
 
-        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">201</span><span class="p">:</span>
-            <span class="n">ns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;s3&quot;</span><span class="p">:</span> <span class="s2">&quot;http://s3.amazonaws.com/doc/2006-03-01/&quot;</span><span class="p">}</span>
-            <span class="n">responseBodyXMLroot</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-            <span class="n">bucket_name</span> <span class="o">=</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;s3:Name&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
-            <span class="n">bucket_objects</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">if</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;s3:Contents&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">contents</span> <span class="ow">in</span> <span class="n">responseBodyXMLroot</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;s3:Contents&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">):</span>
-                    <span class="n">key</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;s3:Key&quot;</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
-                    <span class="n">bucket_objects</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;Key&quot;</span><span class="p">:</span> <span class="n">key</span><span class="o">.</span><span class="n">text</span><span class="p">})</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="s2">&quot;There are no result objects for the COS URL </span><span class="si">{url}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">url</span><span class="o">=</span><span class="n">cos_url</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">confirm</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">answer</span> <span class="o">=</span> <span class="n">confirm_action</span><span class="p">(</span><span class="s2">&quot;delete </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
+
+        <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Deleted Object&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">answer</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+            <span class="n">bucket_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+            <span class="n">first_check</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">bucket_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_objects</span><span class="p">(</span><span class="n">http_string</span><span class="p">,</span> <span class="n">result_location</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bucket_objects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">first_check</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delete_objects</span><span class="p">(</span>
+                        <span class="n">cos_client</span><span class="p">,</span> <span class="n">bucket_name</span><span class="p">,</span> <span class="n">bucket_objects</span><span class="p">,</span> <span class="n">deleted_list_df</span>
                     <span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;Result object listing for COS URL at </span><span class="si">{}</span><span class="s2"> failed with http code </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">result_location</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">return</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">first_check</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s2">&quot;There are no result objects for the COS URL </span><span class="si">{url}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">url</span><span class="o">=</span><span class="n">cos_url</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">break</span>
+        <span class="k">return</span> <span class="n">deleted_list_df</span></div>
 
-        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_delete_objects</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cos_client</span><span class="p">,</span> <span class="n">bucket_name</span><span class="p">,</span> <span class="n">bucket_objects</span><span class="p">,</span> <span class="n">deleted_list_df</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; delete up-to 1000 objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">delete_objects</span><span class="p">(</span>
+            <span class="n">Bucket</span><span class="o">=</span><span class="n">bucket_name</span><span class="p">,</span> <span class="n">Delete</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Objects&quot;</span><span class="p">:</span> <span class="n">bucket_objects</span><span class="p">}</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">dry_run</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cos_client</span><span class="p">))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">cos_client</span><span class="p">)</span>
-            <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Deleted Object&quot;</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">response</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">delete_objects</span><span class="p">(</span>
-                <span class="n">Bucket</span><span class="o">=</span><span class="n">bucket_name</span><span class="p">,</span> <span class="n">Delete</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Objects&quot;</span><span class="p">:</span> <span class="n">bucket_objects</span><span class="p">}</span>
-            <span class="p">)</span>
-
-            <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Deleted Object&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">deleted_list_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">deleted_object</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;Deleted&quot;</span><span class="p">]:</span>
                 <span class="n">deleted_list_df</span> <span class="o">=</span> <span class="n">deleted_list_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">[{</span><span class="s2">&quot;Deleted Object&quot;</span><span class="p">:</span> <span class="n">deleted_object</span><span class="p">[</span><span class="s2">&quot;Key&quot;</span><span class="p">]}],</span>
@@ -761,7 +964,7 @@
                     <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">deleted_list_df</span></div>
+        <span class="k">return</span> <span class="n">deleted_list_df</span>
 
     <span class="k">def</span> <span class="nf">_list_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;List all objects from a given COS URL</span>
@@ -824,10 +1027,10 @@
 <span class="sd">            # NOTE: long strings are broken using ( sub1, sub2)</span>
 <span class="sd">            {</span>
 <span class="sd">            &quot;name&quot;: &quot;my-new-bucket&quot;,</span>
-<span class="sd">            &quot;crn&quot;: (&quot;crn:v1:bluemix:public:cloud-object-storage:global:&quot;,</span>
+<span class="sd">            &quot;crn&quot;: (&quot;crn:v1:bluemix:public:cloud-object-storage:global:&quot;</span>
 <span class="sd">                &quot;a/ 3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903:bucket:my-new-bucket&quot;),</span>
 <span class="sd">            &quot;service_instance_id&quot;: &quot;xxxxxxx-6c4f-4a62-a165-696756d63903&quot;,</span>
-<span class="sd">            &quot;service_instance_crn&quot;: (&quot;crn:v1:bluemix:public:cloud-object-storage:global&quot;,</span>
+<span class="sd">            &quot;service_instance_crn&quot;: (&quot;crn:v1:bluemix:public:cloud-object-storage:global&quot;</span>
 <span class="sd">                &quot;:a/3bf0d9003abfb5d29761c3e97696b71c:xxxxxxx-6c4f-4a62-a165-696756d63903::&quot;),</span>
 <span class="sd">            &quot;time_created&quot;: &quot;2018-03-26T16:23:36.980Z&quot;,</span>
 <span class="sd">            &quot;time_updated&quot;: &quot;2018-10-17T19:29:10.117Z&quot;,</span>
@@ -951,6 +1154,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">sizeof_fmt</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
             <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;K&quot;</span><span class="p">,</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1024.0</span><span class="p">:</span>
                     <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%3.1f</span><span class="s2"> </span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
@@ -982,16 +1187,16 @@
             <span class="k">if</span> <span class="s2">&quot;Contents&quot;</span> <span class="ow">in</span> <span class="n">page</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">page</span><span class="p">[</span><span class="s2">&quot;Contents&quot;</span><span class="p">]:</span>
                     <span class="p">(</span>
-                        <span class="n">smallest_object</span><span class="p">,</span>
-                        <span class="n">largest_object</span><span class="p">,</span>
+                        <span class="n">smallest_size</span><span class="p">,</span>
+                        <span class="n">largest_size</span><span class="p">,</span>
                         <span class="n">oldest_modification</span><span class="p">,</span>
                         <span class="n">newest_modification</span><span class="p">,</span>
                         <span class="n">smallest_object</span><span class="p">,</span>
                         <span class="n">largest_object</span><span class="p">,</span>
                     <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_stats</span><span class="p">(</span>
                         <span class="n">key</span><span class="p">,</span>
-                        <span class="n">smallest_object</span><span class="p">,</span>
-                        <span class="n">largest_object</span><span class="p">,</span>
+                        <span class="n">smallest_size</span><span class="p">,</span>
+                        <span class="n">largest_size</span><span class="p">,</span>
                         <span class="n">oldest_modification</span><span class="p">,</span>
                         <span class="n">newest_modification</span><span class="p">,</span>
                         <span class="n">smallest_object</span><span class="p">,</span>
@@ -1019,6 +1224,29 @@
             <span class="s2">&quot;largest_object_size&quot;</span><span class="p">:</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">largest_size</span><span class="p">),</span>
             <span class="s2">&quot;largest_object&quot;</span><span class="p">:</span> <span class="n">largest_object</span><span class="p">,</span>
         <span class="p">}</span></div>
+
+<div class="viewcode-block" id="COSClient.copy_objects"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.cos.COSClient.copy_objects">[docs]</a>    <span class="k">def</span> <span class="nf">copy_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_path</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upload a file to a given COS URL</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        -------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            if COS URL is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_valid_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Not a valid COS URL: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># result_objects = self.list_cos_objects(cos_url)</span>
+        <span class="n">url_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_cos_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+        <span class="n">cos_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cos_client</span><span class="p">(</span><span class="n">url_parsed</span><span class="o">.</span><span class="n">endpoint</span><span class="p">)</span>
+        <span class="n">bucket</span> <span class="o">=</span> <span class="n">url_parsed</span><span class="o">.</span><span class="n">bucket</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">cos_client</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File uploaded&quot;</span><span class="p">)</span></div>
 
     <span class="c1"># -----------------</span>
     <span class="c1"># The methods below are for interacting with a file stored as an asset in a Watson Studio&#39;s Project.</span>
@@ -1076,19 +1304,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">cos</span> <span class="o">=</span> <span class="n">COSClient</span><span class="p">()</span>
-    <span class="n">cos_url</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;cos://us-south/sql-query-cos-access-ts/aiops_test/&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Location=us-south/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;From: &quot;</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;To : &quot;</span><span class="p">,</span> <span class="n">cos</span><span class="o">.</span><span class="n">get_exact_url</span><span class="p">(</span><span class="n">cos_url</span><span class="p">))</span>
-
-    <span class="n">cos_url</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/aiops_test/&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Location=eu-de/DC=rgfra02/Year=2019/Month=10/Date=23/Hour=01/&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">cos</span><span class="o">.</span><span class="n">delete_objects</span><span class="p">(</span><span class="n">cos_url</span><span class="p">)</span>
+    <span class="k">pass</span>
 </pre></div>
 
           </div>

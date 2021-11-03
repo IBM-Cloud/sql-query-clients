@@ -38,13 +38,13 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLBuilder Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../includeme.html">Github Repository</a></li>
@@ -101,14 +101,17 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="c1"># ------------------------------------------------------------------------------</span>
+<span class="c1"># flake8: noqa E203</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
 <span class="kn">import</span> <span class="nn">sqlparse</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">import</span> <span class="nn">re</span>
+
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedStorageFormatException</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedStorageFormatException</span>
+
 
 <div class="viewcode-block" id="format_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.format_sql">[docs]</a><span class="k">def</span> <span class="nf">format_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;format SQL string to ensure proper content for string comparison</span>
@@ -117,36 +120,52 @@
 <span class="sd">    ----------</span>
 <span class="sd">    sql_stmt: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(cos)://[^\s]*&#39;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(cos)://[^\s]*&quot;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">)</span>
     <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">key_template</span> <span class="o">=</span> <span class="s2">&quot;key_</span><span class="si">{num}</span><span class="s2">&quot;</span>
     <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">while</span> <span class="n">url</span><span class="p">:</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">key_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
         <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(cos)://[^\s]*&#39;</span><span class="p">,</span>
-                          <span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span><span class="p">,</span>
-                          <span class="n">sql_stmt</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span>
-                          <span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(cos)://[^\s]*&#39;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">)</span>
+        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;(cos)://[^\s]*&quot;</span><span class="p">,</span> <span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> <span class="n">count</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(cos)://[^\s]*&quot;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">)</span>
         <span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">sqlparse</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">sql_stmt</span><span class="p">,</span>
         <span class="n">keyword_case</span><span class="o">=</span><span class="s2">&quot;upper&quot;</span><span class="p">,</span>
         <span class="n">strip_comments</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">reindent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">identifier_case</span><span class="o">=</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span>
+        <span class="n">strip_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">indent_columns</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">space_around_operators</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">output_format</span><span class="o">=</span><span class="s2">&quot;sql&quot;</span><span class="p">,</span>
+        <span class="n">truncate_strings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">indent_tabs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">comma_first</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">right_margin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">sql_stmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">mapping</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mapping</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">sql_stmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">mapping</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">e</span>
     <span class="k">return</span> <span class="n">sql_stmt</span></div>
+
 
 <div class="viewcode-block" id="print_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.print_sql">[docs]</a><span class="k">def</span> <span class="nf">print_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">format_sql</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="TimeSeriesTransformInput"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesTransformInput</span><span class="p">():</span>
+
+<div class="viewcode-block" id="TimeSeriesTransformInput"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesTransformInput</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class contains methods that supports the transformation of a user-friendly arguments in time-series functions</span>
 <span class="sd">    to IBM CloudSQL compatible values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="TimeSeriesTransformInput.transform_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">transform_sql</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -156,26 +175,29 @@
 <span class="sd">        -----</span>
 <span class="sd">        Syntax: https://cloud.ibm.com/docs/sql-query</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="n">TimeSeriesTransformInput</span><span class="o">.</span><span class="n">ts_segment_by_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">result</span>
+
         <span class="k">return</span> <span class="n">wrapped</span></div>
 
 <div class="viewcode-block" id="TimeSeriesTransformInput.ts_segment_by_time"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.ts_segment_by_time">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">ts_segment_by_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Revise arguments of TS_SEGMENT function to comply with IBM CloudSQL</span>
+<span class="sd">        Revise arguments of TS_SEGMENT_BY_TIME function to comply with IBM CloudSQL</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
-<span class="sd">        The TS_SEGMENT supported by IBM CloudSQL accepts value in number, which is not user-friendly</span>
-<span class="sd">        for units like hour, days, minutes. SQLMagic alllows constructing SQL query string using</span>
+<span class="sd">        The TS_SEGMENT_BY_TIME supported by IBM CloudSQL accepts value in number, which is not user-friendly</span>
+<span class="sd">        for units like hour, days, minutes. SQLBuilder alllows constructing SQL query string using</span>
 <span class="sd">        the below values.</span>
 
-<span class="sd">        1. values: `per_hour`, `hour`, `per_day`, `day`, `per_week`, `week`</span>
+<span class="sd">        1. values: `per_hour`, `hour`, `per_day`, `day`, `per_week`, `week`,</span>
+<span class="sd">        `minute`, `Xminute` (X is a number divisible by 60)</span>
 
 <span class="sd">        .. code-block:: console</span>
 
@@ -200,16 +222,31 @@
 
 <span class="sd">        as ts_segment_by_time operates at mili-seconds level, hour=60*60*1000 miliseconds</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;ts_segment_by_time&#39;</span><span class="p">,</span> <span class="s1">&#39;TS_SEGMENT_BY_TIME&#39;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;ts_segment_by_time&quot;</span><span class="p">,</span> <span class="s2">&quot;TS_SEGMENT_BY_TIME&quot;</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span>
+        <span class="p">)</span>
+
         <span class="k">def</span> <span class="nf">handle_str_str</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">):</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P&lt;step&gt;[a-zA-Z][a-zA-Z_0-9]+)&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s2">&quot;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[0-9]*[_]?[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P&lt;step&gt;[0-9]*[_]?[a-zA-Z][a-zA-Z_0-9]+)&quot;</span><span class="p">,</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="n">h</span>
+
         <span class="k">def</span> <span class="nf">handle_str_number</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">):</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P&lt;step&gt;[0-9]+)&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s2">&quot;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[a-zA-Z][a-zA-Z_0-9]+)[\s]*,[\s]*(?P&lt;step&gt;[0-9]+)&quot;</span><span class="p">,</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="n">h</span>
+
         <span class="k">def</span> <span class="nf">handle_number_str</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">):</span>
-            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[0-9]+)[\s]?,[\s]?(?P&lt;step&gt;[a-zA-Z][a-zA-Z_0-9]+)&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                <span class="sa">r</span><span class="s2">&quot;TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P&lt;window&gt;[0-9]+)[\s]?,[\s]?(?P&lt;step&gt;[a-zA-Z][a-zA-Z_0-9]+)&quot;</span><span class="p">,</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="n">h</span>
+
         <span class="k">def</span> <span class="nf">handle_result</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
             <span class="k">while</span> <span class="n">result</span><span class="p">:</span>
@@ -217,26 +254,55 @@
                 <span class="n">num</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_hour&quot;</span><span class="p">,</span> <span class="s2">&quot;hour&quot;</span><span class="p">]:</span>
-                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span>
-                        <span class="k">elif</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_day&quot;</span><span class="p">,</span> <span class="s2">&quot;day&quot;</span><span class="p">]:</span>
-                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="o">*</span><span class="mi">24</span>
-                        <span class="k">elif</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_week&quot;</span><span class="p">,</span> <span class="s2">&quot;week&quot;</span><span class="p">]:</span>
-                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">7</span>
+                        <span class="n">sub_reg</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                            <span class="sa">r</span><span class="s2">&quot;(?P&lt;number&gt;[0-9]*)[_]?(?P&lt;unit&gt;[a-zA-Z]+)&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">finding</span> <span class="o">=</span> <span class="n">sub_reg</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                        <span class="n">number</span> <span class="o">=</span> <span class="n">finding</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;number&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">number</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+                        <span class="n">unit</span> <span class="o">=</span> <span class="n">finding</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;unit&quot;</span><span class="p">)</span>
+                        <span class="c1"># print(result.group(i), number, unit)</span>
+                        <span class="k">if</span> <span class="s2">&quot;minute&quot;</span> <span class="ow">in</span> <span class="n">unit</span><span class="p">:</span>
+                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">number</span>
+                            <span class="k">assert</span> <span class="mi">60</span> <span class="o">%</span> <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+                        <span class="k">elif</span> <span class="p">(</span>
+                            <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_hour&quot;</span><span class="p">,</span> <span class="s2">&quot;hour&quot;</span><span class="p">]</span>
+                            <span class="ow">or</span> <span class="s2">&quot;hour&quot;</span> <span class="ow">in</span> <span class="n">unit</span>
+                        <span class="p">):</span>
+                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="n">number</span>
+                        <span class="k">elif</span> <span class="p">(</span>
+                            <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_day&quot;</span><span class="p">,</span> <span class="s2">&quot;day&quot;</span><span class="p">]</span>
+                            <span class="ow">or</span> <span class="s2">&quot;day&quot;</span> <span class="ow">in</span> <span class="n">unit</span>
+                        <span class="p">):</span>
+                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="n">number</span>
+                        <span class="k">elif</span> <span class="p">(</span>
+                            <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;per_week&quot;</span><span class="p">,</span> <span class="s2">&quot;week&quot;</span><span class="p">]</span>
+                            <span class="ow">or</span> <span class="s2">&quot;week&quot;</span> <span class="ow">in</span> <span class="n">unit</span>
+                        <span class="p">):</span>
+                            <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="n">number</span>
                         <span class="k">else</span><span class="p">:</span>
                             <span class="k">try</span><span class="p">:</span>
                                 <span class="kn">import</span> <span class="nn">isodate</span>
+
                                 <span class="n">x</span> <span class="o">=</span> <span class="n">isodate</span><span class="o">.</span><span class="n">parse_duration</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
-                                <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mi">60</span><span class="p">)</span>  <span class="c1"># (minute)</span>
+                                <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>  <span class="c1"># (minute)</span>
                             <span class="k">except</span> <span class="n">ISO8601Error</span><span class="p">:</span>
                                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> unsupported&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
-                                <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                        <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span> <span class="c1"># (milliseconds)</span>
+                                <span class="k">assert</span> <span class="mi">0</span>
+                        <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># (milliseconds)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">num</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
                     <span class="n">start_end</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-                <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">sql_stmt</span><span class="p">[:</span><span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">+</span> <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span><span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> \
-                    <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">+</span>  <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">]:]</span>
+                <span class="n">sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">sql_stmt</span><span class="p">[:</span> <span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="o">+</span> <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">:</span> <span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+                    <span class="o">+</span> <span class="n">sql_stmt</span><span class="p">[</span><span class="n">start_end</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">:]</span>
+                <span class="p">)</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">sql_stmt</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">sql_stmt</span>
 
@@ -248,11 +314,13 @@
         <span class="n">sql_stmt</span> <span class="o">=</span> <span class="n">handle_result</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sql_stmt</span></div></div>
 
-<div class="viewcode-block" id="TimeSeriesSchema"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesSchema</span><span class="p">():</span>
+
+<div class="viewcode-block" id="TimeSeriesSchema"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesSchema</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The class tracks the columns that is useful in time-series handling.</span>
 <span class="sd">    Currently, it tracks column names whose values are in UNIX time format</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># the list of column in unix-tme format</span>
         <span class="sd">&quot;&quot;&quot;9999999999999 (13 digits) means Sat Nov 20 2286 17:46:39 UTC</span>
@@ -264,16 +332,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">columns_in_unixtime</span><span class="p">(</span><span class="bp">self</span> <span class="p">):</span>
+    <span class="k">def</span> <span class="nf">columns_in_unixtime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the name of columns whose values are in UNIX timestamp&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span>
+
     <span class="nd">@columns_in_unixtime</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">columns_in_unixtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_list</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Assign the name of columns whose values are in UNIX timestamp&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_unixtime_columns</span> <span class="o">=</span> <span class="n">column_list</span></div>
 
 
-<div class="viewcode-block" id="SQLMagic"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic">[docs]</a><span class="k">class</span> <span class="nc">SQLMagic</span><span class="p">(</span><span class="n">TimeSeriesSchema</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder">[docs]</a><span class="k">class</span> <span class="nc">SQLBuilder</span><span class="p">(</span><span class="n">TimeSeriesSchema</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The class supports constructing a full SQL query statement</span>
 
@@ -288,17 +357,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PARQUET&quot;</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;JSON&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_vtable_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
-<div class="viewcode-block" id="SQLMagic.print_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql">[docs]</a>    <span class="k">def</span> <span class="nf">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.print_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.print_sql">[docs]</a>    <span class="k">def</span> <span class="nf">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;print() sql string&quot;&quot;&quot;</span>
         <span class="n">print_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_sql</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="SQLMagic.get_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.get_sql">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
+<div class="viewcode-block" id="SQLBuilder.get_sql"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.get_sql">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
     <span class="k">def</span> <span class="nf">get_sql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the current sql string&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">format_sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLMagic.reset_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.reset_">[docs]</a>    <span class="k">def</span> <span class="nf">reset_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.reset_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.reset_">[docs]</a>    <span class="k">def</span> <span class="nf">reset_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Reset and returns the current sql string&quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sql</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -308,16 +378,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">res</span></div>
 
-<div class="viewcode-block" id="SQLMagic.with_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.with_">[docs]</a>    <span class="k">def</span> <span class="nf">with_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.with_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.with_">[docs]</a>    <span class="k">def</span> <span class="nf">with_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;WITH &lt;table&gt; AS &lt;sql&gt; [, &lt;table AS &lt;sql&gt;]&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;WITH&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; WITH &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; AS (&quot;</span> <span class="o">+</span> <span class="n">sql_stmt</span>  <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">) &quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; WITH &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; AS (&quot;</span> <span class="o">+</span> <span class="n">sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">) &quot;</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_has_with_clause</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; AS (&quot;</span> <span class="o">+</span> <span class="n">sql_stmt</span>  <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">) &quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s2">&quot; AS (&quot;</span> <span class="o">+</span> <span class="n">sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">) &quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_vtable_name</span> <span class="o">=</span> <span class="n">table_name</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.select_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.select_">[docs]</a>    <span class="k">def</span> <span class="nf">select_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">columns</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.select_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.select_">[docs]</a>    <span class="k">def</span> <span class="nf">select_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        SELECT &lt;columns&gt;</span>
 
@@ -326,12 +401,12 @@
 <span class="sd">        columns: str</span>
 <span class="sd">            a string representing a comma-separated list of columns</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="ow">is</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;SELECT &quot;</span> <span class="o">+</span> <span class="n">columns</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_select_clause</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.from_table_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_table_">[docs]</a>    <span class="k">def</span> <span class="nf">from_table_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.from_table_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_table_">[docs]</a>    <span class="k">def</span> <span class="nf">from_table_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        FROM &lt;table&gt; [AS alias] [, &lt;table&gt; [AS alias]]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -347,28 +422,32 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.from_cos_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_cos_">[docs]</a>    <span class="k">def</span> <span class="nf">from_cos_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;parquet&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.from_cos_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_cos_">[docs]</a>    <span class="k">def</span> <span class="nf">from_cos_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;parquet&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        FROM &lt;cos-url&gt; AS type [AS alias] [, &lt;cos-url&gt; AS type [AS alias]]</span>
+<span class="sd">        FROM &lt;cos-url&gt; STORED AS &lt;format_type&gt; AS type [FIELDS TERMINATED BY delimiter] [AS alias] [, &lt;cos-url&gt; AS type [AS alias]]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">format_type</span> <span class="o">=</span> <span class="n">format_type</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot;, &quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; FROM &quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="n">cos_url</span> <span class="o">+</span> <span class="s2">&quot; STORED AS &quot;</span> <span class="o">+</span> <span class="n">format_type</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="n">cos_url</span> <span class="o">+</span> <span class="s2">&quot; STORED AS &quot;</span> <span class="o">+</span> <span class="n">format_type</span>
+        <span class="k">if</span> <span class="n">delimiter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">format_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;textfile&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; FIELD TERMINATED BY &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">delimiter</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">alias</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.from_view_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_view_">[docs]</a>    <span class="k">def</span> <span class="nf">from_view_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.from_view_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_view_">[docs]</a>    <span class="k">def</span> <span class="nf">from_view_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_stmt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        FROM (&lt;sql&gt;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; FROM  ( </span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="se">\n</span><span class="s2">) &quot;</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.where_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.where_">[docs]</a>    <span class="k">def</span> <span class="nf">where_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.where_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.where_">[docs]</a>    <span class="k">def</span> <span class="nf">where_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        WHERE &lt;condition&gt; [, &lt;condition&gt;]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -379,39 +458,64 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_has_from_clause</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.join_cos_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_cos_">[docs]</a>    <span class="k">def</span> <span class="nf">join_cos_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.join_cos_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.join_cos_">[docs]</a>    <span class="k">def</span> <span class="nf">join_cos_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        [type] JOIN &lt;cos-url&gt; [AS alias]</span>
+<span class="sd">        [typ] JOIN &lt;cos-url&gt; [AS alias]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">table</span> <span class="o">=</span> <span class="n">cos_url</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">join_table_</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">join_table_</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="n">typ</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SQLMagic.join_table_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_table_">[docs]</a>    <span class="k">def</span> <span class="nf">join_table_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.join_table_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.join_table_">[docs]</a>    <span class="k">def</span> <span class="nf">join_table_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        [type] JOIN &lt;table&gt; [AS alias] ON &lt;condition&gt;</span>
+<span class="sd">        [typ] JOIN &lt;table&gt; [AS alias] ON &lt;condition&gt;</span>
 
-<span class="sd">        NOTE: [type] is a value in the list below</span>
+<span class="sd">        NOTE: [typ] is a value in the list below</span>
 
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            [&quot;INNER&quot;, &quot;CROSS&quot;, &quot;OUTER&quot;, &quot;LEFT&quot;, &quot;LEFT OUTER&quot;, &quot;LEFT SEMI&quot;,</span>
 <span class="sd">            &quot;RIGHT&quot;, &quot;RIGHT OUTER&quot;, &quot;FULL&quot;, &quot;FULL OUTER&quot;, &quot;ANTI&quot;, &quot;LEFT ANTI&quot;]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;INNER&quot;</span><span class="p">,</span> <span class="s2">&quot;CROSS&quot;</span><span class="p">,</span> <span class="s2">&quot;OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT SEMI&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;RIGHT&quot;</span><span class="p">,</span> <span class="s2">&quot;RIGHT OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;FULL&quot;</span><span class="p">,</span> <span class="s2">&quot;FULL OUTER&quot;</span><span class="p">,</span> <span class="s2">&quot;ANTI&quot;</span><span class="p">,</span> <span class="s2">&quot;LEFT ANTI&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;INNER&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;CROSS&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;OUTER&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;LEFT&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;LEFT OUTER&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;LEFT SEMI&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;RIGHT&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;RIGHT OUTER&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;FULL&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;FULL OUTER&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ANTI&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;LEFT ANTI&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
         <span class="kn">import</span> <span class="nn">re</span>
-        <span class="nb">type</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39; +&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Wrong &#39;type&#39;, use a value in &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">)</span>
+
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot; +&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Wrong &#39;typ&#39;, use a value in &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supported_join_types</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">alias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">type</span> <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span> <span class="o">+</span> <span class="n">table</span> <span class="o">+</span> <span class="s2">&quot; ON &quot;</span> <span class="o">+</span> <span class="n">condition</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">typ</span> <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span> <span class="o">+</span> <span class="n">table</span> <span class="o">+</span> <span class="s2">&quot; ON &quot;</span> <span class="o">+</span> <span class="n">condition</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">type</span> <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span> <span class="o">+</span> <span class="n">table</span> <span class="o">+</span> <span class="s2">&quot; AS &quot;</span> <span class="o">+</span> <span class="n">alias</span> <span class="o">+</span> <span class="s2">&quot; ON &quot;</span> <span class="o">+</span> <span class="n">condition</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span>
+                <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+                <span class="o">+</span> <span class="n">typ</span>
+                <span class="o">+</span> <span class="s2">&quot; JOIN &quot;</span>
+                <span class="o">+</span> <span class="n">table</span>
+                <span class="o">+</span> <span class="s2">&quot; AS &quot;</span>
+                <span class="o">+</span> <span class="n">alias</span>
+                <span class="o">+</span> <span class="s2">&quot; ON &quot;</span>
+                <span class="o">+</span> <span class="n">condition</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.order_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.order_by_">[docs]</a>    <span class="k">def</span> <span class="nf">order_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.order_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.order_by_">[docs]</a>    <span class="k">def</span> <span class="nf">order_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        ORDER BY &lt;columns&gt;</span>
 
@@ -423,7 +527,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; ORDER BY &quot;</span> <span class="o">+</span> <span class="n">columns</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.group_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.group_by_">[docs]</a>    <span class="k">def</span> <span class="nf">group_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.group_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.group_by_">[docs]</a>    <span class="k">def</span> <span class="nf">group_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        GROUP BY &lt;columns&gt;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -433,7 +537,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">columns</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.store_at_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.store_at_">[docs]</a>    <span class="k">def</span> <span class="nf">store_at_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.store_at_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.store_at_">[docs]</a>    <span class="k">def</span> <span class="nf">store_at_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cos_url</span><span class="p">,</span> <span class="n">format_type</span><span class="o">=</span><span class="s2">&quot;CSV&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        INTO &lt;cos-url&gt; STORED AS &lt;type&gt;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -441,12 +545,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; INTO &quot;</span> <span class="o">+</span> <span class="n">cos_url</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_has_stored_location</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">format_type</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; STORED AS &quot;</span> <span class="o">+</span> <span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">format_type</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_format_types</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">UnsupportedStorageFormatException</span><span class="p">(</span><span class="s2">&quot;ERROR: unsupported type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">format_type</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">UnsupportedStorageFormatException</span><span class="p">(</span>
+                    <span class="s2">&quot;ERROR: unsupported type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">format_type</span><span class="p">)</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
     <span class="c1"># def store_as_(self, format_type=&quot;parquet&quot;):</span>
@@ -456,37 +562,44 @@
     <span class="c1">#         self._sql_stmt = self._sql_stmt + &quot; STORED AS &quot; + format_type.upper()</span>
     <span class="c1">#     return self</span>
 
-<div class="viewcode-block" id="SQLMagic.partition_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_by_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.partition_by_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_by_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_by_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        PARTITIONED BY &lt;columns&gt;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot; PARTITION &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="ow">and</span> <span class="s2">&quot; PARTITIONED &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="s2">&quot; PARTITION &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span>
+            <span class="ow">and</span> <span class="s2">&quot; PARTITIONED &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+=</span> <span class="s2">&quot; PARTITIONED BY &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.partition_objects_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_objects_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_objects_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_objects</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.partition_objects_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_objects_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_objects_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_objects</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        PARTITIONED INTO &lt;num&gt;  OBJECTS</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;PARTITION&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; PARTITIONED INTO &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_objects</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; OBJECTS&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; PARTITIONED INTO &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_objects</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; OBJECTS&quot;</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.partition_rows_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_rows_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_rows_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
+<div class="viewcode-block" id="SQLBuilder.partition_rows_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_rows_">[docs]</a>    <span class="k">def</span> <span class="nf">partition_rows_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rows</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        PARTITIONED INTO &lt;num&gt; ROWS</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;PARTITION&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; PARTITIONED INTO &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; ROWS&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sql_stmt</span> <span class="o">+</span> <span class="s2">&quot; PARTITIONED INTO &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_rows</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; ROWS&quot;</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="SQLMagic.format_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
+<div class="viewcode-block" id="SQLBuilder.format_"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.format_">[docs]</a>    <span class="nd">@TimeSeriesTransformInput</span><span class="o">.</span><span class="n">transform_sql</span>
     <span class="k">def</span> <span class="nf">format_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform string replacement needed so that the final result is a SQL statement that is accepted by IBM Spark SQL</span>
 <span class="sd">        &quot;&quot;&quot;</span>

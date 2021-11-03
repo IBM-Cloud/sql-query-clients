@@ -3,7 +3,8 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+
     <title>Github Repository &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -39,14 +40,13 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html#supplement">Supplement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLBuilder Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Github Repository</a></li>
@@ -86,65 +86,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="github-repository">
+  <section id="github-repository">
 <h1>Github Repository<a class="headerlink" href="#github-repository" title="Permalink to this headline">¶</a></h1>
 <p>Github repository for <a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/ibmcloudsql">ibmcloudsql</a>.</p>
-<p>Following is the content of the repository’s README:</p>
-<blockquote>
-<div><p>Allows you to run SQL statements in the IBM Cloud on data stored on object storage:</p>
-<p>Run <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">./setup_env.sh</span></code> which creates and activates a clean virtual Python environment. It uses Python 2.7 by default. Adapt line 2 inside the script if you want a different version.</p>
-<p>Run <code class="docutils literal notranslate"><span class="pre">./_install</span></code>.</p>
-<ol class="arabic">
-<li><p>Create a file <code class="docutils literal notranslate"><span class="pre">ibmcloudsql/test_credentials.py</span></code> with the following three lines and your according properties:
-.. code-block:: guess</p>
-<blockquote>
-<div><p>apikey=’&lt;your IBM Cloud API key&gt;’
-instance_crn=’&lt;your SQL Query instance CRN&gt;’
-result_location=’&lt;COS URI of default result location for your SQL result sets&gt;’</p>
-</div></blockquote>
-</li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">ibmcloudsql/test.py</span></code>.
-### Packaging and publishing distribution</p></li>
-<li><p>Make sure to increase <code class="docutils literal notranslate"><span class="pre">version=...</span></code> in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> before creating a new package.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">package.sh</span></code>. It will prompt for user and password that must be authorized for package <code class="docutils literal notranslate"><span class="pre">ibmcloudsql</span></code> on pypi.org.</p></li>
-</ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>import ibmcloudsql
-my_ibmcloud_apikey = &#39;&lt;your api key here&gt;&#39;
-my_instance_crn=&#39;&lt;your ibm cloud sql query instance CRN here&gt;&#39;
-my_target_cos_url=&#39;&lt;Cloud Object Storage URL for the SQL result target. Format: cos://&lt;endpoint&gt;/&lt;bucket&gt;/[&lt;prefix&gt;]&gt;&#39;
-sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn)
-sqlClient.run_sql(&#39;SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5 INTO {} STORED AS CSV&#39;.format(my_target_cos_url)).head()
-</pre></div>
-</div>
-<p>You can use IBM Watson Studio with the following <a class="reference external" href="https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d">demo notebook</a> that shows some elaborate examples of using various aspects of ibmcloudsql.</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">SQLQuery(api_key,</span> <span class="pre">instance_crn,</span> <span class="pre">target_cos_url=None,</span> <span class="pre">client_info='')</span></code> Constructor</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logon(force=False)</span></code> Needs to be called before any other method below. Logon is valid for one hour. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater <code class="docutils literal notranslate"><span class="pre">force=True</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">submit_sql(sql_text,</span> <span class="pre">pagesize=None)</span></code> Returns <code class="docutils literal notranslate"><span class="pre">jobId</span></code>as string. Optional pagesize parameter (in rows) for paginated result objects.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">wait_for_job(jobId)</span></code> Waits for job to end and returns job completion state (either <code class="docutils literal notranslate"><span class="pre">completed</span></code> or <code class="docutils literal notranslate"><span class="pre">failed</span></code>)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_result(jobId,</span> <span class="pre">pagenumber=None)</span></code> returns SQL result data frame for entire result or for specified page of results.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_results(jobId)</span></code> Returns a data frame with the list of result objects written</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">delete_result(jobId)</span></code> Deletes all result set objects in cloud object storage for the given jobId</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">rename_exact_result(jobId)</span></code> Renames single partitioned query result to exact single object name without folder hierarchy.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_job(jobId)</span></code> Returns details for the given SQL job as a json object</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_jobs()</span></code> Returns the list of recent 30 submitted SQL jobs with all details as a data frame</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">run_sql(sql_text)</span></code> Compound method that calls <code class="docutils literal notranslate"><span class="pre">submit_sql</span></code>, <code class="docutils literal notranslate"><span class="pre">wait_for_job</span></code> and <code class="docutils literal notranslate"><span class="pre">wait_for_job</span></code> in sequenceA</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sql_ui_link()</span></code> Returns browser link for SQL Query web console for currently configured instance</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_cos_summary(cos_url)</span></code> Returns summary for stored number of objects and volume for a given cos url as a json</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">list_cos_objects(cos_url)</span></code> Returns a data frame with the list of objects found in the given cos url</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">export_job_history(cos_url)</span></code> Exports new jobs as parquet file to the given cos url</p></li>
-</ul>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">RateLimitedException(message)</span></code> raised when jobs can’t be submitted due to 429 / Plan limit for concurrent queries has been reached
-## Constructor options</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">api_key</span></code>: IAM API key</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">instance_crn</span></code>: SQL Query instance CRN identifier</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">target_cos_url</span></code>: Optional default target URL. Don’t use when you want to provide target URL in SQL statement text.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">client_info</span></code>: Optional string to identify your client application in IBM Cloud for PD reasons.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">max_tries</span></code>: Optional integer to specify maximum attempts when dealing with request rate limit. Default value is <code class="docutils literal notranslate"><span class="pre">1</span></code>, which means it will through exception <code class="docutils literal notranslate"><span class="pre">RateLimitedException</span></code> when response status code is <code class="docutils literal notranslate"><span class="pre">429</span></code>. It will enable <em>exponential backoff</em> when specifying any positive number greater than <code class="docutils literal notranslate"><span class="pre">1</span></code>. For instance, given <code class="docutils literal notranslate"><span class="pre">max_tries=5</span></code>, assuming it will get response status code <code class="docutils literal notranslate"><span class="pre">429</span></code> for 4 times until the 5th attempt will get response status code <code class="docutils literal notranslate"><span class="pre">201</span></code>, the wait time will be <code class="docutils literal notranslate"><span class="pre">2s</span></code>, <code class="docutils literal notranslate"><span class="pre">4s</span></code>, <code class="docutils literal notranslate"><span class="pre">8s</span></code> and <code class="docutils literal notranslate"><span class="pre">16s</span></code> for each attempts.</p></li>
-</ul>
-</div></blockquote>
-</div>
+<p>Following is the content of the repository’s <a class="reference external" href="https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/README.md">README</a>:</p>
+</section>
 
 
           </div>

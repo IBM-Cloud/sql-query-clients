@@ -3,8 +3,9 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <title>SQLMagic Class &#8212; ibmcloudsql alpha documentation</title>
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+
+    <title>SQLBuilder Class &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -40,14 +41,13 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html#supplement">Supplement</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cos.html">COSClient Class</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">SQLMagic Class</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SQLBuilder Class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-transform-input">Time series transform input</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-schema">Time series schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#time-series-schema-sql-magic">Time series schema SQL Magic</a></li>
@@ -93,15 +93,15 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="sqlmagic-class">
-<span id="sql-magic-label"></span><h1>SQLMagic Class<a class="headerlink" href="#sqlmagic-class" title="Permalink to this headline">¶</a></h1>
+  <section id="sqlbuilder-class">
+<span id="sql-magic-label"></span><h1>SQLBuilder Class<a class="headerlink" href="#sqlbuilder-class" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.sql_magic" title="ibmcloudsql.sql_magic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.sql_magic</span></code></a> provides the following three classes:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesTransformInput</span></code></a> class: provides utilities for mapping user-friendly APIs to library-friendly APIs</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema" title="ibmcloudsql.sql_magic.TimeSeriesSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesSchema</span></code></a> class: provides hints about the schema of the data to support <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource" title="ibmcloudsql.sql_query_ts.SQLClientTimeSeries.get_ts_datasource"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_ts_datasource()</span></code></a></p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class: provides APIs to help constructing a complete SQL query without knowing the details about syntax specific to IBM Cloud SQL</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder" title="ibmcloudsql.sql_magic.SQLBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLBuilder</span></code></a> class: provides APIs to help constructing a complete SQL query without knowing the details about syntax specific to IBM Cloud SQL</p></li>
 </ul>
-<div class="section" id="time-series-transform-input">
+<section id="time-series-transform-input">
 <h2>Time series transform input<a class="headerlink" href="#time-series-transform-input" title="Permalink to this headline">¶</a></h2>
 <p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesTransformInput</span></code></a> class: provides utilities for mapping from user-friendly time series query into library-friendly time series query</p>
 <p>Example:</p>
@@ -114,60 +114,60 @@
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">transform_sql()</span></code></a>: the decorator that is applied on the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql" title="ibmcloudsql.sql_magic.SQLMagic.print_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLMagic.print_sql()</span></code></a> and <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_" title="ibmcloudsql.sql_magic.SQLMagic.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLMagic.format_()</span></code></a> methods</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput.transform_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">transform_sql()</span></code></a>: the decorator that is applied on the <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.print_sql" title="ibmcloudsql.sql_magic.SQLBuilder.print_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLBuilder.print_sql()</span></code></a> and <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.format_" title="ibmcloudsql.sql_magic.SQLBuilder.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">SQLBuilder.format_()</span></code></a> methods</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesTransformInput.ts_segment_by_time" title="ibmcloudsql.sql_magic.TimeSeriesTransformInput.ts_segment_by_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ts_segment_by_time()</span></code></a></p></li>
 </ul>
-</div>
-<div class="section" id="time-series-schema">
+</section>
+<section id="time-series-schema">
 <h2>Time series schema<a class="headerlink" href="#time-series-schema" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">unixtime_columns</span></code>: shows which columns contain time stamp data in Unix time format</p></li>
 </ul>
-</div>
-<div class="section" id="time-series-schema-sql-magic">
+</section>
+<section id="time-series-schema-sql-magic">
 <h2>Time series schema SQL Magic<a class="headerlink" href="#time-series-schema-sql-magic" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic" title="ibmcloudsql.sql_magic.SQLMagic"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLMagic</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema" title="ibmcloudsql.sql_magic.TimeSeriesSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesSchema</span></code></a> class.</p>
+<p>A <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder" title="ibmcloudsql.sql_magic.SQLBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">SQLBuilder</span></code></a> class is also a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.TimeSeriesSchema" title="ibmcloudsql.sql_magic.TimeSeriesSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeSeriesSchema</span></code></a> class.</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.reset_" title="ibmcloudsql.sql_magic.SQLMagic.reset_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset_()</span></code></a>: resets the internal storage of an SQL statement (use this before constructing a new one)</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.print_sql" title="ibmcloudsql.sql_magic.SQLMagic.print_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">print_sql()</span></code></a>: prints and checks the current content of an SQL statement</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.get_sql" title="ibmcloudsql.sql_magic.SQLMagic.get_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_sql()</span></code></a>: returns the string representation of the SQL statement</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.with_" title="ibmcloudsql.sql_magic.SQLMagic.with_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_()</span></code></a>: provides table name and the SQL query for that table</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.select_" title="ibmcloudsql.sql_magic.SQLMagic.select_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_()</span></code></a>: provides column names</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_table_" title="ibmcloudsql.sql_magic.SQLMagic.from_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_table_()</span></code></a>: the table name</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_cos_" title="ibmcloudsql.sql_magic.SQLMagic.from_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_cos_()</span></code></a>: provides COS URL and format of data via <cite>format_type</cite> option</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.from_view_" title="ibmcloudsql.sql_magic.SQLMagic.from_view_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_view_()</span></code></a>: provides SQL statement that returns a view</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.where_" title="ibmcloudsql.sql_magic.SQLMagic.where_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">where_()</span></code></a>: where condition</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.order_by_" title="ibmcloudsql.sql_magic.SQLMagic.order_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">order_by_()</span></code></a>: lists columns</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.group_by_" title="ibmcloudsql.sql_magic.SQLMagic.group_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">group_by_()</span></code></a>: lists columns</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.store_at_" title="ibmcloudsql.sql_magic.SQLMagic.store_at_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">store_at_()</span></code></a>: provides COS URL and format of data</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_objects_" title="ibmcloudsql.sql_magic.SQLMagic.partition_objects_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_objects_()</span></code></a>: provides number of objects</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_rows_" title="ibmcloudsql.sql_magic.SQLMagic.partition_rows_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_rows_()</span></code></a>: provides number of rows per object</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.partition_by_" title="ibmcloudsql.sql_magic.SQLMagic.partition_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_by_()</span></code></a>: provides the string of tuple of column names for HIVE catalog partitioning</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.format_" title="ibmcloudsql.sql_magic.SQLMagic.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">format_()</span></code></a>: applies transformation needed to map user-friendly time series queries into library-friendly time series queries</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_cos_" title="ibmcloudsql.sql_magic.SQLMagic.join_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_cos_()</span></code></a>: JOIN statement using COS URL</p></li>
-<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLMagic.join_table_" title="ibmcloudsql.sql_magic.SQLMagic.join_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_table_()</span></code></a>: JOIN statement using table name</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.reset_" title="ibmcloudsql.sql_magic.SQLBuilder.reset_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reset_()</span></code></a>: resets the internal storage of an SQL statement (use this before constructing a new one)</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.print_sql" title="ibmcloudsql.sql_magic.SQLBuilder.print_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">print_sql()</span></code></a>: prints and checks the current content of an SQL statement</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.get_sql" title="ibmcloudsql.sql_magic.SQLBuilder.get_sql"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_sql()</span></code></a>: returns the string representation of the SQL statement</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.with_" title="ibmcloudsql.sql_magic.SQLBuilder.with_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_()</span></code></a>: provides table name and the SQL query for that table</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.select_" title="ibmcloudsql.sql_magic.SQLBuilder.select_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">select_()</span></code></a>: provides column names</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_table_" title="ibmcloudsql.sql_magic.SQLBuilder.from_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_table_()</span></code></a>: the table name</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_cos_" title="ibmcloudsql.sql_magic.SQLBuilder.from_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_cos_()</span></code></a>: provides COS URL and format of data via <cite>format_type</cite> option</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.from_view_" title="ibmcloudsql.sql_magic.SQLBuilder.from_view_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_view_()</span></code></a>: provides SQL statement that returns a view</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.where_" title="ibmcloudsql.sql_magic.SQLBuilder.where_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">where_()</span></code></a>: where condition</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.order_by_" title="ibmcloudsql.sql_magic.SQLBuilder.order_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">order_by_()</span></code></a>: lists columns</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.group_by_" title="ibmcloudsql.sql_magic.SQLBuilder.group_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">group_by_()</span></code></a>: lists columns</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.store_at_" title="ibmcloudsql.sql_magic.SQLBuilder.store_at_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">store_at_()</span></code></a>: provides COS URL and format of data</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_objects_" title="ibmcloudsql.sql_magic.SQLBuilder.partition_objects_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_objects_()</span></code></a>: provides number of objects</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_rows_" title="ibmcloudsql.sql_magic.SQLBuilder.partition_rows_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_rows_()</span></code></a>: provides number of rows per object</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.partition_by_" title="ibmcloudsql.sql_magic.SQLBuilder.partition_by_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partition_by_()</span></code></a>: provides the string of tuple of column names for HIVE catalog partitioning</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.format_" title="ibmcloudsql.sql_magic.SQLBuilder.format_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">format_()</span></code></a>: applies transformation needed to map user-friendly time series queries into library-friendly time series queries</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.join_cos_" title="ibmcloudsql.sql_magic.SQLBuilder.join_cos_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_cos_()</span></code></a>: JOIN statement using COS URL</p></li>
+<li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.sql_magic.SQLBuilder.join_table_" title="ibmcloudsql.sql_magic.SQLBuilder.join_table_"><code class="xref py py-meth docutils literal notranslate"><span class="pre">join_table_()</span></code></a>: JOIN statement using table name</p></li>
 </ul>
-<p>Example: we can generate the SQL string using SQLMagic APIs</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">sqlmagic</span> <span class="o">=</span> <span class="n">ibmcloudsql</span><span class="o">.</span><span class="n">SQLMagic</span><span class="p">()</span>
+<p>Example: we can generate the SQL string using SQLBuilder APIs</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">sqlmagic</span> <span class="o">=</span> <span class="n">ibmcloudsql</span><span class="o">.</span><span class="n">SQLBuilder</span><span class="p">()</span>
 <span class="p">(</span><span class="n">sqlClient</span>
  <span class="o">.</span><span class="n">with_</span><span class="p">(</span><span class="s2">&quot;humidity_location_table&quot;</span><span class="p">,</span>
           <span class="p">(</span><span class="n">sqlmagic</span><span class="o">.</span><span class="n">select_</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span>
@@ -190,40 +190,40 @@
 </pre></div>
 </td></tr></table></div>
 <p>This is the typically way to generate the SQL similar to the one above</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">stmt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    WITH</span>
 <span class="s2">        humidity_location_table AS (</span>
 <span class="s2">        -- 1. Select locations from DHT where humidity is &gt;70</span><span class="si">% a</span><span class="s2">nd the length is data is between 1000 and 2000</span>
@@ -259,8 +259,8 @@
 <span class="n">result</span> <span class="o">=</span> <span class="n">sqlClient</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>

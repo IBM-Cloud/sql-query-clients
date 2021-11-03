@@ -38,13 +38,13 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../cos.html">COSClient Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sql_magic.html">SQLBuilder Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utilities.html">IBMCloudAccess Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../includeme.html">Github Repository</a></li>
@@ -181,8 +181,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">original_exception</span> <span class="o">=</span> <span class="n">original_exception</span></div>
 
 
-<div class="viewcode-block" id="SqlQueryDropTableException"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryDropTableException">[docs]</a><span class="k">class</span> <span class="nc">SqlQueryDropTableException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;The error raised when a running sql job fails, e.g. timeout&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SqlQueryCreateTableException"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryCreateTableException">[docs]</a><span class="k">class</span> <span class="nc">SqlQueryCreateTableException</span><span class="p">(</span><span class="n">SqlQueryFailException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The error raised when a running create-table sql job fails&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">original_exception</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">original_exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">original_exception</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_exception</span> <span class="o">=</span> <span class="n">original_exception</span></div>
+
+
+<div class="viewcode-block" id="SqlQueryDropTableException"><a class="viewcode-back" href="../../ibmcloudsql.html#ibmcloudsql.exceptions.SqlQueryDropTableException">[docs]</a><span class="k">class</span> <span class="nc">SqlQueryDropTableException</span><span class="p">(</span><span class="n">SqlQueryFailException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The error raised when a running drop-table sql job fails&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">original_exception</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">original_exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

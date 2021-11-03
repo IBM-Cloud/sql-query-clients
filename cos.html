@@ -3,7 +3,8 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+
     <title>COSClient Class &#8212; ibmcloudsql alpha documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,7 +18,7 @@
     <script src="_static/js/custom.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SQLMagic Class" href="sql_magic.html" />
+    <link rel="next" title="SQLBuilder Class" href="sql_magic.html" />
     <link rel="prev" title="SQLQuery Class" href="sql_query.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -40,19 +41,18 @@
 
 
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html">SQLQuery Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sql_query.html#sqlclienttimeseries-class">SQLClientTimeSeries Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sql_query.html#supplement">Supplement</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">COSClient Class</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#parsed-url">Parsed URL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#project-lib">Project Lib</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cos-client">COS Client</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLMagic Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sql_magic.html">SQLBuilder Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">IBMCloudAccess Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="includeme.html">Github Repository</a></li>
@@ -63,7 +63,7 @@
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="sql_query.html" title="previous chapter">SQLQuery Class</a></li>
-      <li>Next: <a href="sql_magic.html" title="next chapter">SQLMagic Class</a></li>
+      <li>Next: <a href="sql_magic.html" title="next chapter">SQLBuilder Class</a></li>
   </ul></li>
 </ul>
 </div>
@@ -93,7 +93,7 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="cosclient-class">
+  <section id="cosclient-class">
 <span id="cos-label"></span><h1>COSClient Class<a class="headerlink" href="#cosclient-class" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="ibmcloudsql.html#module-ibmcloudsql.cos" title="ibmcloudsql.cos"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ibmcloudsql.cos</span></code></a> provides 3 classes</p>
 <ul class="simple">
@@ -101,11 +101,11 @@
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.COSClient</span></code></a> class that does what ParsedUrl can and provides APIs to interact with COS (an extension to ibm-cos-sdk).</p></li>
 <li><p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ProjectLib" title="ibmcloudsql.cos.ProjectLib"><code class="xref py py-class docutils literal notranslate"><span class="pre">ibmcloudsql.cos.ProjectLib</span></code></a> class that provides APIs to read/write data to a project’s COS.</p></li>
 </ul>
-<div class="section" id="parsed-url">
+<section id="parsed-url">
 <h2>Parsed URL<a class="headerlink" href="#parsed-url" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParsedUrl</span></code></a> provides the APIs to parse a COS URL.</p>
-</div>
-<div class="section" id="project-lib">
+</section>
+<section id="project-lib">
 <h2>Project Lib<a class="headerlink" href="#project-lib" title="Permalink to this headline">¶</a></h2>
 <p><code class="xref py py-class docutils literal notranslate"><span class="pre">ProjectLib</span></code> class maintains a reference to an object in IBM Watson Studio’s ProjectLib
 that can read a file stored as an asset and load them into the current notebook.</p>
@@ -129,8 +129,8 @@ use for saving and restoring the job progress.</p>
 <span class="n">sqlClient</span><span class="o">.</span><span class="n">connect_project_lib</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="cos-client">
+</section>
+<section id="cos-client">
 <h2>COS Client<a class="headerlink" href="#cos-client" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.COSClient" title="ibmcloudsql.cos.COSClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">COSClient</span></code></a> is also an <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.utilities.IBMCloudAccess" title="ibmcloudsql.utilities.IBMCloudAccess"><code class="xref py py-class docutils literal notranslate"><span class="pre">IBMCloudAccess</span></code></a> and a <a class="reference internal" href="ibmcloudsql.html#ibmcloudsql.cos.ParsedUrl" title="ibmcloudsql.cos.ParsedUrl"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParsedUrl</span></code></a>.</p>
 <p>COSClient class further provides the following APIs:</p>
@@ -157,8 +157,8 @@ use for saving and restoring the job progress.</p>
 </div></blockquote>
 </li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
