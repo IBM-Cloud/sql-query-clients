@@ -7,6 +7,25 @@ import responses
 from ibmcloudsql.sql_magic import SQLBuilder
 
 
+def diff_strings(str1, str2):
+    # handle the case where one string is longer than the other
+    maxlen = len(str2) if len(str1) < len(str2) else len(str1)
+
+    print("===")
+    # loop through the characters
+    for i in range(maxlen):
+        # use a slice rather than index in case one string longer than other
+        letter1 = str1[i : i + 1]
+        letter2 = str2[i : i + 1]
+        # create string with differences
+        if letter1 != letter2:
+            print("A", repr(str1[i:]))
+            print("A", repr(str2[i:]))
+            break
+            # result1+=letter1
+            # result2+=letter2
+
+
 @pytest.fixture
 def sql_stmt():
     _sql_stmt = """
@@ -95,44 +114,37 @@ def test_chain_function(sql_magic):
         20
     )
     # sql_magic.print_sql()
-    print(sql_magic._sql_stmt)
-    assert (
-        sql_magic._sql_stmt
-        == """ WITH container_ts_table AS (
-        SELECT
-            container_id,
-            ts
-        FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=eba380ac-1dda-4255-ab6a-9d72be3db9f7 STORED AS PARQUET
-        USING TIME_SERIES_FORMAT(key="container_id", timetick="time_stamp", value="request_latency"
-        ) in ts   -- NOTE: 'USING' is applied for data source [and there is no need for GROUP BY clause]
-) , diff_avg_latency_per_interval AS (
-        select
-            container_id,
-            ts_diff(ts_seg_avg(ts_segment_by_time(ts, 60 * 15 * 1000, 60 * 15 * 1000))) as ts
-        from container_ts_table
-) , diff_latency_flattened AS (
-        select
-            container_id,
-            ts_explode(ts) as (tt, diff_latency)
-        from diff_avg_latency_per_interval
-) , avg_diff_latency_per_id AS (
-        select
-            container_id,
-            ts_avg(ts) as avg_diff_latency
-        from diff_avg_latency_per_interval
-) , joined AS (
-        select
-            diff_latency_flattened.container_id,
-            tt,
-            diff_latency,
-            avg_diff_latency
-        from diff_latency_flattened, avg_diff_latency_per_id
-        where diff_latency_flattened.container_id=avg_diff_latency_per_id.container_id
-) SELECT
-    container_id,
-    tt,
-    diff_latency FROM joined WHERE abs(diff_latency) < avg_diff_latency * 2.0 INTO cos://test/url STORED AS PARQUET PARTITIONED INTO 20 OBJECTS"""
-    )
+    expected_sql = """WITH container_ts_table AS
+  (SELECT container_id,
+          ts
+   FROM cos://s3.us-south.cloud-object-storage.appdomain.cloud/sql-query-cos-access-ts/jobid=eba380ac-1dda-4255-ab6a-9d72be3db9f7 stored AS parquet USING time_series_format(KEY="container_id", timetick="time_stamp", value="request_latency") in ts ),
+     diff_avg_latency_per_interval AS
+  (SELECT container_id,
+          ts_diff(ts_seg_avg(ts_segment_by_time(ts, 60 * 15 * 1000, 60 * 15 * 1000))) AS ts
+   FROM container_ts_table),
+     diff_latency_flattened AS
+  (SELECT container_id,
+          ts_explode(ts) AS (tt,
+                             diff_latency)
+   FROM diff_avg_latency_per_interval),
+     avg_diff_latency_per_id AS
+  (SELECT container_id,
+          ts_avg(ts) AS avg_diff_latency
+   FROM diff_avg_latency_per_interval),
+     joined AS
+  (SELECT diff_latency_flattened.container_id,
+          tt,
+          diff_latency,
+          avg_diff_latency
+   FROM diff_latency_flattened,
+        avg_diff_latency_per_id
+   WHERE diff_latency_flattened.container_id=avg_diff_latency_per_id.container_id )
+SELECT container_id,
+       tt,
+       diff_latency
+FROM joined
+WHERE abs(diff_latency) < avg_diff_latency * 2.0 INTO cos://test/url stored AS parquet partitioned INTO 20 objects"""
+    assert sql_magic.get_sql() == expected_sql
 
 
 def test_format_(sql_magic):
@@ -154,9 +166,9 @@ def test_format_(sql_magic):
     """
     sql_magic._sql_stmt = sql_stmt
     sql_magic.format_()
-    print("=====")
-    print(sql_magic._sql_stmt)
-    print("=====")
+    # print("=====")
+    # print(sql_magic._sql_stmt)
+    # print("=====")
     assert (
         sql_magic._sql_stmt
         == """
@@ -188,7 +200,7 @@ def test_format_(sql_magic):
     """
     sql_magic._sql_stmt = sql_stmt
     sql_magic.format_()
-    print(sql_magic._sql_stmt)
+    # print(sql_magic._sql_stmt)
     assert (
         sql_magic._sql_stmt
         == """
