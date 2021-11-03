@@ -19,4 +19,4 @@ __version__ = "0.4.28"
 from .SQLQuery import SQLQuery
 from .sql_query_ts import SQLClientTimeSeries
 from .exceptions import RateLimitedException
-from .sql_magic import SQLMagic
+from .sql_magic import SQLBuilder
