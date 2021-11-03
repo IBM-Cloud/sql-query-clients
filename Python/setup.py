@@ -47,7 +47,7 @@ setup(
     version=get_version("ibmcloudsql/__init__.py"),
     python_requires=">=2.7, <4",
     install_requires=[
-        "pandas>=1.3.0",
+        "pandas>=1.1.0",
         "requests>= 2.2.0",
         "ibm-cos-sdk-core==2.10.0",
         "ibm-cos-sdk==2.10.0",
