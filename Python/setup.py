@@ -60,6 +60,7 @@ setup(
         "isodate",
         "importlib-metadata",
         "typing-extensions",
+        "python-dateutil",
     ],
     description="Python client for interacting with IBM Cloud SQL Query service",  # noqa
     url="https://github.com/IBM-Cloud/sql-query-clients",

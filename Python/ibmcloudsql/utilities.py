@@ -136,10 +136,12 @@ class IBMCloudAccess:
 
     @property
     def cos_session(self):
+        """Get the current COS session."""
         return self._session
 
     @property
     def thread_safe(self):
+        """Check if SQLQuery is in thread-safe mode."""
         return self._thread_safe
 
     def get_session(self):
@@ -189,8 +191,7 @@ class IBMCloudAccess:
         return ibm_boto3._get_default_session()
 
     def logon(self, force=False):
-        """
-        Establish a connection to IBM Cloud
+        """Establish a connection to IBM Cloud.
 
         Notes
         -----

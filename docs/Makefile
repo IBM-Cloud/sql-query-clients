@@ -35,11 +35,15 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
-setup:
-	conda create -n sphinx python=3.6 
+setup_conda:
+	conda create -n sphinx python=3.6
 	conda activate sphinx
-	pip install numpydoc m2r recommonmark sphinx==2.4.4 --force-reinstall
+	make setup
 	echo Make sure you're in 'sphinx' virtual environment each time you build the docs
+
+setup:
+	pip install numpydoc m2r recommonmark sphinx==2.4.4 --force-reinstall
+	pip install python-dateutil  backoff numpy pandas ibm-cos-sdk sqlparse deprecated
 
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(PDFBUILDDIR)/latex
@@ -51,6 +55,6 @@ python:
 	rm source/ibmcloudsql.rst
 	sphinx-apidoc -f -o source ../Python/ibmcloudsql ... ../Python/ibmcloudsql/test*
 
-buildandcommithtml: html 
+buildandcommithtml: html
 	cd $(BUILDDIR)/html; git add . ; git commit -m "rebuilt docs"; git push origin gh-pages
 	echo Goto https://ibm-cloud.github.io/sql-query-clients/ to see the new docs.
