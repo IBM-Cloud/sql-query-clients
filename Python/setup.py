@@ -61,6 +61,7 @@ setup(
         "importlib-metadata",
         "typing-extensions",
         "python-dateutil",
+        "deprecated",
     ],
     description="Python client for interacting with IBM Cloud SQL Query service",  # noqa
     url="https://github.com/IBM-Cloud/sql-query-clients",
