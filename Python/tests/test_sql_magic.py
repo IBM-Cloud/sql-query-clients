@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 import responses
 from ibmcloudsql.sql_magic import SQLBuilder
+from ibmcloudsql.SQLQuery import SQLQuery
 
 
 def diff_strings(str1, str2):
@@ -51,6 +52,13 @@ def sql_stmt():
 @pytest.fixture
 def sql_magic():
     return SQLBuilder()
+
+
+@pytest.fixture
+def sqlClient():
+    return SQLQuery(
+        "", "", client_info="ibmcloudsql test",
+    )  # maintain backward compatible
 
 
 def test_chain_function(sql_magic):
@@ -214,3 +222,61 @@ def test_format_(sql_magic):
     FROM container_ts_table INTO cos://us-south/sql-query-cos-access-ts STORED AS PARQUET
     """
     )
+
+
+def test_chain_function2(sql_magic, sqlClient):
+    sqlmagic = sql_magic
+    targeturl = "cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/"
+    (
+        sqlClient.with_(
+            "humidity_location_table",
+            (
+                sqlmagic.select_("location")
+                .from_view_(
+                    "select count(*) as count, location from dht where humidity > 70.0 group by location"
+                )
+                .where_("count > 1000 and count < 2000")
+            ).reset_(),
+        )
+        .with_(
+            "pm_location_table",
+            (
+                sqlmagic.select_("location")
+                .from_view_(
+                    "select count(*) as count, location from sds group by location"
+                )
+                .where_("count > 1000 and count < 2000")
+            ).reset_(),
+        )
+        .select_("humidity_location_table.location")
+        .from_table_("humidity_location_table")
+        .join_table_(
+            "pm_location_table",
+            typ="inner",
+            condition="humidity_location_table.location=pm_location_table.location",
+        )
+        .store_at_(targeturl)
+    )
+    expected_sql = """WITH humidity_location_table AS
+  (SELECT LOCATION
+   FROM
+     (SELECT count(*) AS COUNT,
+             LOCATION
+      FROM dht
+      WHERE humidity > 70.0
+      GROUP BY LOCATION)
+   WHERE COUNT > 1000
+     AND COUNT < 2000 ),
+     pm_location_table AS
+  (SELECT LOCATION
+   FROM
+     (SELECT count(*) AS COUNT,
+             LOCATION
+      FROM sds
+      GROUP BY LOCATION)
+   WHERE COUNT > 1000
+     AND COUNT < 2000 )
+SELECT humidity_location_table.location
+FROM humidity_location_table
+INNER JOIN pm_location_table ON humidity_location_table.location=pm_location_table.location INTO cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/ stored AS csv"""
+    assert sqlClient.get_sql() == expected_sql
