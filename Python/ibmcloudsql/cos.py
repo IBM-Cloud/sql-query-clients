@@ -394,6 +394,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
     def __init__(
         self,
         cloud_apikey="",
+        token=None,
         cos_url="",
         client_info="COS Client",
         staging=False,
@@ -404,6 +405,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         IBMCloudAccess.__init__(
             self,
             cloud_apikey=cloud_apikey,
+            token=token,
             client_info=client_info,
             staging=staging,
             iam_max_tries=iam_max_tries,

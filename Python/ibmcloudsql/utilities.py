@@ -22,6 +22,7 @@ from datetime import datetime
 import ibm_boto3
 import ibm_botocore
 import requests
+from ibm_botocore.credentials import TokenManager
 
 
 def rename_keys(d, keys):
@@ -73,6 +74,12 @@ def confirm_action(action_name=None):
         answer = input(msg).lower()
     return answer == "y"
 
+class TokenReturner(TokenManager):
+    def __init__(self, token):
+        self.token=token
+
+    def get_token(self):
+        return self.token
 
 class IBMCloudAccess:
     """
@@ -102,12 +109,14 @@ class IBMCloudAccess:
         self,
         cloud_apikey="",
         client_info="",
+        token=None,
         staging=False,
         thread_safe=False,
         session=None,
         iam_max_tries: int = 1,
     ):
         self.apikey = cloud_apikey
+        self.token = token
         self.staging = staging
         self._iam_max_tries = iam_max_tries
         assert self._iam_max_tries >= 1
@@ -169,44 +178,73 @@ class IBMCloudAccess:
 
     def _get_new_session(self):
         """return a new ibm_boto3.session.Session object"""
-        if self.staging:
-            return ibm_boto3.session.Session(
-                ibm_api_key_id=self.apikey,
-                ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
-            )
+        if self.token:
+            if self.staging:
+                return ibm_boto3.session.Session(
+                    token_manager=TokenReturner(self.token),
+                    ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+                )
+            else:
+                return ibm_boto3.session.Session(token_manager=TokenReturner(self.token), )
         else:
-            return ibm_boto3.session.Session(ibm_api_key_id=self.apikey,)
+            if self.staging:
+                return ibm_boto3.session.Session(
+                    ibm_api_key_id=self.apikey,
+                    ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+                )
+            else:
+                return ibm_boto3.session.Session(ibm_api_key_id=self.apikey,)
 
     def _get_default_session(self):
         # setup DEFAULT_SESSION global variable = a boto3 session for the given IAM API key
-        if self.staging:
-            ibm_boto3.setup_default_session(
-                ibm_api_key_id=self.apikey,
-                ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
-            )
+        if self.token:
+            if self.staging:
+                ibm_boto3.setup_default_session(
+                    token_manager=TokenReturner(self.token),
+                    ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+                )
+            else:
+                ibm_boto3.setup_default_session(token_manager=TokenReturner(self.token), )
         else:
-            ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey)
+            if self.staging:
+                ibm_boto3.setup_default_session(
+                    ibm_api_key_id=self.apikey,
+                    ibm_auth_endpoint="https://iam.test.cloud.ibm.com/identity/token",
+                )
+            else:
+                ibm_boto3.setup_default_session(ibm_api_key_id=self.apikey,)
         return ibm_boto3._get_default_session()
 
-    def logon(self, force=False):
+    def logon(self, force=False, token=None):
         """
         Establish a connection to IBM Cloud
+
+        Parameters
+        -----------
+        force: Boolean
+            Force retrieval of a fresh IAM even when 300 seconds haven't passed yet. Default is false.
+        token: str
+            A fresh custom specified IAM token to use from now on. Must not be specified when SQLClient was initialized with an api_key.
 
         Notes
         -----
             An AIM token is needed for any operations to IBM cloud services (e.g. COS)
-            A new AIM token is created after 300 seconds.
+            A new AIM token is created after 300 seconds from the api_key specified to SQLQuery client initialization.
             A token is valid for 3600 seconds
 
         Raises
         ---------
         AttributeError:
            The exception is raised when the token cannot be retrieved using the current credential.
+        ValueError:
+            Raised when a token is specified but SQLClient was initiualized with an api_key.
 
         """
+
         if (
             self.logged_on
             and not force
+            and token is None
             and (datetime.now() - self.last_logon).seconds < 300
             and (
                 "authorization" in self.request_headers
@@ -217,6 +255,11 @@ class IBMCloudAccess:
 
         # TODO refactor construction to avoid calling private method
         self.logged_on = False
+        if token is not None:
+            if self.apikey is not None:
+                raise ValueError("You have configured an apikey. You cannot provide a custom token to logon().")
+            self.token=token
+        self._session = self.get_session()
         boto3_session = self._session
         # ibm_boto3._get_default_session()
         complete = False
@@ -226,9 +269,10 @@ class IBMCloudAccess:
         while not complete and count < self._iam_max_tries:
             try:
                 # set this to ensure a new token is retrieved
-                boto3_session.get_credentials().token_manager._expiry_time = (
-                    boto3_session.get_credentials().token_manager._time_fetcher()
-                )
+                if not self.token:
+                    boto3_session.get_credentials().token_manager._expiry_time = (
+                        boto3_session.get_credentials().token_manager._time_fetcher()
+                    )
                 ro_credentials = (
                     boto3_session.get_credentials().get_frozen_credentials()
                 )
