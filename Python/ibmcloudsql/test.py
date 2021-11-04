@@ -507,8 +507,7 @@ expected_sql = """WITH humidity_location_table AS
      AND COUNT < 2000 )
 SELECT humidity_location_table.location
 FROM humidity_location_table
-INNER JOIN pm_location_table ON humidity_location_table.location=pm_location_table.location
-INTO cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/ STORED AS CSV"""
+INNER JOIN pm_location_table ON humidity_location_table.location=pm_location_table.location INTO cos://us-geo/thinkstdemo-donotdelete-pr-iwmvg18vv9ki4d/ stored AS csv"""
 assert sqlClient.get_sql() == expected_sql
 
 print("==================================")
