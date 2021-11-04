@@ -30,11 +30,11 @@ sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQU
 ```
 
 ## Demo notebook
-You can use IBM Watson Studio with the following [demo notebook](https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d) that shows some elaborate examples of using various aspects of ibmcloudsql.
+You can use IBM Watson Studio with the following [demo notebook](https://dataplatform.cloud.ibm.com/analytics/notebooks/v2/440b3665-367f-4fc9-86d8-4fe7eae13b18/view?access_token=3c1471a6970890fe28cadf118215df44e82c2472a83c4051e3ff80fe505448ed) that shows some elaborate examples of using various aspects of ibmcloudsql.
 
 ## SQLQuery method list
- * `SQLQuery(api_key, instance_crn, target_cos_url=None, client_info='')` Constructor
- * `logon(force=False)` Needs to be called before any other method below. Logon is valid for one hour. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater `force=True`.
+ * `SQLQuery(api_key, instance_crn, target_cos_url=None, token=None, client_info='')` Constructor
+ * `logon(force=False, token=None)` Needs to be called before any other method below. It exchanges the `api_key` set at initialization for a temporary oauth token. The invocation is a No-Op if previous logon is less than 5 minutes ago. You can force logon anyway with optional paramater `force=True`. When you have inititialized the client without an `api_key` but instead specified a custom `token` then you can specify a fresh `token to logon method to update the client with that.
  * `submit_sql(sql_text, pagesize=None)` Returns `jobId`as string. Optional pagesize parameter (in rows) for paginated result objects.
  * `wait_for_job(jobId)` Waits for job to end and returns job completion state (either `completed` or `failed`)
  * `get_result(jobId, pagenumber=None)` returns SQL result data frame for entire result or for specified page of results.
@@ -47,13 +47,15 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `sql_ui_link()` Returns browser link for SQL Query web console for currently configured instance
  * `get_cos_summary(cos_url)` Returns summary for stored number of objects and volume for a given cos url as a json
  * `list_cos_objects(cos_url)` Returns a data frame with the list of objects found in the given cos url
- * `export_job_history(cos_url)` Exports new jobs as parquet file to the given cos url
+ * `export_job_history(cos_url)` Exports new jobs as parquet file to the given `cos_url`.
+ * `export_tags_for_cos_objects(cos_url, export_target_cos_file)` Exports all objects as a parquet file to the given `cos_url` that have tags configured along with the value for each tag.
 
 ## Exceptions
  * `RateLimitedException(message)` raised when jobs can't be submitted due to 429 / Plan limit for concurrent queries has been reached
 ## Constructor options
- * `api_key`: IAM API key
+ * `api_key`: IAM API key. When this parameter is set to `None` then you must specify an own valid IAM otauth token in the parameter `token`.
  * `instance_crn`: SQL Query instance CRN identifier
  * `target_cos_url`: Optional default target URL. Don't use when you want to provide target URL in SQL statement text.
+ * `token`: Optional custom IAM oauth token. When you specify this then you must set `api_key` parameter to `None`.
  * `client_info`: Optional string to identify your client application in IBM Cloud for PD reasons.
  * `max_tries`: Optional integer to specify maximum attempts when dealing with request rate limit. Default value is `1`, which means it will through exception `RateLimitedException` when response status code is `429`. It will enable _exponential backoff_ when specifying any positive number greater than `1`. For instance, given `max_tries=5`, assuming it will get response status code `429` for 4 times until the 5th attempt will get response status code `201`, the wait time will be `2s`, `4s`, `8s` and `16s` for each attempts.

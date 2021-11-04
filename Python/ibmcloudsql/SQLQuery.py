@@ -306,12 +306,14 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
     Parameters
     ----------
-    apikey : str, optional
+    api_key : str, optional
         an account-level API key [manage/Access (IAM)/IBM Cloud API keys]
     instance_crn :str, optional
         CRN from SQLQuery instance
     target_cos_url : str, optional
         the URI where retrieved data is stored
+    token : str, optional
+        A valid IBM Cloud IAM token. Must not be specified when api_key is also specified.
     max_concurrent_jobs: int, optional
         the max number of concurrent jobs
     client_info : str, optional
@@ -329,6 +331,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         api_key,
         instance_crn,
         target_cos_url=None,
+        token=None,
         client_info="IBM Cloud SQL Query Python SDK",
         thread_safe=False,
         max_concurrent_jobs=4,
@@ -342,9 +345,12 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         else:
             self.api_hostname = "api.sql-query.cloud.ibm.com"
             self.ui_hostname = "sql-query.cloud.ibm.com"
+        if (api_key is None and token is None) or (api_key is not None and token is not None):
+            raise ValueError("You need to specify exactly one of the both parameters: api_key or token")
         COSClient.__init__(
             self,
             cloud_apikey=api_key,
+            token=token,
             cos_url=target_cos_url,
             client_info=client_info,
             iam_max_tries=iam_max_tries,
@@ -731,7 +737,12 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         Returns
         -------
             'failed', 'completed', or 'unknown'
-        """
+
+         Raises
+        ---------
+        ValueError:
+            Raised when both an api_key and a token is specified.
+       """
 
         def wait_for_job(jobId):
             while True:
