@@ -45,10 +45,26 @@ def format_sql(sql_stmt):
         url = re.search(r"(cos)://[^\s]*", sql_stmt)
         index = index + 1
     sql_stmt = sqlparse.format(
-        sql_stmt, keyword_case="upper", strip_comments=True, reindent=True,
+        sql_stmt,
+        keyword_case="upper",
+        strip_comments=True,
+        reindent=True,
+        identifier_case="lower",
+        strip_whitespace=True,
+        indent_columns=False,
+        space_around_operators=False,
+        output_format="sql",
+        truncate_strings=None,
+        indent_tabs=False,
+        comma_first=False,
+        right_margin=None,
     )
     if mapping:
-        sql_stmt = sql_stmt.format(**mapping)
+        try:
+            sql_stmt = sql_stmt.format(**mapping)
+        except KeyError as e:
+            print(sql_stmt)
+            raise e
     return sql_stmt
 
 
@@ -89,10 +105,11 @@ class TimeSeriesTransformInput:
         Notes
         -----
         The TS_SEGMENT_BY_TIME supported by IBM CloudSQL accepts value in number, which is not user-friendly
-        for units like hour, days, minutes. SQLMagic alllows constructing SQL query string using
+        for units like hour, days, minutes. SQLBuilder alllows constructing SQL query string using
         the below values.
 
-        1. values: `per_hour`, `hour`, `per_day`, `day`, `per_week`, `week`
+        1. values: `per_hour`, `hour`, `per_day`, `day`, `per_week`, `week`,
+        `minute`, `Xminute` (X is a number divisible by 60)
 
         .. code-block:: console
 
@@ -123,14 +140,14 @@ class TimeSeriesTransformInput:
 
         def handle_str_str(sql_stmt):
             h = re.compile(
-                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[0-9]*[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]*[a-zA-Z][a-zA-Z_0-9]+)",
+                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[0-9]*[_]?[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]*[_]?[a-zA-Z][a-zA-Z_0-9]+)",
                 re.MULTILINE,
             )
             return h
 
         def handle_str_number(sql_stmt):
             h = re.compile(
-                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[a-zA-Z][a-zA-Z_0-9]+)[\s]?,[\s]?(?P<step>[0-9]+)",
+                r"TS_SEGMENT_BY_TIME[\s]?\(([a-zA-Z0-9]+)[\s]?,[\s]?(?P<window>[a-zA-Z][a-zA-Z_0-9]+)[\s]*,[\s]*(?P<step>[0-9]+)",
                 re.MULTILINE,
             )
             return h
@@ -149,23 +166,35 @@ class TimeSeriesTransformInput:
                 num = {}
                 for i in [2, 3]:
                     if not result.group(i).isdigit():
-                        p = re.compile(r"[0-9]*minute")
-                        p2 = re.compile(r"[0-9]+minute")
-                        granularity = result.group(i).strip().lower()
-                        if p.match(granularity):
-                            level = "minute"
-                            num[i] = 1
-                            if p2.match(granularity):
-                                temp = re.findall(r"\d+", granularity)
-                                num_min = list(map(int, temp))[0]
-                                num[i] = num_min
-                                assert 60 % num_min == 0
-                        elif result.group(i).strip().lower() in ["per_hour", "hour"]:
-                            num[i] = 60
-                        elif result.group(i).strip().lower() in ["per_day", "day"]:
-                            num[i] = 60 * 24
-                        elif result.group(i).strip().lower() in ["per_week", "week"]:
-                            num[i] = 60 * 24 * 7
+                        sub_reg = re.compile(
+                            r"(?P<number>[0-9]*)[_]?(?P<unit>[a-zA-Z]+)"
+                        )
+                        finding = sub_reg.match(result.group(i))
+                        number = finding.group("number")
+                        if len(number) == 0:
+                            number = 1
+                        else:
+                            number = int(number)
+                        unit = finding.group("unit")
+                        # print(result.group(i), number, unit)
+                        if "minute" in unit:
+                            num[i] = number
+                            assert 60 % num[i] == 0
+                        elif (
+                            result.group(i).strip().lower() in ["per_hour", "hour"]
+                            or "hour" in unit
+                        ):
+                            num[i] = 60 * number
+                        elif (
+                            result.group(i).strip().lower() in ["per_day", "day"]
+                            or "day" in unit
+                        ):
+                            num[i] = 60 * 24 * number
+                        elif (
+                            result.group(i).strip().lower() in ["per_week", "week"]
+                            or "week" in unit
+                        ):
+                            num[i] = 60 * 24 * 7 * number
                         else:
                             try:
                                 import isodate
@@ -225,7 +254,7 @@ class TimeSeriesSchema:
         self._unixtime_columns = column_list
 
 
-class SQLMagic(TimeSeriesSchema):
+class SQLBuilder(TimeSeriesSchema):
     """
     The class supports constructing a full SQL query statement
 
@@ -305,15 +334,19 @@ class SQLMagic(TimeSeriesSchema):
         self._has_from_clause = True
         return self
 
-    def from_cos_(self, cos_url, format_type="parquet", alias=None):
+    def from_cos_(self, cos_url, format_type="parquet", alias=None, delimiter=None):
         """
-        FROM <cos-url> AS type [AS alias] [, <cos-url> AS type [AS alias]]
+        FROM <cos-url> STORED AS <format_type> AS type [FIELDS TERMINATED BY delimiter] [AS alias] [, <cos-url> AS type [AS alias]]
         """
+        format_type = format_type.strip().lower()
         if self._has_from_clause:
             self._sql_stmt += ", "
         else:
             self._sql_stmt += " FROM "
-        self._sql_stmt += cos_url + " STORED AS " + format_type.strip()
+        self._sql_stmt += cos_url + " STORED AS " + format_type
+        if delimiter is not None:
+            assert format_type in ["csv", "textfile"]
+            self._sql_stmt += " FIELD TERMINATED BY '{}'".format(delimiter)
         if alias:
             self._sql_stmt += " " + alias.strip()
         self._has_from_clause = True
@@ -337,18 +370,18 @@ class SQLMagic(TimeSeriesSchema):
         self._has_from_clause = False
         return self
 
-    def join_cos_(self, cos_url, condition, type="inner", alias=None):
+    def join_cos_(self, cos_url, condition, typ="inner", alias=None):
         """
-        [type] JOIN <cos-url> [AS alias]
+        [typ] JOIN <cos-url> [AS alias]
         """
         table = cos_url
-        return self.join_table_(table, condition, type=type, alias=alias)
+        return self.join_table_(table, condition, typ=typ, alias=alias)
 
-    def join_table_(self, table, condition, type="inner", alias=None):
+    def join_table_(self, table, condition, typ="inner", alias=None):
         """
-        [type] JOIN <table> [AS alias] ON <condition>
+        [typ] JOIN <table> [AS alias] ON <condition>
 
-        NOTE: [type] is a value in the list below
+        NOTE: [typ] is a value in the list below
 
         .. code-block:: python
 
@@ -371,20 +404,20 @@ class SQLMagic(TimeSeriesSchema):
         ]
         import re
 
-        type = re.sub(" +", " ", type)
-        if type.upper() not in self.supported_join_types:
-            msg = "Wrong 'type', use a value in " + str(self.supported_join_types)
+        typ = re.sub(" +", " ", typ)
+        if typ.upper() not in self.supported_join_types:
+            msg = "Wrong 'typ', use a value in " + str(self.supported_join_types)
             raise ValueError(msg)
 
         if alias is None:
             self._sql_stmt = (
-                self._sql_stmt + " " + type + " JOIN " + table + " ON " + condition
+                self._sql_stmt + " " + typ + " JOIN " + table + " ON " + condition
             )
         else:
             self._sql_stmt = (
                 self._sql_stmt
                 + " "
-                + type
+                + typ
                 + " JOIN "
                 + table
                 + " AS "

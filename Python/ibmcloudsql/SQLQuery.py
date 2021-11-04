@@ -56,12 +56,12 @@ except Exception:
 try:
     from .cos import COSClient
     from .utilities import rename_keys
-    from .sql_magic import SQLMagic, format_sql, print_sql
+    from .sql_magic import SQLBuilder, format_sql, print_sql
     from .catalog_table import HiveMetastore
 except ImportError:
     from cos import COSClient
     from utilities import rename_keys
-    from sql_magic import SQLMagic, format_sql, print_sql
+    from sql_magic import SQLBuilder, format_sql, print_sql
     from catalog_table import HiveMetastore
 import logging
 from functools import wraps
@@ -69,6 +69,9 @@ import json
 from json import JSONDecodeError
 import inspect
 import re
+from datetime import datetime
+from threading import Thread
+from timeit import default_timer as timer
 
 logger = logging.getLogger(__name__)
 
@@ -92,9 +95,70 @@ def validate_job_status(f):
     return wrapped
 
 
+saved_jobs_prev_time = datetime.now()
+
+
+def save(file_name, data):
+    """Save file still ok in the case of Ctrl-C is pressed"""
+    # backup file regularly
+    import time
+    from dateutil.relativedelta import relativedelta
+
+    global saved_jobs_prev_time
+    now = datetime.now()
+    diff = relativedelta(now, saved_jobs_prev_time)
+    backup_file = None
+    if diff.hours > 1:
+        saved_jobs_prev_time = now
+        t = time.localtime()
+        timestamp = time.strftime("%b-%d-%Y_%H%M", t)
+        backup_file = "{}-{}".format(file_name, timestamp)
+
+    a = Thread(target=_save_no_interrupt, args=(file_name, data, backup_file))
+    a.start()
+    a.join()
+
+
+def _save_no_interrupt(file_name, data, backup_file):
+    if backup_file is not None:
+        import shutil
+
+        shutil.copyfile(file_name, backup_file)
+    with open(file_name, "w") as outfile:
+        json.dump(data, outfile)
+
+
 def check_saved_jobs_decorator(f):
     """a decorator that load data from ProjectLib, check for completed SQL
     Query job, before deciding to launch it"""
+
+    def check_rerun_failed_job(self, job_result, sql_stmt, prefix):
+        """for failed job due to long runtime: raise SqlQueryTimeOutException
+        so that the caller knows to split the job into two smaller jobs"""
+        run_as_usual = False
+        if job_result["status"] == "failed":
+            if (
+                "error_message" in job_result
+                and "location does not exist" in job_result["error_message"]
+            ):
+                print("skip due to no data: {}".format(sql_stmt))
+            else:
+                # if failed because of too-long, don't try it again
+                from dateutil import parser
+
+                startt = parser.parse(job_result["submit_time"])
+                endt = parser.parse(job_result["end_time"])
+                tMin = (endt - startt).seconds / 60
+                if tMin > 50:
+                    self._data[sql_stmt]["lower_granularity"] = True
+                    self._data[sql_stmt]["run_time_more_than"] = tMin
+                    save(prefix, self._data)
+                    msg = "Runtime: {} (min). Need to change the SQL statement to reduce running time".format(
+                        tMin
+                    )
+                    raise SqlQueryTimeOutException(msg)
+                run_as_usual = True
+        return run_as_usual
 
     @wraps(f)
     def wrapped(*args, **kwargs):
@@ -102,6 +166,7 @@ def check_saved_jobs_decorator(f):
         dictionary = inspect.getcallargs(f, *args, **kwargs)
         prefix = dictionary["file_name"]  # Gets you the username, default or modifed
         sql_stmt = dictionary["sql_stmt"]
+        force_rerun = dictionary["force_rerun"]
         # refine query
         sql_stmt = format_sql(sql_stmt)
 
@@ -121,7 +186,9 @@ def check_saved_jobs_decorator(f):
                 if len(keys_mapping) > 0:
                     rename_keys(self.project_lib.data, keys_mapping)
 
-            if sql_stmt in self.project_lib.data:
+            if force_rerun is True:
+                run_as_usual = True
+            elif sql_stmt in self.project_lib.data:
                 run_as_usual = False
                 job_id = self.project_lib.data[sql_stmt]["job_id"]
                 if self.project_lib.data[sql_stmt]["status"] == "completed":
@@ -130,6 +197,7 @@ def check_saved_jobs_decorator(f):
                     if self.project_lib.data[sql_stmt]["status"] != status_no_job_id:
                         # query the status
                         job_result = self.get_job(job_id)
+                        job_result.pop("statement", None)
                         self.project_lib.data[sql_stmt]["job_info"] = job_result
                         try:
                             self.project_lib.data[sql_stmt]["status"] = job_result[
@@ -140,8 +208,9 @@ def check_saved_jobs_decorator(f):
 
                             pprint.pprint(job_id, "\n", job_result)
                             raise e
-                        if job_result["status"] == "failed":
-                            run_as_usual = True
+                        run_as_usual = check_rerun_failed_job(
+                            self, job_result, sql_stmt, prefix
+                        )
                         self.write_project_lib_data()
                     else:
                         run_as_usual = True
@@ -155,8 +224,18 @@ def check_saved_jobs_decorator(f):
                     prefix = self._tracking_filename
             try:
                 with open(prefix) as json_data:
-                    self._data = json.load(json_data)
-                if sql_stmt in self._data:
+                    try:
+                        self._data = json.load(json_data)
+                    except ValueError:
+                        print(
+                            "Can't load {prefix} file: not a valid JSON file".format(
+                                prefix=prefix
+                            )
+                        )
+                        assert 0
+                if force_rerun is True:
+                    run_as_usual = True
+                elif sql_stmt in self._data:
                     run_as_usual = False
                     job_id = self._data[sql_stmt]["job_id"]
                     if self._data[sql_stmt]["status"] == "completed":
@@ -165,6 +244,7 @@ def check_saved_jobs_decorator(f):
                         if self._data[sql_stmt]["status"] != status_no_job_id:
                             # query the status
                             job_result = self.get_job(job_id)
+                            job_result.pop("statement", None)
                             self._data[sql_stmt]["job_info"] = job_result
                             try:
                                 self._data[sql_stmt]["status"] = job_result["status"]
@@ -173,10 +253,10 @@ def check_saved_jobs_decorator(f):
 
                                 pprint.pprint(job_result)
                                 raise e
-                            if job_result["status"] == "failed":
-                                run_as_usual = True
-                            with open(prefix, "w") as outfile:
-                                json.dump(self._data, outfile)
+                            run_as_usual = check_rerun_failed_job(
+                                self, job_result, sql_stmt, prefix
+                            )
+                            save(prefix, self._data)
                         else:
                             run_as_usual = True
             except FileNotFoundError:
@@ -195,8 +275,7 @@ def check_saved_jobs_decorator(f):
                 else:
                     # use local file
                     self._data[sql_stmt] = result
-                    with open(prefix, "w") as outfile:
-                        json.dump(self._data, outfile)
+                    save(prefix, self._data)
             except Exception as e:
                 e_ = e
                 status = status_no_job_id
@@ -211,8 +290,7 @@ def check_saved_jobs_decorator(f):
                 else:
                     # use local file
                     self._data[sql_stmt] = {"job_id": job_id, "status": status}
-                    with open(prefix, "w") as outfile:
-                        json.dump(self._data, outfile)
+                    save(prefix, self._data)
             if e_ is not None:
                 raise e_
         return job_id
@@ -220,7 +298,7 @@ def check_saved_jobs_decorator(f):
     return wrapped
 
 
-class SQLQuery(COSClient, SQLMagic, HiveMetastore):
+class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
     """The class the provides necessary APIs to interact with
 
     1. IBM SQL Serverless service
@@ -279,7 +357,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             thread_safe=thread_safe,
             staging=staging_env,
         )
-        SQLMagic.__init__(self)
+        SQLBuilder.__init__(self)
         if target_cos_url is not None:
             HiveMetastore.__init__(self, target_cos_url)
 
@@ -287,6 +365,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         self.target_cos_url = target_cos_url
         self.export_cos_url = target_cos_url
         self.user_agent = client_info
+        self._supported_format_types = ["JSON", "CSV", "PARQUET"]
 
         self.max_tries = max_tries
         self.max_concurrent_jobs = (
@@ -296,8 +375,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         # track the status of jobs - save the time to SQLQuery server
         self.jobs_tracking = {}
         self._tracking_filename = None
+        self._supported_job_status = ["running", "completed", "failed", "unknown"]
 
         logger.debug("SQLClient created successful")
+
+    def is_a_supported_storage_type(self, typ):
+        """check if a type is in a supported format"""
+        return typ.upper() in self._supported_format_types
 
     def set_tracking_file(self, file_name):
         """provides the file name which is used for tracking multiple SQL requests
@@ -430,12 +514,12 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 raise SyntaxError(error_message)
 
     def submit(self, pagesize=None):
-        """ run the internal SQL statement that you created using the APIs provided by SQLMagic
+        """ run the internal SQL statement that you created using the APIs provided by SQLBuilder
         """
         self.format_()
         return self.submit_sql(self._sql_stmt, pagesize=pagesize)
 
-    def submit_sql(self, sql_stmt, pagesize=None):
+    def submit_sql(self, sql_stmt, pagesize=None, stored_as=None):
         """
         Asynchronous call - submit and quickly return the job_id.
 
@@ -446,6 +530,8 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         pagesize: int, optional
             an integer indicating the number of rows for each partition/page
             [using PARTITIONED EVERY <pagesize> ROWS syntax]
+        stored_as: string
+            The type being used, only if 'INTO ... STORED AS ...' is not provided
 
         Returns
         -------
@@ -534,7 +620,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         if pagesize or pagesize == 0:
             if type(pagesize) == int and pagesize > 0:
                 if self.target_cos_url and not INTO_is_present(sql_text):
-                    sqlData["statement"] += " INTO {}".format(self.target_cos_url)
+                    if stored_as is not None:
+                        assert self.is_a_supported_storage_type(stored_as)
+                        sqlData["statement"] += " INTO {} STORED AS {format}".format(
+                            self.target_cos_url, format=stored_as
+                        )
+                    else:
+                        sqlData["statement"] += " INTO {}".format(self.target_cos_url)
                 elif not INTO_is_present(sql_text):
                     raise SyntaxError(
                         'Neither resultset_target parameter nor "INTO" clause specified.'
@@ -549,7 +641,13 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                     "pagesize parameter ({}) is not valid.".format(pagesize)
                 )
         elif self.target_cos_url and not INTO_is_present(sql_text):
-            sqlData.update({"resultset_target": self.target_cos_url})
+            if stored_as is not None:
+                assert self.is_a_supported_storage_type(stored_as)
+                sqlData["statement"] += " INTO {} STORED AS {format}".format(
+                    self.target_cos_url, format=stored_as
+                )
+            else:
+                sqlData.update({"resultset_target": self.target_cos_url})
 
         max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
@@ -560,7 +658,9 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return intrumented_send(sqlData)
 
     @check_saved_jobs_decorator
-    def submit_and_track_sql(self, sql_stmt, pagesize=None, file_name=None):
+    def submit_and_track_sql(
+        self, sql_stmt, pagesize=None, file_name=None, force_rerun=False, stored_as=None
+    ):
         """
         Each SQL Query instance is limited by the number of sql queries that it
         can handle at a time.  This can be a problem when you
@@ -607,6 +707,10 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             * (2) you use local notebook, and you want to use a local file to track it
 
             You don't need to provide the file name if you're using Watson studio, and the file name has been provided via :meth:`.connect_project_lib`.
+        force_rerun: bool
+            Rerun even if the given sql statement has been previously launched and completed. Be cautious when enabling this flag, as
+            you may have duplicated number of data onto the same location. The reason for this flag is to provide the option to rerun a command
+            - in that the previously created data has been deleted.
 
         Notes
         -----
@@ -615,7 +719,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             This APIs make use of :py:meth:`.COSClient.connect_project_lib`, :py:meth:`.COSClient.read_project_lib_data`.
 
         """
-        return self.submit_sql(sql_stmt, pagesize=pagesize)
+        return self.submit_sql(sql_stmt, pagesize=pagesize, stored_as=stored_as)
 
     def wait_for_job(self, jobId, sleep_time=2):
         """
@@ -1434,7 +1538,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """ return the number of running jobs in the SQL Query server"""
         return self.get_jobs_count_with_status("running")
 
-    def execute_sql(self, sql_stmt, pagesize=None, get_result=False):
+    def execute_sql(self, sql_stmt, pagesize=None, get_result=False, stored_as=None):
         """
         Extend the behavior of :meth:`.run_sql`.
         It is a blocking call that waits for the job to finish (unlike :meth:`.submit_sql`), but it has the following features:
@@ -1472,7 +1576,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         """
         Container = namedtuple("RunSql", ["data", "job_id"])
 
-        job_id = self.submit_sql(sql_stmt, pagesize=pagesize)
+        job_id = self.submit_sql(sql_stmt, pagesize=pagesize, stored_as=stored_as)
         data = None
         job_status = self.wait_for_job(job_id)
         logger.debug("Job " + job_id + " terminated with status: " + job_status)
@@ -1563,7 +1667,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         return self.get_result(job_id)
 
     def run(self, pagesize=None, get_result=False):
-        """ run the internal SQL statement provided by SQLMagic using :meth:`.execute_sql`
+        """ run the internal SQL statement provided by SQLBuilder using :meth:`.execute_sql`
         """
         self.format_()
         return self.execute_sql(
@@ -1715,7 +1819,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         else:
             print("No new jobs to export")
 
-    def get_schema_data(self, cos_url, type="json", dry_run=False):
+    def get_schema_data(self, cos_url, typ="json", dry_run=False):
         """
         Return the schema of COS URL
 
@@ -1723,11 +1827,14 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
         ----------
         cos_url : str
             The COS URL where data is stored
-        type : str, optional
+        typ : str, optional
             The format type of the data, default is 'json'
             Use from ['json', 'csv', 'parquet'] with case-insensitive
         dry_run: bool, optional
             This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
+        result_format: string
+            'dataframe'
+            'list'
 
         Returns
         -------
@@ -1740,22 +1847,27 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
             in either scenarios: (1) target COS URL is not set, (2) invalid type, (3) invalid COS URL
 
         """
-        supported_types = ["JSON", "CSV", "PARQUET"]
+        if not self.is_a_supported_storage_type(typ):
+            logger.error("use wrong format")
+            msg = """
+"Use wrong format of data: 'typ' option")
+Acceptable values: {}
+            """.format(
+                str(self._supported_format_types)
+            )
+            raise ValueError(msg)
 
         if self.target_cos_url is None:
             msg = "Need to pass target COS URL when creating SQL Client object"
-            raise ValueError(msg)
-        if type.upper() not in supported_types:
-            msg = "Expected 'type' value: " + str(supported_types)
             raise ValueError(msg)
         if not self.is_valid_cos_url(cos_url):
             msg = "Not a valid COS URL"
             raise ValueError(msg)
         sql_stmt = """
-        SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
+        SELECT * FROM DESCRIBE({cos_in} STORED AS {typ})
         INTO {cos_out} STORED AS JSON
         """.format(
-            cos_in=cos_url, type=type.upper(), cos_out=self.target_cos_url
+            cos_in=cos_url, typ=typ.upper(), cos_out=self.target_cos_url
         )
         if dry_run:
             print(sql_stmt)
@@ -1766,7 +1878,7 @@ class SQLQuery(COSClient, SQLMagic, HiveMetastore):
                 "�]�]L�" in df.name[0] and "PAR1" in df.name[0]
             ):
                 msg = (
-                    "ERROR: Revise 'type' value, underlying data format maybe different"
+                    "ERROR: Revise 'typ' value, underlying data format maybe different"
                 )
                 raise ValueError(msg)
             return df

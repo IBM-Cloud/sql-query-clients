@@ -31,6 +31,9 @@ lock = threading.Lock()
 
 class SQLClientTimeSeries(SQLQuery):
     """This class augments SQLClient with time-series functionality
+
+    HISTORY:
+    Aug-10-2021: expand _get_ts_datasource_v3()
     """
 
     def __init__(
@@ -641,6 +644,89 @@ class SQLClientTimeSeries(SQLQuery):
 
     def get_ts_datasource(
         self,
+        cos_in,
+        key,
+        time_stamp,
+        observation,
+        cos_out,
+        granularity="raw",
+        where_clause="",
+        ops="avg",
+        dry_run=False,
+        keep_col_names: bool = True,
+        cast_observation=None,
+        num_objects=20,
+        print_warning=True,
+    ):
+        """
+        Prepare the data source for time-series in the next-query, in that the result is
+        broken down into multiple objects using `num_objects` as the criteria
+
+        It will returns the data source in 3 columns:
+            * keep_col_names <- False: use exact values below
+                field_name, time_stamp, observation
+            * keep_col_names <- True: use the values passed via arguments
+                <key>, <time_stamp>, <observation>
+
+        Parameters
+        --------------
+        cos_in: str
+            The data source in "COS_URL stored as <format>"
+        key: str
+            The column name being used as the key
+        time_stamp: str
+            The column name being used as timestick
+        observation: str
+            The column name being used as value
+        cast_observation: str, optional=None
+            The type to be casted for the `observation` column
+        cos_out: str
+            The COS URL where the data is copied to - later as data source
+        granularity: str
+            a value in one of ["raw", "per_min", "per_<x>min", "per_sec", "per_<x>sec"]
+            with <x> is a number divided by 60, e.g. 10, 15
+        dry_run: bool, optional
+            This option, once selected as True, returns the internally generated SQL statement, and no job is queried.
+        num_objects: int, optional
+            The number of objects to be created for storing the data
+        print_warning: bool, default=True
+            print a warning or not
+        keep_col_names: bool, optional (False)
+            By default, all 3 original column names are maintained.
+            If you set to false, they are mapped to `field_name` (for key),
+            `time_stamp` and `observation`, respectively.
+
+        Returns
+        ----------
+        str
+            The COS_URL where the data with 3 fields (key, time_stamp, observation)
+            and can be digested into time-series via TIME_SERIES_FORMAT(key, timestick, value)
+        """
+        if len(self._unixtime_columns) == 0 and print_warning is True:
+            msg = (
+                "WARNING: You may want to assign the list of columns to`.columns_in_unixtime`",
+                " to let the SQL client know what columns are timestamp and in UNIX time format",
+            )
+            print(msg)
+
+        return self._get_ts_datasource_v3(
+            None,
+            cos_in,
+            key,
+            time_stamp,
+            observation,
+            cos_out,
+            granularity,
+            where_clause,
+            ops,
+            dry_run,
+            num_objects=num_objects,
+            cast_observation=cast_observation,
+            keep_col_names=keep_col_names,
+        )
+
+    def get_ts_datasource_from_table(
+        self,
         table_name,
         key,
         time_stamp,
@@ -669,6 +755,7 @@ class SQLClientTimeSeries(SQLQuery):
         --------------
         table: str
             The catalog table name
+            NOTE: Use either `cos_in` or `table`, but not both
         key: str
             The column name being used as the key
         time_stamp: str
@@ -708,6 +795,7 @@ class SQLClientTimeSeries(SQLQuery):
 
         return self._get_ts_datasource_v3(
             table_name,
+            None,
             key,
             time_stamp,
             observation,
@@ -1369,6 +1457,7 @@ class SQLClientTimeSeries(SQLQuery):
     def _get_ts_datasource_v3(
         self,
         table_name,
+        cos_in,
         key,
         time_stamp,
         observation,
@@ -1389,8 +1478,10 @@ class SQLClientTimeSeries(SQLQuery):
 
         Parameters
         --------------
-        table: str
+        table_name: str
             The catalog table name or the view-table that you generate from the WITH clause via :meth:`with_` method
+        cos_in: str
+            The COS URL and format of datasource, in case you don't use `table_name`
         key: str
             The column name being used as the key, and is maped to `field_name`
         time_stamp: str
@@ -1457,7 +1548,14 @@ class SQLClientTimeSeries(SQLQuery):
              hour(time_stamp),
              minute(time_stamp),
              (floor(second(time_stamp)/1)) * 1 INTO cos://us-south/customer-exp STORED AS PARQUET PARTITIONED INTO 20 OBJECTS
+
+        HISTORY:
+        Aug-05-2021: expand to add `cos_in` argument
         """
+        assert not (table_name is None and cos_in is None)
+        assert not (table_name is not None and cos_in is not None)
+        if cos_in and len(cos_in) > 0:
+            table_name = cos_in
         tmp_cos = self.target_cos_url
         if num_objects is None and num_rows is None:
             print("provide at least `num_objects` or `num_rows`")

@@ -1,5 +1,8 @@
+"""Catalog Table."""
 import logging
 import time
+
+from deprecated import deprecated
 
 logger = logging.getLogger(__name__)
 try:
@@ -19,11 +22,16 @@ except ImportError:
 
 
 class HiveMetastore:
-    """
-    This class supports the handling HIVE catalog table
-    """
+    """This class supports the handling HIVE catalog table."""
 
     def __init__(self, target_url):
+        """Create an instance of the class.
+
+        Parameters
+        ----------
+        target_url: str
+          The COS URL that is used to store temporary data for any SQL Query queries.
+        """
         self.current_table_name = None
         # keep tracks of what tables are availables
         self.partitioned_tables = set()
@@ -45,7 +53,7 @@ class HiveMetastore:
         self.supported_format_types = ["PARQUET", "CSV", "JSON"]
 
     def _is_valid_target_url(self, target_url=None):
-        """raise ValueError if the required COS URL is invalid"""
+        """Raise ValueError if the required COS URL is invalid."""
         if target_url is None:
             target_url = self._target_url
         if target_url is None or not ParsedUrl().is_valid_cos_url(target_url):
@@ -56,12 +64,13 @@ class HiveMetastore:
         return True
 
     def configure(self, target_url):
-        """Update the configuration"""
+        """Update the configuration."""
         self._is_valid_target_url(target_url)
         self._target_url = target_url
 
     @property
     def target_url(self):
+        """Return the target COS URL."""
         return self._target_url
 
     @target_url.setter
@@ -71,7 +80,7 @@ class HiveMetastore:
 
     # Extended functionality
     def show_tables(self, target_cos_url=None, pattern=None):
-        """List the available Hive Metastore
+        """List the available Hive Metastore.
 
         Parameters
         ------------
@@ -109,8 +118,7 @@ class HiveMetastore:
         return df
 
     def drop_all_tables(self):
-        """
-        Delete all created tables in the project
+        """Delete all created tables in the project.
 
         Returns
         -------
@@ -131,8 +139,7 @@ class HiveMetastore:
         return True
 
     def drop_tables(self, table_names):
-        """
-        Drop a list of tables
+        """Drop a list of tables.
 
         Parameters
         ----------
@@ -143,8 +150,7 @@ class HiveMetastore:
             self.drop_table(x)
 
     def drop_table(self, table_name=None):
-        """
-        Drop a given table
+        """Drop a given table.
 
         Parameters
         ----------
@@ -201,7 +207,7 @@ class HiveMetastore:
         blocking=True,
         schema=None,
     ):
-        """Create a table for data on COS
+        """Create a table for data on COS.
 
         Parameters
         ----------
@@ -242,7 +248,7 @@ class HiveMetastore:
         """
         self._is_valid_target_url(cos_url)
 
-        def create_table_async(
+        def _create_table_async(
             table_name,
             cos_url=None,
             format_type="CSV",
@@ -250,24 +256,24 @@ class HiveMetastore:
             schema=None,
         ):
             """
-            the async version of `create_table`
+            Create a table asynchronously. This is the async version of :meth:`.create_table`.
 
-            Parameters
-            ----------
-            table_name: str
-                The name of the table
+              Parameters
+              ----------
+              table_name: str
+                  The name of the table
 
-            cos_url : str, optional
-                The COS URL from which the table should reference to
-                If not provided, it uses the internal `self.cos_in_url`
+              cos_url : str, optional
+                  The COS URL from which the table should reference to
+                  If not provided, it uses the internal `self.cos_in_url`
 
-            force_recreate: bool, optional
-                (True) force to recreate an existing table
+              force_recreate: bool, optional
+                  (True) force to recreate an existing table
 
-            Returns
-            ------
-                job_id [if the table is being created]
-                None   [if the table already created]
+              Returns
+              ------
+                  job_id [if the table is being created]
+                  None   [if the table already created]
             """
             self.current_table_name = table_name
 
@@ -293,7 +299,7 @@ class HiveMetastore:
                         table_name=table_name, cos_in=cos_url, format_type=format_type
                     )
                 else:
-                    # explit selection of scheme -> need to tell "PARTITIONED BY"
+                    # choose scheme -> need to tell "PARTITIONED BY"
                     schema = self._format_schema(schema)
                     sql_stmt_create = """
                     CREATE TABLE {table_name} {schema}
@@ -311,7 +317,7 @@ class HiveMetastore:
                 return job_id
             return None
 
-        job_id = create_table_async(
+        job_id = _create_table_async(
             table_name,
             cos_url,
             format_type=format_type,
@@ -327,7 +333,7 @@ class HiveMetastore:
         return None
 
     def _format_schema(self, schema):
-        """Format the schema string to ensure it is enclosed by ( and )"""
+        """Format the schema string to ensure it is enclosed by ( and )."""
         schema = schema.strip()
         if schema[0] == "(" or schema[-1] == ")":
             if schema[0] != "(" or schema[-1] != ")":
@@ -344,9 +350,13 @@ class HiveMetastore:
         format_type="CSV",
         force_recreate=False,
         schema=None,
+        partition_list=None,
     ):
-        """
-        Create a partitioned table for data on COS. The data needs to be organized in the form that
+        """Create a partitioned table for data on COS.
+
+        Note
+        -----------
+        The data needs to be organized in the form that
         match HIVE metastore criteria, e.g.
 
         .. code-block:: console
@@ -354,7 +364,8 @@ class HiveMetastore:
             <COS-URL>/field_1=value1_1/field_2=value_2_1/object_file
             <COS-URL>/field_1=value1_2/field_2=value_2_1/object_file
 
-        NOTE: Each time the data is updated, we need to call `recover_table_partitions`
+        NOTE: Each time the data is updated, we need to call
+        :meth:`.recover_table_partitions`
         on the created partitioned table.
 
         Parameters
@@ -367,23 +378,30 @@ class HiveMetastore:
             If not provided, it uses the internal `self.cos_in_url`
 
         format_type: string, optional
-            The type of the data above that you want to reference (default: CSV)
+            The type of the data above (default: CSV)
 
         force_recreate: bool
             (True) force to recreate an existing table
 
         schema: None or string
-            If None, then automatic schema detection is used. Otherwise, pass in the comma-separated
+            If None, then automatic schema detection is used. Otherwise,
+            pass in the comma-separated
             string in the form "(columnName type, columnName type)"
+
+        partition_list: comma-separated string | list
+            the list of columns to be part of the partitioning. NOTE: the order
+            matters.
 
 
         Returns
         ----------
+        None
 
         Raises
         -------
         ValueError:
-            when the argument is invalid for `cos_url` (invalid format or there is no such location),
+            when the argument is invalid for `cos_url`
+            (invalid format or there is no such location),
             format_type (invalid value)
 
 
@@ -399,9 +417,17 @@ class HiveMetastore:
         else:
             self._is_valid_target_url(cos_url)
 
+        if schema is not None:
+            if partition_list is None:
+                raise ValueError("Please provide `partition_list`")
         df = self.show_tables()
+        table = table_name.strip().lower()
         try:
-            found = df[df["tableName"].str.contains(table_name.strip().lower())]
+            found = df[df["tableName"].str.contains(table)][
+                "tableName"
+            ].tolist()  # noqa
+            if table not in found:
+                found = []
         except Exception:
             # not found
             found = []
@@ -423,22 +449,28 @@ class HiveMetastore:
                 USING {format_type}
                 LOCATION {cos_in}
                 """
-                sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(
-                    table_name=table_name, cos_in=cos_url, format_type=format_type
+                sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(  # noqa
+                    table_name=table_name,
+                    cos_in=cos_url,
+                    format_type=format_type,  # noqa
                 )
             else:
+                if isinstance(partition_list, list):
+                    tmp = ", ".join(partition_list)
+                    partition_list = tmp
                 # explit selection of scheme -> need to tell "PARTITIONED BY"
                 schema = self._format_schema(schema)
                 sql_stmt_create_partitioned = """
                 CREATE TABLE {table_name} {schema}
                 USING {format_type}
-                PARTITIONED BY (country)
+                PARTITIONED BY ({partition_list})
                 LOCATION {cos_in}
                 """.format(
                     table_name=table_name,
                     cos_in=cos_url,
                     format_type=format_type,
                     schema=schema,
+                    partition_list=partition_list,
                 )
             logger.debug(sql_stmt_create_partitioned)
             try:
@@ -447,17 +479,37 @@ class HiveMetastore:
                 msg = str(e)
                 no_schema_error_msg = "Unable to infer schema"
                 if no_schema_error_msg in msg:
-                    msg = "Can't infer schema (explicit schema is needed) or the COS URL is wrong. Please check"
+                    msg = (
+                        "Can't infer schema (explicit schema is needed)"
+                        " or the COS URL is wrong. Please check"
+                    )
                     raise SqlQueryCreateTableException(msg)
                 else:
                     raise e
 
             time.sleep(2)
             self.recover_table_partitions(table_name)
+        else:
+            # TODO: update table?
+            pass
+
+    def add_partitions(self, table_name, col_names):
+        """Update the table with a partition column having new value."""
+        self.current_table_name = table_name
+        sql_stmt = """ALTER TABLE {table_name} ADD {col_names} PARTITIONS
+        """.format(
+            table_name=table_name, col_names=col_names
+        )
+        self.run_sql(sql_stmt)
 
     def recover_table_partitions(self, table_name):
-        """
-        This step is required after creating a new partitioned table
+        """Update a partitioned table. This step is required after creating a new partitioned table.
+
+        Note
+        ------
+          You should use this once at the start (at the first time you define
+          the table) to save some work but later on, I would recommend using
+          :meth:`.add_partitions`
 
         Parameters
         ----------
@@ -472,8 +524,8 @@ class HiveMetastore:
         )
         self.run_sql(sql_stmt)
 
-    def describe_table(self, table_name):
-        """Return the schema of table
+    def get_schema_table(self, table_name):
+        """Return the schema of table.
 
         Parameters
         ----------
@@ -486,12 +538,39 @@ class HiveMetastore:
             3 columns: col_name (object), data_type (object), comment (float64)
 
         """
+        return self._describe_table(table_name)
+
+    @deprecated(
+        version="1.0",
+        reason="Please use get_schema_table [in par with :meth:`.get_schema` from COS URL]",  # noqa
+    )
+    def describe_table(self, table_name):
+        """Return the schema of a table."""
+        return self._describe_table(table_name)
+
+    def _describe_table(self, table_name):
         self._is_valid_target_url()
 
         sql_stmt = """
         DESCRIBE TABLE {table_name} INTO {cos_out} STORED AS CSV""".format(
             table_name=table_name, cos_out=self.target_url
         )
+        try:
+            return self.run_sql(sql_stmt)
+        except Exception:
+            return None
+
+    def create_metaindex(self, table_name):
+        """Create a metaindex for a given table."""
+        sql_stmt = """CREATE METAINDEX {}""".format(table_name)
+        try:
+            return self.run_sql(sql_stmt)
+        except Exception:
+            return None
+
+    def get_metaindex(self, table_name):
+        """Get the metaindex of a table."""
+        sql_stmt = """DESCRIBE METAINDEX ON TABLE {}""".format(table_name)
         try:
             return self.run_sql(sql_stmt)
         except Exception:

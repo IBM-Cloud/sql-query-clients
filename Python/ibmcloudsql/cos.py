@@ -18,7 +18,8 @@ import getpass
 import time
 import xml.etree.ElementTree as ET
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from pprint import pformat
 
 import ibm_boto3
@@ -505,9 +506,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         source_url_parsed = self.analyze_cos_url(source_cos_url)
         target_cos_url = self.get_exact_url(target_cos_url)
         target_url_parsed = self.analyze_cos_url(target_cos_url)
-        target_prefix=target_url_parsed.prefix
+        target_prefix = target_url_parsed.prefix
         if len(target_prefix) > 0:
-            if target_prefix[-1] != '/':
+            if target_prefix[-1] != "/":
                 target_prefix = target_prefix + "/"
         cos_client = self._get_cos_client(target_url_parsed.endpoint)
 
@@ -516,24 +517,51 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         start_date = source_objects.LastModified.min()
         end_date = source_objects.LastModified.max()
         for n in range(int((end_date - start_date).days) + 1):
-            current_date = start_date + timedelta(n-1)
-            current_objects = source_objects[(source_objects['LastModified'] >= current_date - timedelta(days=buffer_days)) &
-                                             (source_objects['LastModified'] <= current_date + timedelta(days=buffer_days))]
+            current_date = start_date + timedelta(n - 1)
+            current_objects = source_objects[
+                (
+                    source_objects["LastModified"]
+                    >= current_date - timedelta(days=buffer_days)
+                )
+                & (
+                    source_objects["LastModified"]
+                    <= current_date + timedelta(days=buffer_days)
+                )
+            ]
 
             for source_index, source_object in current_objects.iterrows():
-                current_source = source_url_parsed.bucket + "/" + source_object['Object']
-                if "/_schema_as_json" in current_source or "/_checkpoint/" in current_source:
-                    continue # Don't copy SQL Query stream data landing checkpoint and schema objects.
-                current_target_object = source_object['Object'][len(source_url_parsed.prefix):]
-                current_target_prefix = "{}_date_landed={}".format(target_prefix, current_date)
+                current_source = (
+                    source_url_parsed.bucket + "/" + source_object["Object"]
+                )
+                if (
+                    "/_schema_as_json" in current_source
+                    or "/_checkpoint/" in current_source
+                ):
+                    continue  # Don't copy SQL Query stream data landing checkpoint and schema objects.
+                current_target_object = source_object["Object"][
+                    len(source_url_parsed.prefix) :
+                ]
+                current_target_prefix = "{}_date_landed={}".format(
+                    target_prefix, current_date
+                )
                 cos_client.copy_object(
                     Bucket=target_url_parsed.bucket,
                     CopySource=current_source,
-                    Key=current_target_prefix + "/" + current_target_object
+                    Key=current_target_prefix + "/" + current_target_object,
                 )
-            if len(current_objects)>0:
-                cos_client.put_object(Body='', Bucket=target_url_parsed.bucket, Key=current_target_prefix + "/_SUCCESS")
-                print("Copied {} objects to bucket {} into folder {}.".format(len(current_objects), target_url_parsed.bucket, current_target_prefix))
+            if len(current_objects) > 0:
+                cos_client.put_object(
+                    Body="",
+                    Bucket=target_url_parsed.bucket,
+                    Key=current_target_prefix + "/_SUCCESS",
+                )
+                print(
+                    "Copied {} objects to bucket {} into folder {}.".format(
+                        len(current_objects),
+                        target_url_parsed.bucket,
+                        current_target_prefix,
+                    )
+                )
 
     def list_cos_objects(self, cos_url, size_unit=None, sort_by_size=False):
         """
@@ -607,10 +635,11 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             }
             assert size_unit in ["B", "KB", "MB", "GB"]
             result.Size = result.Size / mapping[size_unit]
-        else:
-            result = pd.DataFrame()
         if sort_by_size is True:
-            result.sort_values("Size", inplace=True, ascending=False)
+            if result is not None:
+                result.sort_values("Size", inplace=True, ascending=False)
+            else:
+                result = pd.DataFrame()
         return result
 
     def _get_tags_for_objects(self, bucket, endpoint, cos_objects_df):
@@ -1109,6 +1138,29 @@ class COSClient(ParsedUrl, IBMCloudAccess):
             "largest_object_size": sizeof_fmt(largest_size),
             "largest_object": largest_object,
         }
+
+    def copy_objects(self, source_path, cos_url):
+        """
+        Upload a file to a given COS URL
+
+        Raises
+        -------
+        ValueError
+            if COS URL is invalid
+        """
+        if not self.is_valid_cos_url(cos_url):
+            msg = "Not a valid COS URL: {}".format(cos_url)
+            raise ValueError(msg)
+        # result_objects = self.list_cos_objects(cos_url)
+        url_parsed = self.analyze_cos_url(cos_url)
+        cos_client = self._get_cos_client(url_parsed.endpoint)
+        bucket = url_parsed.bucket
+        try:
+            res = cos_client.upload_file(source_path, cos_url)
+        except Exception as e:
+            print(Exception, e)
+        else:
+            print("File uploaded")
 
     # -----------------
     # The methods below are for interacting with a file stored as an asset in a Watson Studio's Project.

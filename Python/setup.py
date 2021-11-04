@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ------------------------------------------------------------------------------
+"""Setup file."""
 import codecs
 import os.path
 
@@ -20,18 +21,20 @@ from setuptools import setup
 
 
 def readme():
+    """Return README.rst content."""
     with open("README.rst") as f:
         return f.read()
 
 
-def read(rel_path):
+def _read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
     with codecs.open(os.path.join(here, rel_path), "r") as fp:
         return fp.read()
 
 
 def get_version(rel_path):
-    for line in read(rel_path).splitlines():
+    """Get package version."""
+    for line in _read(rel_path).splitlines():
         if line.startswith("__version__"):
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
@@ -44,10 +47,10 @@ setup(
     version=get_version("ibmcloudsql/__init__.py"),
     python_requires=">=2.7, <4",
     install_requires=[
-        "pandas>=1.3.0",
+        "pandas>=1.1.0",
         "requests>= 2.2.0",
-        "ibm-cos-sdk-core>=2.7.0",
-        "ibm-cos-sdk>=2.7.0",
+        "ibm-cos-sdk-core==2.10.0",
+        "ibm-cos-sdk==2.10.0",
         "numpy",
         "pyarrow",
         "backoff==1.10.0",
@@ -57,8 +60,10 @@ setup(
         "isodate",
         "importlib-metadata",
         "typing-extensions",
+        "python-dateutil",
+        "deprecated",
     ],
-    description="Python client for interacting with IBM Cloud SQL Query service",
+    description="Python client for interacting with IBM Cloud SQL Query service",  # noqa
     url="https://github.com/IBM-Cloud/sql-query-clients",
     author="IBM Corp.",
     author_email="torsten@de.ibm.com",
