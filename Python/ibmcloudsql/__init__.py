@@ -14,7 +14,7 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 # flake8: noqa F401
 from .SQLQuery import SQLQuery
 from .sql_query_ts import SQLClientTimeSeries

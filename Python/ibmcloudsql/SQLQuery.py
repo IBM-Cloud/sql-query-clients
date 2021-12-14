@@ -941,7 +941,10 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                     if not hasattr(body, "__iter__"):
                         body.__iter__ = types.MethodType(self.__iter__, body)
 
-                    partition_df = pd.read_csv(body, on_bad_lines='skip')
+                    if pd.__version__ >= '1.3.0':
+                        partition_df = pd.read_csv(body, on_bad_lines='skip')
+                    else:
+                        partition_df = pd.read_csv(body)
 
                 elif result_format == "parquet":
                     tmpfile = tempfile.NamedTemporaryFile()
