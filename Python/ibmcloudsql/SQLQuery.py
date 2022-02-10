@@ -857,7 +857,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                 )
             )
 
-        if "resultset_location" not in job_details:
+        if "resultset_location" not in job_details or not job_details["resultset_format"]:
             return None
 
         url_parsed = self.analyze_cos_url(job_details["resultset_location"])

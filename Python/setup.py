@@ -49,8 +49,8 @@ setup(
     install_requires=[
         "pandas>=1.1.0",
         "requests>= 2.2.0",
-        "ibm-cos-sdk-core==2.10.0",
-        "ibm-cos-sdk==2.10.0",
+        "ibm-cos-sdk-core>=2.10.0",
+        "ibm-cos-sdk>=2.10.0",
         "numpy",
         "pyarrow",
         "backoff==1.10.0",
