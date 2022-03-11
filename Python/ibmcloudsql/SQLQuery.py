@@ -41,6 +41,7 @@ try:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalErrorException,
     )
 except Exception:
     from .exceptions import (
@@ -52,6 +53,7 @@ except Exception:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalErrorException,
     )
 try:
     from .cos import COSClient
@@ -1654,6 +1656,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                 )
                 cos_url_not_accessible_error_msg = "Accessing the specified Cloud Object Storage location is forbidden."
                 cos_invalid_format_error_msg = "The input data doesn't have a correct"
+                cos_table_already_exist = "Table customers already exists"
                 if cos_in_url_error_msg in error_message:
                     raise CosUrlNotFoundException(error_message)
                 elif cos_out_url_error_msg in error_message:
@@ -1662,8 +1665,10 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                     raise CosUrlInaccessibleException(error_message)
                 elif cos_invalid_format_error_msg in error_message:
                     raise SqlQueryInvalidFormatException(error_message)
+                elif cos_table_already_exist in error_message:
+                    raise SqlQueryTableExistException(error_message)
                 else:
-                    raise Exception(error_message)
+                    raise InternalErrorException(error_message)
             except KeyError as e:
                 pprint.pprint(details)
                 raise e

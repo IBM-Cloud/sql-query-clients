@@ -11,6 +11,7 @@ try:
         SqlQueryDropTableException,
         SqlQueryFailException,
         SqlQueryCreateTableException,
+        InternalErrorException,
     )
 except ImportError:
     from .cos import ParsedUrl
@@ -18,6 +19,7 @@ except ImportError:
         SqlQueryDropTableException,
         SqlQueryFailException,
         SqlQueryCreateTableException,
+        InternalErrorException,
     )
 
 
@@ -343,12 +345,28 @@ class HiveMetastore:
             schema = "(" + schema + ")"
         return schema
 
+    def table_exists(self, table_name):
+        """check if a catalog table exists"""
+        df = self.show_tables()
+        try:
+            found = df[df["tableName"].str.contains(table_name)][
+                "tableName"
+            ].tolist()  # noqa
+            if table_name not in found:
+                found = []
+        except Exception:
+            # not found
+            found = []
+        if len(found) == 0:
+            return False
+        else:
+            return True
+
     def create_partitioned_table(
         self,
         table_name,
         cos_url=None,
         format_type="CSV",
-        force_recreate=False,
         schema=None,
         partition_list=None,
     ):
@@ -379,9 +397,6 @@ class HiveMetastore:
 
         format_type: string, optional
             The type of the data above (default: CSV)
-
-        force_recreate: bool
-            (True) force to recreate an existing table
 
         schema: None or string
             If None, then automatic schema detection is used. Otherwise,
@@ -420,78 +435,55 @@ class HiveMetastore:
         if schema is not None:
             if partition_list is None:
                 raise ValueError("Please provide `partition_list`")
-        df = self.show_tables()
-        table = table_name.strip().lower()
-        try:
-            found = df[df["tableName"].str.contains(table)][
-                "tableName"
-            ].tolist()  # noqa
-            if table not in found:
-                found = []
-        except Exception:
-            # not found
-            found = []
-        if len(found) > 0 and force_recreate:
-            self.drop_table(table_name)
-        self.partitioned_tables.add(table_name)
-        if format_type.upper() not in self.supported_format_types:
-            raise ValueError(
-                "Please fix `format_type` to be in {}".format(
-                    str(self.supported_format_types)
-                )
+
+        if schema is None:
+            # auto-detection of scheme
+            self.sql_stmt_create_partitioned_template = """
+            CREATE TABLE {table_name}
+            USING {format_type}
+            LOCATION {cos_in}
+            """
+            sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(  # noqa
+                table_name=table_name, cos_in=cos_url, format_type=format_type,  # noqa
             )
-
-        if len(found) == 0 or force_recreate:
-            if schema is None:
-                # auto-detection of scheme
-                self.sql_stmt_create_partitioned_template = """
-                CREATE TABLE {table_name}
-                USING {format_type}
-                LOCATION {cos_in}
-                """
-                sql_stmt_create_partitioned = self.sql_stmt_create_partitioned_template.format(  # noqa
-                    table_name=table_name,
-                    cos_in=cos_url,
-                    format_type=format_type,  # noqa
-                )
-            else:
-                if isinstance(partition_list, list):
-                    tmp = ", ".join(partition_list)
-                    partition_list = tmp
-                # explit selection of scheme -> need to tell "PARTITIONED BY"
-                schema = self._format_schema(schema)
-                sql_stmt_create_partitioned = """
-                CREATE TABLE {table_name} {schema}
-                USING {format_type}
-                PARTITIONED BY ({partition_list})
-                LOCATION {cos_in}
-                """.format(
-                    table_name=table_name,
-                    cos_in=cos_url,
-                    format_type=format_type,
-                    schema=schema,
-                    partition_list=partition_list,
-                )
-            logger.debug(sql_stmt_create_partitioned)
-            try:
-                self.run_sql(sql_stmt_create_partitioned)
-            except Exception as e:
-                msg = str(e)
-                no_schema_error_msg = "Unable to infer schema"
-                if no_schema_error_msg in msg:
-                    msg = (
-                        "Can't infer schema (explicit schema is needed)"
-                        " or the COS URL is wrong. Please check"
-                    )
-                    raise SqlQueryCreateTableException(msg)
-                else:
-                    raise e
-
-            time.sleep(2)
-            self.recover_table_partitions(table_name)
         else:
-            # TODO: update table?
-            pass
+            if isinstance(partition_list, list):
+                tmp = ", ".join(partition_list)
+                partition_list = tmp
+            # explit selection of scheme -> need to tell "PARTITIONED BY"
+            schema = self._format_schema(schema)
+            sql_stmt_create_partitioned = """
+            CREATE TABLE {table_name} {schema}
+            USING {format_type}
+            PARTITIONED BY ({partition_list})
+            LOCATION {cos_in}
+            """.format(
+                table_name=table_name,
+                cos_in=cos_url,
+                format_type=format_type,
+                schema=schema,
+                partition_list=partition_list,
+            )
+        logger.debug(sql_stmt_create_partitioned)
+        try:
+            self.run_sql(sql_stmt_create_partitioned)
+        except SqlQueryTableExistException as e:
+            msg = "The table already exist. Please either delete with `.drop_table` or update the partition with `.recover_table_partitions`"
+            raise SqlQueryCreateTableException(msg, e)
+        except InternalErrorException as e:
+            msg = str(e)
+            no_schema_error_msg = "Unable to infer schema"
+            if no_schema_error_msg in msg:
+                msg = (
+                    "Can't infer schema (explicit schema is needed)"
+                    " or the COS URL is wrong. Please check"
+                )
+                raise SqlQueryCreateTableException(msg)
+            else:
+                raise e
+
+        time.sleep(2)
+        self.recover_table_partitions(table_name)
 
     def add_partitions(self, table_name, col_names):
         """Update the table with a partition column having new value."""

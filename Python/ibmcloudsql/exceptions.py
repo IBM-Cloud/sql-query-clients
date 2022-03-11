@@ -19,6 +19,7 @@ class RateLimitedException(Exception):
     """The error when number of requests exceeds the capacity"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -30,6 +31,7 @@ class InternalError502Exception(Exception):
     """The error when SQL Query returns a 502 internal error"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -41,6 +43,7 @@ class CosUrlNotFoundException(Exception):
     """The error when the Cloud-Object Storage (COS) URL being used is invalid or not accessible"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -52,6 +55,7 @@ class CosUrlInaccessibleException(Exception):
     """The error when the Cloud-Object Storage (COS) URL being used is not accessible"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -63,6 +67,7 @@ class SqlQueryCrnInvalidFormatException(Exception):
     """The error when the SQL Query CRN is not correct"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -75,6 +80,7 @@ class SqlQueryInvalidPlanException(Exception):
     e.g. need to upgrade to Standard Plan or higher"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -86,6 +92,7 @@ class SqlQueryFailException(Exception):
     """The error raised when a running sql job fails, e.g. timeout"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -97,6 +104,7 @@ class SqlQueryCreateTableException(SqlQueryFailException):
     """The error raised when a running create-table sql job fails"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -108,6 +116,7 @@ class SqlQueryDropTableException(SqlQueryFailException):
     """The error raised when a running drop-table sql job fails"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -119,6 +128,7 @@ class SqlQueryInvalidFormatException(SqlQueryFailException):
     """The error raised when the format of COS URL is not valid"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
@@ -130,6 +140,19 @@ class UnsupportedStorageFormatException(Exception):
     """The error when the SQL uses a format of data that has not been supported yet"""
 
     def __init__(self, msg, original_exception=None):
+        """create exception object"""
+        if original_exception is not None:
+            super().__init__(msg + (": %s" % original_exception))
+        else:
+            super().__init__(msg)
+        self.original_exception = original_exception
+
+
+class InternalErrorException(Exception):
+    """The error when SQL Query crash with an internal error"""
+
+    def __init__(self, msg, original_exception=None):
+        """create exception object"""
         if original_exception is not None:
             super().__init__(msg + (": %s" % original_exception))
         else:
