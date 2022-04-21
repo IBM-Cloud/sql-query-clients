@@ -425,6 +425,7 @@ INTO {} STORED AS CSV".format(
 )
 print("Result is:")
 print(result)
+
 # ========= CATALOG TABLES
 print("Show all catalog tables")
 print(sqlClient.target_url)
@@ -432,10 +433,14 @@ print(sqlClient.show_tables())
 
 table_name = "test_table_partition"
 print("Create a partitioned catalog table")
-print(sqlClient.create_partitioned_table(table_name, force_recreate=True))
+print(sqlClient.create_partitioned_table(table_name,cos_url="cos://us-geo/sql/customers_partitioned_csv",partition_list="country" ))
 print(sqlClient.show_tables())
+
 print("Describe a catalog table")
 print(sqlClient.describe_table(table_name))
+
+print("Add partition")
+print(sqlClient.add_partition(table_name,"country='Lummerland'" ))
 
 print("Drop a catalog table")
 print(sqlClient.drop_table(table_name))
