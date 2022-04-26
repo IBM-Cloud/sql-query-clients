@@ -27,7 +27,7 @@
     <name>Dremio IBM SQL Query Community Connector</name>
 
     <properties>
-        <dremio.version>13.1.0-202102110202430875-3e6f3e7c</dremio.version>
+        <dremio.version>20.1.0-202202061055110045-36733c65</dremio.version>
     </properties>
 
     <dependencies>
