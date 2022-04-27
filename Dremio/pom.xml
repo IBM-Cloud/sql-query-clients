@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dremio.plugins</groupId>
-    <version>13.1.0</version>
+    <version>20.1.0</version>
     <artifactId>dremio-ibm-sql-query-plugin</artifactId>
     <name>Dremio IBM SQL Query Community Connector</name>
 
