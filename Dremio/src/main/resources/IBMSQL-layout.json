@@ -1,0 +1,53 @@
+{
+    "sourceType": "IBMSQL",
+    "metadataRefresh": {
+        "datasetDiscovery": true
+    },
+    "form": {
+        "tabs": [
+            {
+                "name": "General",
+                "isGeneral": true,
+                "sections": [
+                    {
+                        "name": "Connection",
+                        "layout": "row",
+                        "elements": [
+                            {
+                                "propName": "config.jdbcURL",
+                                "placeholder": "jdbc:ibmcloudsql:{instance-crn}[?{key1}={value1}&{key2}={value2}...]",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.apikey",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.targetcosurl",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.maxIdleConns",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.idleTimeSec",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

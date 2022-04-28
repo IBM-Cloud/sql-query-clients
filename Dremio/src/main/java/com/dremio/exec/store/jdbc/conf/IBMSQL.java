@@ -18,31 +18,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.dremio.exec.store.jdbc.*;
 import com.dremio.options.OptionManager;
 import com.dremio.security.CredentialsService;
-import org.apache.log4j.Logger;
 import com.dremio.exec.catalog.conf.DisplayMetadata;
 import com.dremio.exec.catalog.conf.NotMetadataImpacting;
 import com.dremio.exec.catalog.conf.Secret;
 import com.dremio.exec.catalog.conf.SourceType;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig;
 import com.dremio.exec.store.jdbc.dialect.arp.ArpDialect;
-import com.dremio.exec.store.jdbc.dialect.arp.ArpYaml;
+import org.apache.log4j.Logger;
 import com.google.common.annotations.VisibleForTesting;
 import io.protostuff.Tag;
 import java.util.Properties;
 /**
  * Configuration for IBMSQL.
  */
-@SourceType(value = "IBMSQL", label = "IBMSQL" , uiConfig = "dremio-layout.json")
-public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
+@SourceType(value = "IBMSQL", label = "IBMSQL" , uiConfig = "IBMSQL-layout.json", externalQuerySupported = false)
+public class IBMSQL extends AbstractArpConf<IBMSQL> {
     private static final String ARP_FILENAME = "arp/implementation/IBMSQL-arp.yaml";
     private static final ArpDialect ARP_DIALECT =
             AbstractArpConf.loadArpFile(ARP_FILENAME, (ArpDialect::new));
     private static final String DRIVER = "com.ibm.cloud.sql.jdbc.Driver";
+
+     private static Logger log = Logger.getLogger(IBMSQL.class);
+
+
     /*
        https://cloud.ibm.com/docs/sql-query?topic=sql-query-jdbc
      */
     @Tag(1)
-    @DisplayMetadata(label = "JDBC URL (Ex: jdbc:ibmcloudsql:{instance-crn}[?{key1}={value1}&{key2}={value2}...]")
+    @DisplayMetadata(label = "JDBC URL ")
     public String jdbcURL;
 
 
@@ -79,7 +82,7 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     @DisplayMetadata(label = "Encrypt connection")
     public boolean useSsl = false;
 
-    public IBMSQLConf(){}
+    public IBMSQL(){}
 
 
     @Override
@@ -102,7 +105,7 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
         if (useSsl) {
         properties.setProperty("SSL", "1");
         }
-
+        log.info(toJdbcConnectionString());
         return DataSources.newGenericConnectionPoolDataSource(DRIVER,
                 toJdbcConnectionString(), null, apikey, properties,
                 DataSources.CommitMode.DRIVER_SPECIFIED_COMMIT_MODE,
