@@ -32,7 +32,7 @@ import java.util.Properties;
 /**
  * Configuration for IBMSQL.
  */
-@SourceType(value = "IBMSQL", label = "IBMSQL" , uiConfig = "dremio-layout.json")
+@SourceType(value = "IBMSQL", label = "IBMSQL" , uiConfig = "IBMSQL-layout.json")
 public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     private static final String ARP_FILENAME = "arp/implementation/IBMSQL-arp.yaml";
     private static final ArpDialect ARP_DIALECT =
