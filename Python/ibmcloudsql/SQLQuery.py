@@ -41,6 +41,7 @@ try:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalError524Exception,
         InternalErrorException,
     )
 except Exception:
@@ -53,6 +54,7 @@ except Exception:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalError524Exception,
         InternalErrorException,
     )
 try:
@@ -484,7 +486,15 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                         msg=self._response_error_msg(response),
                     )
                 )
-
+            # Throw in case we hit 524, which sometimes is sent by Cloudflare when API is temporarily unreachable
+            if response.status_code == 524:
+                time.sleep(3)  # seconds
+                raise InternalError524Exception(
+                    "Internal Error ({code}): {msg}".format(
+                        code=response.status_code,
+                        msg=self._response_error_msg(response),
+                    )
+                )
             # any other error but 429 will be raised here, like 403 etc
             response.raise_for_status()
 
@@ -654,7 +664,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
             backoff.expo,
-            (RateLimitedException, InternalError502Exception),
+            (RateLimitedException, InternalError502Exception, InternalError524Exception),
             max_tries=max_tries,
         )(self._send_req)
         return intrumented_send(sqlData)
