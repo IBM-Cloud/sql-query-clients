@@ -656,7 +656,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
             backoff.expo,
-            (RateLimitedException, InternalError502Exception),
+            (RateLimitedException, InternalError502Exception, InternalError524Exception),
             max_tries=max_tries,
         )(self._send_req)
         return intrumented_send(sqlData)
