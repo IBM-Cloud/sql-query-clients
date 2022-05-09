@@ -40,7 +40,7 @@ if ibmcloud_apikey == "":
     print({'error': 'No API key specified'})
     quit()
 if sql_instance_crn == "":
-    print({'error': 'No SQL Query instance CRN specified'})
+    print({'error': 'No Data Engine instance CRN specified'})
     quit()
 if sql_statement_text == "":
     if sql_job_id == "":

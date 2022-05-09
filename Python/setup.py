@@ -63,7 +63,7 @@ setup(
         "python-dateutil",
         "deprecated",
     ],
-    description="Python client for interacting with IBM Cloud SQL Query service",  # noqa
+    description="Python client for interacting with IBM Cloud Data Engine service",  # noqa
     url="https://github.com/IBM-Cloud/sql-query-clients",
     author="IBM Corp.",
     author_email="torsten@de.ibm.com",

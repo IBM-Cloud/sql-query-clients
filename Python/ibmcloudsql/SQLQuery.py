@@ -336,7 +336,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         instance_crn,
         target_cos_url=None,
         token=None,
-        client_info="IBM Cloud SQL Query Python SDK",
+        client_info="IBM Cloud Data Engine Python SDK",
         thread_safe=False,
         max_concurrent_jobs=4,
         max_tries=1,
@@ -344,11 +344,11 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
     ):
         staging_env = instance_crn.startswith("crn:v1:staging")
         if staging_env:
-            self.api_hostname = "api.sql-query.test.cloud.ibm.com"
-            self.ui_hostname = "sql-query.test.cloud.ibm.com"
+            self.api_hostname = "api.dataengine.test.cloud.ibm.com"
+            self.ui_hostname = "dataengine.test.cloud.ibm.com"
         else:
-            self.api_hostname = "api.sql-query.cloud.ibm.com"
-            self.ui_hostname = "sql-query.cloud.ibm.com"
+            self.api_hostname = "api.dataengine.cloud.ibm.com"
+            self.ui_hostname = "dataengine.cloud.ibm.com"
         if (api_key is None and token is None) or (api_key is not None and token is not None):
             raise ValueError("You need to specify exactly one of the both parameters: api_key or token")
         COSClient.__init__(
@@ -418,7 +418,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         if instance_crn is None:
             self.instance_crn = (
                 input(
-                    "Enter SQL Query Instance CRN (leave empty to use previous one): "
+                    "Enter Data Engine Instance CRN (leave empty to use previous one): "
                 )
                 or self.instance_crn
             )
@@ -564,7 +564,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: console
 
             curl -XPOST \
-                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=YOUR_SQL_QUERY_CRN" \
+                --url "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn=YOUR_SQL_QUERY_CRN" \
                 -H "Accept: application/json" \
                 -H "Authorization: Bearer YOUR_BEARER_TOKEN" \
                 -H "Content-Type: application/json" \
@@ -589,7 +589,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             request_headers.update({'User-Agent': self.user_agent})
             request_headers.update({'authorization': 'Bearer {}'.format(ro_credentials.token)})
             response = requests.post(
-                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
                 headers=request_headers,
                 json=sqlData)
             \"\"\"
@@ -615,7 +615,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                 ]
             }
             \"\"\"
-            # error code information: https://cloud.ibm.com/apidocs/sql-query
+            # error code information: https://cloud.ibm.com/apidocs/sql-query-v3
 
 
         """
@@ -674,7 +674,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         self, sql_stmt, pagesize=None, file_name=None, force_rerun=False, stored_as=None
     ):
         """
-        Each SQL Query instance is limited by the number of sql queries that it
+        Each Data Engine instance is limited by the number of sql queries that it
         can handle at a time.  This can be a problem when you
         launch many SQL Query jobs, as such limitation may prevent you to
         complete all of them in one session. The `max_tries` options when creating
@@ -818,7 +818,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: console
 
             curl -XGET \\
-                --url "https://api.sql-query.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
+                --url "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
                 -H "Accept: application/json" \\
                 -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \\
                 -H "Content-Type: application/json"
@@ -845,14 +845,14 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: python
 
             response = requests.get(
-                "https://api.sql-query.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://api.dataengine.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 headers=self.request_headers,
             )
 
             if response.status_code == 200 or response.status_code == 201:
                 status_response = response.json()
 
-            https://cloud.ibm.com/apidocs/sql-query#run-an-sql-job
+            https://cloud.ibm.com/apidocs/sql-query-v3#run-an-sql-job
         """
         self.logon()
 
@@ -1008,7 +1008,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
     def list_results(self, jobId, wait=False):
         """
-        NOTE: A single SQL Query can store the queried data in the COS output
+        NOTE: A single Data Engine can store the queried data in the COS output
         in multiple objects/partitions
 
         When one of those below is used
@@ -1088,7 +1088,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
     def rename_exact_result(self, jobId, wait=False):
         """
-        A SQL Query can store data into partitioned/paginated multiple objects, or single object.
+        A Data Engine can store data into partitioned/paginated multiple objects, or single object.
 
         Even with single object, indeed, multiple objects are created, two of them has size 0.
         (<URL>/_SUCCESS, and <URL>/) beside the ones that hold data (<URL>/<data1>, <URL>/<data2>)
@@ -1541,7 +1541,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
     @validate_job_status
     def get_jobs_count_with_status(self, status):
-        """ return the number of jobs in the SQL Query server for the given `status`
+        """ return the number of jobs in the Data Engine server for the given `status`
 
         It has the limitation as described in :meth:`.get_jobs`
         """
@@ -1550,7 +1550,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         return num_jobs
 
     def get_number_running_jobs(self):
-        """ return the number of running jobs in the SQL Query server"""
+        """ return the number of running jobs in the Data Engine server"""
         return self.get_jobs_count_with_status("running")
 
     def execute_sql(self, sql_stmt, pagesize=None, get_result=False, stored_as=None):
@@ -1694,7 +1694,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
     def process_failed_jobs_until_all_completed(self, job_id_list):
         """
-        re-send those that are failed - due to the time-out mechanism of SQL Query server
+        re-send those that are failed - due to the time-out mechanism of Data Engine server
 
         Here, if job_time < 40 minutes, then we re-send.
         """

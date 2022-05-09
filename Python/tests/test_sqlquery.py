@@ -30,7 +30,7 @@ def test_init(sqlquery_client):
 def test_submit_sql_no_retry(sqlquery_client):
     '''expect exception when getting status code 429'''
     mock_error_message = 'too many requests'
-    responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
+    responses.add(responses.POST, 'https://api.dataengine.cloud.ibm.com/v2/sql_jobs',
                   json={'errors': [{'message': mock_error_message}]}, status=429)
 
     with pytest.raises(RateLimitedException, match=mock_error_message) as exc_info:
@@ -44,11 +44,11 @@ def test_submit_sql_w_retry(sqlquery_client):
 
     sqlquery_client.max_tries = 3
 
-    responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
+    responses.add(responses.POST, 'https://api.dataengine.cloud.ibm.com/v2/sql_jobs',
                   json={'errors': [{'message': mock_error_message}]}, status=429)
-    responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
+    responses.add(responses.POST, 'https://api.dataengine.cloud.ibm.com/v2/sql_jobs',
                   json={'errors': [{'message': mock_error_message}]}, status=429)
-    responses.add(responses.POST, 'https://api.sql-query.cloud.ibm.com/v2/sql_jobs',
+    responses.add(responses.POST, 'https://api.dataengine.cloud.ibm.com/v2/sql_jobs',
                   json={'job_id': mock_job_id}, status=201)
 
     assert sqlquery_client.submit_sql('VALUES (1)') == mock_job_id
