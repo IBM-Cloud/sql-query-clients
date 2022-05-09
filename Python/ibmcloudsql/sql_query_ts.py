@@ -45,7 +45,7 @@ class SQLClientTimeSeries(SQLQuery):
         max_tries=1,
         iam_max_tries=1,
         thread_safe=False,
-        client_info="TimeSeries Cloud SQL Query Python",
+        client_info="TimeSeries Cloud Data Engine Python",
     ):
         SQLQuery.__init__(
             self,

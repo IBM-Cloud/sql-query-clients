@@ -28,7 +28,7 @@ class RateLimitedException(Exception):
 
 
 class InternalError502Exception(Exception):
-    """The error when SQL Query returns a 502 internal error"""
+    """The error when Data Engine returns a 502 internal error"""
 
     def __init__(self, msg, original_exception=None):
         """create exception object"""
@@ -39,7 +39,7 @@ class InternalError502Exception(Exception):
         self.original_exception = original_exception
 
 class InternalError524Exception(Exception):
-    """The error when SQL Query returns a 524 internal error"""
+    """The error when Data Engine returns a 524 internal error"""
 
     def __init__(self, msg, original_exception=None):
         """create exception object"""
@@ -74,7 +74,7 @@ class CosUrlInaccessibleException(Exception):
 
 
 class SqlQueryCrnInvalidFormatException(Exception):
-    """The error when the SQL Query CRN is not correct"""
+    """The error when the Data Engine CRN is not correct"""
 
     def __init__(self, msg, original_exception=None):
         """create exception object"""
@@ -159,7 +159,7 @@ class UnsupportedStorageFormatException(Exception):
 
 
 class InternalErrorException(Exception):
-    """The error when SQL Query crash with an internal error"""
+    """The error when Data Engine crash with an internal error"""
 
     def __init__(self, msg, original_exception=None):
         """create exception object"""

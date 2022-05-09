@@ -184,7 +184,7 @@ class ProjectLib:
 
 
 # ---------------------------------------------------------------------------------------------
-# Helper class to do client-side mapping of COS endpoints to aliases supported in SQL Query
+# Helper class to do client-side mapping of COS endpoints to aliases supported in Data Engine
 # ---------------------------------------------------------------------------------------------
 class ParsedUrl(object):
     """Use this class to extract information from COS URL
@@ -361,7 +361,7 @@ class ParsedUrl(object):
 
 # ---------------------------------------------------------------------------
 # Helper class to query information or manipulate data as objects on COS
-# which can also be used from SQL Query
+# which can also be used from Data Engine
 # ---------------------------------------------------------------------------
 class COSClient(ParsedUrl, IBMCloudAccess):
     """
@@ -537,7 +537,7 @@ class COSClient(ParsedUrl, IBMCloudAccess):
                     "/_schema_as_json" in current_source
                     or "/_checkpoint/" in current_source
                 ):
-                    continue  # Don't copy SQL Query stream data landing checkpoint and schema objects.
+                    continue  # Don't copy Data Engine stream data landing checkpoint and schema objects.
                 current_target_object = source_object["Object"][
                     len(source_url_parsed.prefix) :
                 ]

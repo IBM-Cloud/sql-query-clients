@@ -31,7 +31,7 @@ def main(args):
         return {'error': 'No API key specified'}
     sql_instance_crn = args.get("sqlquery_instance_crn", "")
     if sql_instance_crn == "":
-        return {'error': 'No SQL Query instance CRN specified'}
+        return {'error': 'No Data Engine instance CRN specified'}
     target_url  = args.get("target_url", "")
     client_information = args.get("client_info", "ibmcloudsql cloud function")
     sql_statement_text = args.get("sql", "")

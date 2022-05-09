@@ -11,7 +11,7 @@ Run `./_install.sh`.
 1. Create a file `ibmcloudsql/test_credentials.py` with the following three lines and your according properties:
 ```
 apikey='<your IBM Cloud API key>'
-instance_crn='<your SQL Query instance CRN>'
+instance_crn='<your Data Engine instance CRN>'
 result_location='<COS URI of default result location for your SQL result sets>'
 ...
 ```
@@ -26,7 +26,7 @@ see details in the template file
 ```
 import ibmcloudsql
 my_ibmcloud_apikey = '<your api key here>'
-my_instance_crn='<your ibm cloud sql query instance CRN here>'
+my_instance_crn='<your ibm cloud Data Engine instance CRN here>'
 my_target_cos_url='<Cloud Object Storage URL for the SQL result target. Format: cos://<endpoint>/<bucket>/[<prefix>]>'
 sqlClient = SQLQuery(my_ibmcloud_apikey, my_instance_crn)
 sqlClient.run_sql('SELECT * FROM cos://us-geo/sql/orders.parquet STORED AS PARQUET LIMIT 5 INTO {} STORED AS CSV'.format(my_target_cos_url)).head()
@@ -47,7 +47,7 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `get_job(jobId)` Returns details for the given SQL job as a json object
  * `get_jobs()` Returns the list of recent 30 submitted SQL jobs with all details as a data frame
  * `run_sql(sql_text)` Compound method that calls `submit_sql`, `wait_for_job` and `wait_for_job` in sequenceA
- * `sql_ui_link()` Returns browser link for SQL Query web console for currently configured instance
+ * `sql_ui_link()` Returns browser link for Data Engine web console for currently configured instance
  * `get_cos_summary(cos_url)` Returns summary for stored number of objects and volume for a given cos url as a json
  * `list_cos_objects(cos_url)` Returns a data frame with the list of objects found in the given cos url
  * `export_job_history(cos_url)` Exports new jobs as parquet file to the given `cos_url`.
@@ -57,7 +57,7 @@ You can use IBM Watson Studio with the following [demo notebook](https://datapla
  * `RateLimitedException(message)` raised when jobs can't be submitted due to 429 / Plan limit for concurrent queries has been reached
 ## Constructor options
  * `api_key`: IAM API key. When this parameter is set to `None` then you must specify an own valid IAM otauth token in the parameter `token`.
- * `instance_crn`: SQL Query instance CRN identifier
+ * `instance_crn`: Data Engine instance CRN identifier
  * `target_cos_url`: Optional default target URL. Don't use when you want to provide target URL in SQL statement text.
  * `token`: Optional custom IAM oauth token. When you specify this then you must set `api_key` parameter to `None`.
  * `client_info`: Optional string to identify your client application in IBM Cloud for PD reasons.

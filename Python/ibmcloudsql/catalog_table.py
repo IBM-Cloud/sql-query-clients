@@ -32,7 +32,7 @@ class HiveMetastore:
         Parameters
         ----------
         target_url: str
-          The COS URL that is used to store temporary data for any SQL Query queries.
+          The COS URL that is used to store temporary data for any Data Engine queries.
         """
         self.current_table_name = None
         # keep tracks of what tables are availables
