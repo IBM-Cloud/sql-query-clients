@@ -41,6 +41,7 @@ try:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalError524Exception,
         InternalErrorException,
     )
 except Exception:
@@ -53,6 +54,7 @@ except Exception:
         SqlQueryFailException,
         SqlQueryInvalidFormatException,
         InternalError502Exception,
+        InternalError524Exception,
         InternalErrorException,
     )
 try:
