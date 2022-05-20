@@ -1837,7 +1837,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         else:
             print("No new jobs to export")
 
-    def get_schema_data(self, cos_url, typ="json", dry_run=False):
+    def get_schema_data(self, cos_url, type="json", dry_run=False):
         """
         Return the schema of COS URL
 
@@ -1845,7 +1845,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         ----------
         cos_url : str
             The COS URL where data is stored
-        typ : str, optional
+        type : str, optional
             The format type of the data, default is 'json'
             Use from ['json', 'csv', 'parquet'] with case-insensitive
         dry_run: bool, optional
@@ -1865,10 +1865,10 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             in either scenarios: (1) target COS URL is not set, (2) invalid type, (3) invalid COS URL
 
         """
-        if not self.is_a_supported_storage_type(typ):
+        if not self.is_a_supported_storage_type(type):
             logger.error("use wrong format")
             msg = """
-"Use wrong format of data: 'typ' option")
+"Use wrong format of data: 'type' option")
 Acceptable values: {}
             """.format(
                 str(self._supported_format_types)
@@ -1882,10 +1882,10 @@ Acceptable values: {}
             msg = "Not a valid COS URL"
             raise ValueError(msg)
         sql_stmt = """
-        SELECT * FROM DESCRIBE({cos_in} STORED AS {typ})
+        SELECT * FROM DESCRIBE({cos_in} STORED AS {type})
         INTO {cos_out} STORED AS JSON
         """.format(
-            cos_in=cos_url, typ=typ.upper(), cos_out=self.target_cos_url
+            cos_in=cos_url, type=type.upper(), cos_out=self.target_cos_url
         )
         if dry_run:
             print(sql_stmt)
@@ -1896,7 +1896,7 @@ Acceptable values: {}
                 "�]�]L�" in df.name[0] and "PAR1" in df.name[0]
             ):
                 msg = (
-                    "ERROR: Revise 'typ' value, underlying data format maybe different"
+                    "ERROR: Revise 'type' value, underlying data format maybe different"
                 )
                 raise ValueError(msg)
             return df
