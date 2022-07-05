@@ -1,17 +1,17 @@
 # sql-query-clients [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Python%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions) [![Actions Status](https://github.com/IBM-Cloud/sql-query-clients/workflows/Node.js%20CI/badge.svg)](https://github.com/IBM-Cloud/sql-query-clients/actions)
 
-This repository contains application client samples and blueprint code for the [IBM Cloud SQL Query service](https://cloud.ibm.com/catalog/services/sql-query#about).
+This repository contains application client samples and blueprint code for the [IBM Cloud Data Engine service](https://cloud.ibm.com/catalog/services/sql-query#about).
 
 
 ## List of clients
  * [ibmcloudsql](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python) Python SDK
- * [Cloud Function](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function) for SQL Query (uses `ibmcloudsql`)
- * [sqlQuery](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK **deprecated** (Use this [SQL Query Node SDK]( https://github.com/IBM/sql-query-node-sdk) instead)
+ * [Cloud Function](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Python/cloud_function) for Data Engine (uses `ibmcloudsql`)
+ * [sqlQuery](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Node) Node SDK **deprecated** (Use this [Data Engine Node SDK]( https://github.com/IBM/sql-query-node-sdk) instead)
  * [Dremio](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Dremio) connector
  * [Grafana](https://github.com/IBM-Cloud/sql-query-clients/tree/master/Grafana) connector
 
 ## Documentation
- * Please refer to [SQL Query Getting Started](https://cloud.ibm.com/docs/services/sql-query?topic=sql-query-getting-started) for general information and turorial for this service.
+ * Please refer to [Data Engine Getting Started](https://cloud.ibm.com/docs/services/sql-query?topic=sql-query-getting-started) for general information and turorial for this service.
  * The documentation for [ibmcloudsql Python API](https://ibm-cloud.github.io/sql-query-clients/)
  * How to use `ibmcloudsql` in a [Python Notebook](https://dataplatform.cloud.ibm.com/exchange/public/entry/view/4a9bb1c816fb1e0f31fec5d580e4e14d)
 
