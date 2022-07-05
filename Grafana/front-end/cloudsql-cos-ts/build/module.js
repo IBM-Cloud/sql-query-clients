@@ -4637,8 +4637,7 @@ function (_super) {
 
     return queries.map(function (query) {
       var expandedQuery = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])(Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__assign"])({}, query), {
-        //queryText: getTemplateSrv().replace(query.queryText, scopedVars),
-        queryText: Object(_grafana_runtime__WEBPACK_IMPORTED_MODULE_2__["getTemplateSrv"])().replace(query.queryText, undefined)
+        queryText: Object(_grafana_runtime__WEBPACK_IMPORTED_MODULE_2__["getTemplateSrv"])().replace(query.queryText, scopedVars)
       });
 
       return expandedQuery;
