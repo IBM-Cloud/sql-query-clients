@@ -1,6 +1,6 @@
 # Dremio IBM SQL Query Connector
 
-<img src="https://www.dremio.com/img/dremio-website.png" width="60"> <img src="https://1.cms.s81c.com/sites/default/files/2018-12-06/SQL-logo.jpeg" width="80">
+<img src="https://www.dremio.com/wp-content/uploads/2022/03/Dremio-logo.png" width="180"> <img src="https://1.cms.s81c.com/sites/default/files/2018-12-06/SQL-logo.jpeg" width="80">
 
 
 ## Overview

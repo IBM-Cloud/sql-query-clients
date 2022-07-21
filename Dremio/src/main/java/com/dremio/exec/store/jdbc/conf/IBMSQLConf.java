@@ -32,7 +32,7 @@ import java.util.Properties;
 /**
  * Configuration for IBMSQL.
  */
-@SourceType(value = "IBMSQL", label = "IBMSQL")
+@SourceType(value = "IBMSQL", label = "IBMSQL" , uiConfig = "IBMSQL-layout.json")
 public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     private static final String ARP_FILENAME = "arp/implementation/IBMSQL-arp.yaml";
     private static final ArpDialect ARP_DIALECT =
@@ -57,6 +57,15 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     @DisplayMetadata(label = "Target COS URL")
     public String targetcosurl;
 
+    @Tag(4)
+    @DisplayMetadata(label = "Maximum idle connections")
+    @NotMetadataImpacting
+    public int maxIdleConns = 8;
+
+    @Tag(5)
+    @DisplayMetadata(label = "Connection idle time (s)")
+    @NotMetadataImpacting
+    public int idleTimeSec = 60;
 
     @VisibleForTesting
     public String toJdbcConnectionString() {
@@ -66,7 +75,7 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
     }
 
 
-    @Tag(5)
+    @Tag(6)
     @DisplayMetadata(label = "Encrypt connection")
     public boolean useSsl = false;
 
@@ -96,7 +105,8 @@ public class IBMSQLConf extends AbstractArpConf<IBMSQLConf> {
 
         return DataSources.newGenericConnectionPoolDataSource(DRIVER,
                 toJdbcConnectionString(), null, apikey, properties,
-                DataSources.CommitMode.DRIVER_SPECIFIED_COMMIT_MODE);
+                DataSources.CommitMode.DRIVER_SPECIFIED_COMMIT_MODE,
+                maxIdleConns, idleTimeSec);
     }
     
     @Override

@@ -32,7 +32,7 @@ class HiveMetastore:
         Parameters
         ----------
         target_url: str
-          The COS URL that is used to store temporary data for any SQL Query queries.
+          The COS URL that is used to store temporary data for any Data Engine queries.
         """
         self.current_table_name = None
         # keep tracks of what tables are availables
@@ -485,13 +485,21 @@ class HiveMetastore:
         time.sleep(2)
         self.recover_table_partitions(table_name)
 
-    def add_partitions(self, table_name, col_names):
-        """Update the table with a partition column having new value."""
+    def add_partition(self, table_name, col_key_value_pairs, cos_url=None):
+        """Add a partition to the table."""
         self.current_table_name = table_name
-        sql_stmt = """ALTER TABLE {table_name} ADD {col_names} PARTITIONS
-        """.format(
-            table_name=table_name, col_names=col_names
-        )
+
+        if cos_url is None:
+            sql_stmt = """ALTER TABLE {table_name} ADD PARTITION ({col_key_value_pairs})
+            """.format(
+                table_name=table_name, col_key_value_pairs=col_key_value_pairs
+            )
+        else:
+            self._is_valid_target_url(cos_url)
+            sql_stmt = """ALTER TABLE {table_name} ADD PARTITION ({col_key_value_pairs}) LOCATION {cos_in}
+            """.format(
+                table_name=table_name, col_key_value_pairs=col_key_value_pairs, cos_in=cos_url
+            )
         self.run_sql(sql_stmt)
 
     def recover_table_partitions(self, table_name):
@@ -501,7 +509,7 @@ class HiveMetastore:
         ------
           You should use this once at the start (at the first time you define
           the table) to save some work but later on, I would recommend using
-          :meth:`.add_partitions`
+          :meth:`.add_partition`
 
         Parameters
         ----------

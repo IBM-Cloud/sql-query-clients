@@ -1,0 +1,52 @@
+{
+    "sourceType": "IBMSQL",
+    "metadataRefresh": {
+        "datasetDiscovery": true
+    },
+    "form": {
+        "tabs": [
+            {
+                "name": "General",
+                "isGeneral": true,
+                "sections": [
+                    {
+                        "name": "Connection",
+                        "layout": "row",
+                        "elements": [
+                            {
+                                "propName": "config.jdbcURL",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.apikey",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.targetcosurl",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.maxIdleConns",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            },
+                            {
+                                "propName": "config.idleTimeSec",
+                                "validate": {
+                                    "isRequired": true
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -107,8 +107,7 @@ export class COSIBMDataSource extends DataSourceApi<
     return queries.map((query) => {
       const expandedQuery = {
         ...query,
-        //queryText: getTemplateSrv().replace(query.queryText, scopedVars),
-        queryText: getTemplateSrv().replace(query.queryText, undefined),
+        queryText: getTemplateSrv().replace(query.queryText, scopedVars),
       };
       return expandedQuery;
     });

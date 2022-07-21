@@ -51,7 +51,7 @@ setup(
         "requests>= 2.2.0",
         "ibm-cos-sdk-core>=2.10.0",
         "ibm-cos-sdk>=2.10.0",
-        "numpy",
+        "numpy>=1.22.2",
         "pyarrow",
         "backoff==1.10.0",
         "sqlparse>=0.4.2",
@@ -63,7 +63,7 @@ setup(
         "python-dateutil",
         "deprecated",
     ],
-    description="Python client for interacting with IBM Cloud SQL Query service",  # noqa
+    description="Python client for interacting with IBM Cloud Data Engine service",  # noqa
     url="https://github.com/IBM-Cloud/sql-query-clients",
     author="IBM Corp.",
     author_email="torsten@de.ibm.com",
