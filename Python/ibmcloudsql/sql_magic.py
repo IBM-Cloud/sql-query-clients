@@ -334,19 +334,34 @@ class SQLBuilder(TimeSeriesSchema):
         self._has_from_clause = True
         return self
 
-    def from_cos_(self, cos_url, format_type="parquet", alias=None, delimiter=None):
+    def from_cos_(
+        self,
+        cos_url,
+        format_type="parquet",
+        alias=None,
+        delimiter=None,
+        tableTransformer=None,
+    ):
         """
-        FROM <cos-url> STORED AS <format_type> AS type [FIELDS TERMINATED BY delimiter] [AS alias] [, <cos-url> AS type [AS alias]]
+        FROM <tableTransformer>(<cos-url> STORED AS <format_type> AS type [FIELDS TERMINATED BY delimiter] [AS alias] [, <cos-url> AS type) [AS alias]]
+
+        https://cloud.ibm.com/docs/sql-query?topic=sql-query-sql-reference#tableTransformer
         """
         format_type = format_type.strip().lower()
         if self._has_from_clause:
             self._sql_stmt += ", "
         else:
             self._sql_stmt += " FROM "
+        if tableTransformer is not None:
+            tableTransformer = tableTransformer.strip().upper()
+            assert tableTransformer in ["DESCRIBE", "FLATTEN", "CLEANCOLS"]
+            self._sql_stmt += tableTransformer + "("
         self._sql_stmt += cos_url + " STORED AS " + format_type
         if delimiter is not None:
             assert format_type in ["csv", "textfile"]
             self._sql_stmt += " FIELD TERMINATED BY '{}'".format(delimiter)
+        if tableTransformer is not None:
+            self._sql_stmt += ")"
         if alias:
             self._sql_stmt += " " + alias.strip()
         self._has_from_clause = True
