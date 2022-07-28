@@ -18,6 +18,10 @@ import codecs
 import os.path
 
 from setuptools import setup
+# read the contents of your README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 
 def readme():
@@ -64,6 +68,8 @@ setup(
         "deprecated",
     ],
     description="Python client for interacting with IBM Cloud Data Engine service",  # noqa
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url="https://github.com/IBM-Cloud/sql-query-clients",
     author="IBM Corp.",
     author_email="torsten@de.ibm.com",
