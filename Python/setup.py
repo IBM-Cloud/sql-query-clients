@@ -55,7 +55,7 @@ setup(
         "requests>= 2.2.0",
         "ibm-cos-sdk-core>=2.10.0",
         "ibm-cos-sdk>=2.10.0",
-        "numpy>=1.22.2",
+        "numpy>=1.20.3",
         "pyarrow",
         "backoff==1.10.0",
         "sqlparse>=0.4.2",

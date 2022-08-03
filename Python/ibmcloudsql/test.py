@@ -534,7 +534,7 @@ print("==================================")
 print("Check get_schema_data")
 try:
     df = sqlClient.get_schema_data(
-        "cos://us-geo/sql/oklabdata/parquet/sds011/2017/09/", typ="csv"
+        "cos://us-geo/sql/oklabdata/parquet/sds011/2017/09/", type="csv"
     )
 except ValueError:
     print("Got ValueError as expected")
