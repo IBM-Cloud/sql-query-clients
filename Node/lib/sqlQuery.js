@@ -116,7 +116,7 @@ SQLQuery.prototype.getJobs = function () {
         return "You are not logged into IBM Cloud";
     }
 
-    let response = fetch(`https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn=${this.instanceCRN}`, {
+    let response = fetch(`https://api.dataengine.cloud.ibm.com/v3/sql_jobs?type=batch&instance_crn=${this.instanceCRN}`, {
         "method": "GET",
         "headers": this.requestHeaders
     });
@@ -133,7 +133,7 @@ SQLQuery.prototype.getJob = function (jobId) {
         return "You are not logged into IBM Cloud"
     }
 
-    let response = fetch(`https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/${jobId}?instance_crn=${this.instanceCRN}`, {
+    let response = fetch(`https://api.dataengine.cloud.ibm.com/v3/sql_jobs/${jobId}?instance_crn=${this.instanceCRN}`, {
         "method": "GET",
         "headers": this.requestHeaders
     });
@@ -157,7 +157,7 @@ SQLQuery.prototype.submitSql = function (query) {
 
     let sqlData = JSON.stringify({"statement": query, "resultset_target": this.targetCOS});
 
-    let response = fetch(`https://sql-api.ng.bluemix.net/v2-beta/sql_jobs?instance_crn=${this.instanceCRN}`, {
+    let response = fetch(`https://api.dataengine.cloud.ibm.com/v3/sql_jobs?instance_crn=${this.instanceCRN}`, {
         "method": "POST",
         "headers": this.requestHeaders,
         "body": sqlData
@@ -184,7 +184,7 @@ SQLQuery.prototype.waitForJob = function (jobId) {
 
         let checkStatus = setInterval(() => {
 
-            let response = fetch(`https://sql-api.ng.bluemix.net/v2-beta/sql_jobs/${jobId}?instance_crn=${this.instanceCRN}`, {
+            let response = fetch(`https://api.dataengine.cloud.ibm.com/v3/sql_jobs/${jobId}?instance_crn=${this.instanceCRN}`, {
                 "method": "GET",
                 "headers": this.requestHeaders
             });
