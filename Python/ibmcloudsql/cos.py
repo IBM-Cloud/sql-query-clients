@@ -1155,8 +1155,9 @@ class COSClient(ParsedUrl, IBMCloudAccess):
         url_parsed = self.analyze_cos_url(cos_url)
         cos_client = self._get_cos_client(url_parsed.endpoint)
         bucket = url_parsed.bucket
+        key = url_parsed.prefix
         try:
-            res = cos_client.upload_file(source_path, bucket, cos_url)
+            res = cos_client.upload_file(source_path, bucket, key)
         except Exception as e:
             print(Exception, e)
         else:
