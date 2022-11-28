@@ -281,7 +281,7 @@ class IBMCloudAccess:
                 complete = True
             except ibm_botocore.exceptions.CredentialRetrievalError:
                 count += 1
-                if count > self._iam_max_tries:
+                if count >= self._iam_max_tries:
                     msg = (
                         "Login fails: credential cannot be validated"
                         "- check either (1) the key or (2) if IBM  cloud service is available"
@@ -289,7 +289,7 @@ class IBMCloudAccess:
                     raise AttributeError(msg)
             except requests.exceptions.ReadTimeout:
                 count += 1
-                if count > self._iam_max_tries:
+                if count >= self._iam_max_tries:
                     msg = (
                         "Increase iam_max_tries (current set to {}),"
                         " or relaunch again as no response from IAM"
