@@ -30,6 +30,7 @@ import numpy as np
 import pandas as pd
 import requests
 from requests.exceptions import HTTPError
+import re
 
 try:
     from exceptions import (
@@ -461,7 +462,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
         try:
             response = requests.post(
-                "https://{}/v2/sql_jobs?instance_crn={}".format(
+                "https://{}/v3/sql_jobs?instance_crn={}".format(
                     self.api_hostname, self.instance_crn
                 ),
                 headers=self.request_headers,
@@ -564,7 +565,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: console
 
             curl -XPOST \
-                --url "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn=YOUR_SQL_QUERY_CRN" \
+                --url "https://api.dataengine.cloud.ibm.com/v3/sql_jobs?instance_crn=YOUR_SQL_QUERY_CRN" \
                 -H "Accept: application/json" \
                 -H "Authorization: Bearer YOUR_BEARER_TOKEN" \
                 -H "Content-Type: application/json" \
@@ -589,7 +590,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             request_headers.update({'User-Agent': self.user_agent})
             request_headers.update({'authorization': 'Bearer {}'.format(ro_credentials.token)})
             response = requests.post(
-                "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn={}".format(self.instance_crn),
+                "https://api.dataengine.cloud.ibm.com/v3/sql_jobs?instance_crn={}".format(self.instance_crn),
                 headers=request_headers,
                 json=sqlData)
             \"\"\"
@@ -628,6 +629,9 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             tmp = sql_text.replace("\n", " ")
             return (" INTO " in tmp.upper()) or ("\nINTO " in tmp.upper())
 
+        def is_target_location_applicable(sqlstmt):
+            return not re.match(r"\s*(create|alter|drop)\s+(table|view)", sqlstmt.lower())
+
         # If a valid pagesize is specified we need to append the proper PARTITIONED EVERY <num> ROWS clause
         if pagesize or pagesize == 0:
             if type(pagesize) == int and pagesize > 0:
@@ -658,8 +662,8 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
                 sqlData["statement"] += " INTO {} STORED AS {format}".format(
                     self.target_cos_url, format=stored_as
                 )
-            else:
-                sqlData.update({"resultset_target": self.target_cos_url})
+            elif is_target_location_applicable(sql_text):
+                sqlData["statement"] += " INTO {}".format(self.target_cos_url)
 
         max_tries = self.max_tries
         intrumented_send = backoff.on_exception(
@@ -760,7 +764,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             while True:
                 self.logon()
                 response = requests.get(
-                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(
+                    "https://{}/v3/sql_jobs/{}?instance_crn={}".format(
                         self.api_hostname, jobId, self.instance_crn
                     ),
                     headers=self.request_headers,
@@ -818,7 +822,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: console
 
             curl -XGET \\
-                --url "https://api.dataengine.cloud.ibm.com/v2/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
+                --url "https://api.dataengine.cloud.ibm.com/v3/sql_jobs?instance_crn=<YOUR_SQL_QUERY_CRN>" \\
                 -H "Accept: application/json" \\
                 -H "Authorization: Bearer <YOUR_BEARER_TOKEN>"  \\
                 -H "Content-Type: application/json"
@@ -845,7 +849,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         .. code-block:: python
 
             response = requests.get(
-                "https://api.dataengine.cloud.ibm.com/v2/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
+                "https://api.dataengine.cloud.ibm.com/v3/sql_jobs/{}?instance_crn={}".format(jobId, self.instance_crn),
                 headers=self.request_headers,
             )
 
@@ -1339,7 +1343,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
 
             try:
                 response = requests.get(
-                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(
+                    "https://{}/v3/sql_jobs/{}?instance_crn={}".format(
                         self.api_hostname, jobId, self.instance_crn
                     ),
                     headers=self.request_headers,
@@ -1418,7 +1422,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
         self.logon()
 
         response = requests.get(
-            "https://{}/v2/sql_jobs?instance_crn={}".format(
+            "https://{}/v3/sql_jobs?type=batch&instance_crn={}".format(
                 self.api_hostname, self.instance_crn
             ),
             headers=self.request_headers,
@@ -1445,7 +1449,7 @@ class SQLQuery(COSClient, SQLBuilder, HiveMetastore):
             )
             for job in job_list["jobs"]:
                 response = requests.get(
-                    "https://{}/v2/sql_jobs/{}?instance_crn={}".format(
+                    "https://{}/v3/sql_jobs/{}?instance_crn={}".format(
                         self.api_hostname, job["job_id"], self.instance_crn
                     ),
                     headers=self.request_headers,
