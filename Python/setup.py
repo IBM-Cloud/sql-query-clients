@@ -49,7 +49,7 @@ def get_version(rel_path):
 setup(
     name="ibmcloudsql",
     version=get_version("ibmcloudsql/__init__.py"),
-    python_requires=">=2.7, <4",
+    python_requires=">=3.8, <4",
     install_requires=[
         "pandas>=1.1.0",
         "requests>= 2.2.0",
@@ -77,7 +77,6 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.8",
         "Topic :: Database",
     ],
