@@ -1,0 +1,28 @@
+### Egg info 
+*.egg-info
+*.egg
+*.EGG
+*.EGG-INFO
+*.DS_Store
+
+### Local Python env and test
+cosaccess/bin
+cosaccess/.Python
+cosaccess/lib
+cosaccess/include
+cosaccess/pip-selfcheck.json
+cosaccess/test_credentials.py
+
+### Build and distribution
+build/
+dist/
+
+### Compiled and backup files
+__pycache__
+*.pyc
+*.pyo
+*.tmp*
+*.bak
+.coverage
+.pytest_cache
+.venv
