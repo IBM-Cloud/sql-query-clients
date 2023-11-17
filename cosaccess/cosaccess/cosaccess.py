@@ -19,6 +19,7 @@ from ibm_platform_services import IamPolicyManagementV1
 from ibm_platform_services import IamIdentityV1
 from ibm_platform_services import UserManagementV1
 from ibm_platform_services import IamAccessGroupsV2
+from ibm_platform_services import ApiException
 import os
 import re
 import pandas as pd
@@ -101,11 +102,11 @@ class CosAccessManager:
                 policies.append(policy)
         return policies
 
-    def list_policies_for_cos_bucket(self, cosBucket: str, prefix: str = None):
+    def list_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None):
         """Returns all policies on the provided COS bucket and path (optional).
 
         Parameters:
-        cosBucket (str): COS bucket name
+        cosBucket (str): COS bucket name. Optional: when not provided all policies to COS services are returned
         prefix (str): Optional: Prefix path in the bucket
 
         Returns:
@@ -113,7 +114,11 @@ class CosAccessManager:
         """
 
         bucket_policies = []
-        for policy in self.list_policies_for_service("cloud-object-storage"):
+        all_cos_policies = self.list_policies_for_service("cloud-object-storage")
+        if not cosBucket:
+            return all_cos_policies
+        # Filter for policies that apply to the provided bucket
+        for policy in all_cos_policies:
             attributes = 0  # The COS bucket can appear in multiple attributes in the policy
             bucket_policy = False
             for policy_attribute in policy["resource"]["attributes"]:
@@ -121,7 +126,9 @@ class CosAccessManager:
                     bucket_policy = True
                 if policy_attribute["key"] == "resource" and policy_attribute["value"] == cosBucket:
                     attributes += 1
-            if attributes > 0 and bucket_policy:
+            # The policy applies if it is not scoped on bucket at all or if it is scoped on bucket
+            # and the bucket name is the provided one (attributes > 0):
+            if (attributes > 0 and bucket_policy) or (not bucket_policy):
                 bucket_policies.append(policy)
         if not prefix:
             return bucket_policies
@@ -168,9 +175,17 @@ class CosAccessManager:
             raise ValueError("You must provide exactly one of the parameters access_groups or iam_ids.")
         control = {"grant": {"roles": []}}
         for role in roles:
-            if role not in ["Manager", "Reader", "Writer"]:
-                raise ValueError("Supported roles are \"Manager\", \"Reader\" and \"Writer\"")
-            control["grant"]["roles"].append({"role_id": "crn:v1:bluemix:public:iam::::serviceRole:" + role})
+            platform_roles = ["Viewer", "Editor", "Operator", "Administrator"]
+            bucket_roles = ["Manager", "Reader", "Writer"]
+            object_roles = ["ObjectWriter", "ObjectReader", "ContentReader", "NotificationsManager"]
+            if role not in platform_roles and role not in bucket_roles and role not in object_roles:
+                raise ValueError("Supported roles are " + platform_roles + ", " + bucket_roles + " and " + object_roles)
+            if role in platform_roles:
+                control["grant"]["roles"].append({"role_id": "crn:v1:bluemix:public:iam::::role:" + role})
+            elif role in bucket_roles:
+                control["grant"]["roles"].append({"role_id": "crn:v1:bluemix:public:iam::::serviceRole:" + role})
+            else: # Remaining are object roles
+                control["grant"]["roles"].append({"crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" + role})
         resource = {"attributes": [{"value": cos_instance, "operator": "stringEquals", "key": "serviceInstance"},
                                    {"value": "cloud-object-storage", "operator": "stringEquals", "key": "serviceName"},
                                    {"value": self._account_id, "operator": "stringEquals", "key": "accountId"},
@@ -333,7 +348,7 @@ class CosAccessManager:
         """
         return self._access_groups_service.get_access_group(access_group_id=access_group_id).get_result()["name"]
 
-    def get_policies_for_cos_bucket(self, cosBucket: str, prefix: str = None):
+    def get_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None):
         """Prints policies for provided COS bucket and path (optional) to stdout in human readable manner.
 
         Parameters:
@@ -345,21 +360,32 @@ class CosAccessManager:
         """
         data = []
         for i in self.list_policies_for_cos_bucket(cosBucket, prefix):
-            policy = {"instance": "", "bucket": cosBucket, "paths": "", "roles": [], "user": "", "service_id": "",
+            policy = {"instance": "", "bucket": "", "paths": "", "roles": [], "user": "", "service_id": "",
                       "access_group": "", "access_group_id": "", "iam_id": "", "other_subject": ""}
             for j in i["resource"]["attributes"]:
                 if j["key"] == "serviceInstance":
                     policy["instance"] = j["value"]
-                    break
+                if j["key"] == "resource":
+                    policy["bucket"] = j["value"]
             policy["policy_id"] = i["id"]
             roles = []
             for j in i["control"]["grant"]["roles"]:
-                roles.append(j["role_id"][41:])
+                if "crn:v1:bluemix:public:iam::::role:" in j["role_id"]: # Platform role
+                    roles.append(j["role_id"][34:])
+                elif "crn:v1:bluemix:public:iam::::serviceRole:" in j["role_id"]: # Bucket role
+                    roles.append(j["role_id"][41:]) # Service role
+                elif "crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" in j["role_id"]: # Object role
+                    roles.append(j["role_id"][58:])  # Service role
+                else:
+                    roles.append(j["role_id"])  # Whatever
             policy["roles"] = roles
             for j in i["subject"]["attributes"]:
                 if j["key"] == "iam_id" and j["value"].startswith("IBMid-"):
                     policy["iam_id"] = j["value"]
-                    policy["user"] = self.get_user_name(j["value"])
+                    try:
+                        policy["user"] = self.get_user_name(j["value"])
+                    except ApiException as e:
+                        pass
                 elif j["key"] == "iam_id" and j["value"].startswith("iam-ServiceId-"):
                     policy["iam_id"] = j["value"]
                     policy["service_id"] = self.get_service_id_name(j["value"])
@@ -370,7 +396,6 @@ class CosAccessManager:
                     policy["other_subject"] = j["key"] + "=" + j["value"]
             if "rule" in i:
                 for condition in i["rule"]["conditions"]:
-                    conditions = []
                     if "key" in condition:
                         if condition["key"] == "{{resource.attributes.path}}":
                             policy["paths"] = condition["value"]
