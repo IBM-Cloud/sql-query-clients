@@ -42,15 +42,53 @@ class CosAccessManager:
         self._access_groups_service = IamAccessGroupsV2(
             authenticator=self._authenticator)  # To resolve clear access group names
         pd.set_option('display.max_colwidth', None)
+        self._platform_roles = ["Viewer", "Editor", "Operator", "Administrator"]
+        self._bucket_roles = ["Manager", "Reader", "Writer"]
+        self._object_roles = ["ObjectWriter", "ObjectReader", "ContentReader", "NotificationsManager"]
 
-    def list_policies(self):
-        """Returns all policies in the account as JSON.
 
-        Returns:
+    def _parse_role(self, role_crn: str):
+        if "crn:v1:bluemix:public:iam::::role:" in role_crn:  # Platform role
+            return role_crn[34:]
+        elif "crn:v1:bluemix:public:iam::::serviceRole:" in role_crn:  # Bucket role
+            return role_crn[41:]  # Service role
+        elif "crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" in role_crn:  # Object role
+            return role_crn[58:]  # Service role
+        return role_crn # Whatever
+
+    def _expand_role(self, role: str):
+        if role in self._platform_roles:
+            return "crn:v1:bluemix:public:iam::::role:" + role
+        elif role in self._bucket_roles:
+            return "crn:v1:bluemix:public:iam::::serviceRole:" + role
+        elif role in self._object_roles:
+            return "crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" + role
+        else:
+            return role
+    def _validate_roles(self, roles: list[str]):
+        for role in roles:
+            if role not in self._platform_roles and role not in self._bucket_roles and role not in self._object_roles:
+                raise ValueError("Supported roles are " + self._platform_roles + ", " + self._bucket_roles + " and " + self._object_roles)
+
+    def list_policies(self, roles: list[str] = None):
+        """Returns all policies in the account as JSON, optionally filtered by roles of the policies
+
+        Parameters:
+        roles (list[str]): Optional: At least one of these roles in this list must be used by the policy
+
+       Returns:
         int:JSON dict with all policies of the account
         """
 
-        return self._policy_service.list_v2_policies(account_id=self._account_id).get_result()["policies"]
+        policies = []
+        for policy in self._policy_service.list_v2_policies(account_id=self._account_id).get_result()["policies"]:
+            role_match = False
+            for role in policy["control"]["grant"]["roles"]:
+                if roles and self._parse_role(role["role_id"]) in roles:
+                    role_match = True
+            if role_match or not roles:
+                policies.append(policy)
+        return policies
 
     def get_policy(self, policy_id: str):
         policy_response = self._policy_service.get_v2_policy(id=policy_id)
@@ -58,18 +96,19 @@ class CosAccessManager:
         policy["Etag"]=policy_response.get_headers().get("Etag")
         return policy
 
-    def list_policies_for_service(self, serviceName: str):
-        """Returns all policies on the provided service type.
+    def list_policies_for_service(self, serviceName: str, roles: list[str] = None):
+        """Returns all policies on the provided service type and optionally roles.
 
         Parameters:
         serviceName (str): Name of a service type, for instance "cloud-object-storage"
+        roles (list[str]): Optional: At least one of these roles in this list must be used by the policy
 
         Returns:
         int:JSON dict with all policies for the provided service type in the account
         """
 
         policies = []
-        for policy in self.list_policies():
+        for policy in self.list_policies(roles=roles):
             attributes = 0  # The service can appear in multiple attributes in the policy
             for policy_attribute in policy["resource"]["attributes"]:
                 if policy_attribute["key"] == "serviceName":
@@ -80,18 +119,19 @@ class CosAccessManager:
                 policies.append(policy)
         return policies
 
-    def list_policies_for_cos_instance(self, cosServiceInstance: str):
-        """Returns all policies on the provided COS instance.
+    def list_policies_for_cos_instance(self, cosServiceInstance: str, roles: list[str] = None):
+        """Returns all policies on the provided COS instance and optionally roles
 
         Parameters:
         cosServiceInstance (str): COS instance ID
+        roles (list[str]): Optional: At least one of these roles in this list must be used by the policy
 
         Returns:
         int:JSON dict with all policies for the provided COS instance
         """
 
         policies = []
-        for policy in self.list_policies_for_service("cloud-object-storage"):
+        for policy in self.list_policies_for_service("cloud-object-storage", roles=roles):
             attributes = 0  # The service instance can appear in multiple attributes in the policy
             for policy_attribute in policy["resource"]["attributes"]:
                 if policy_attribute["key"] == "serviceInstance":
@@ -102,19 +142,20 @@ class CosAccessManager:
                 policies.append(policy)
         return policies
 
-    def list_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None):
-        """Returns all policies on the provided COS bucket and path (optional).
+    def list_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None, roles: list[str] = None):
+        """Returns all policies on the provided COS bucket and path (optional) and roles (optional)
 
         Parameters:
         cosBucket (str): COS bucket name. Optional: when not provided all policies to COS services are returned
         prefix (str): Optional: Prefix path in the bucket
+        roles (list[str]): Optional: At least one of these roles in this list must be used by the policy
 
         Returns:
         int:JSON dict with all policies for the provided COS bucket and prefix
         """
 
         bucket_policies = []
-        all_cos_policies = self.list_policies_for_service("cloud-object-storage")
+        all_cos_policies = self.list_policies_for_service("cloud-object-storage", roles=roles)
         if not cosBucket:
             return all_cos_policies
         # Filter for policies that apply to the provided bucket
@@ -173,19 +214,10 @@ class CosAccessManager:
                              access_group: str = None, iam_id: str = None):
         if bool(access_group) == bool(iam_id):
             raise ValueError("You must provide exactly one of the parameters access_groups or iam_ids.")
+        self._validate_roles(roles)
         control = {"grant": {"roles": []}}
         for role in roles:
-            platform_roles = ["Viewer", "Editor", "Operator", "Administrator"]
-            bucket_roles = ["Manager", "Reader", "Writer"]
-            object_roles = ["ObjectWriter", "ObjectReader", "ContentReader", "NotificationsManager"]
-            if role not in platform_roles and role not in bucket_roles and role not in object_roles:
-                raise ValueError("Supported roles are " + platform_roles + ", " + bucket_roles + " and " + object_roles)
-            if role in platform_roles:
-                control["grant"]["roles"].append({"role_id": "crn:v1:bluemix:public:iam::::role:" + role})
-            elif role in bucket_roles:
-                control["grant"]["roles"].append({"role_id": "crn:v1:bluemix:public:iam::::serviceRole:" + role})
-            else: # Remaining are object roles
-                control["grant"]["roles"].append({"crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" + role})
+            control["grant"]["roles"].append({"role_id": self._expand_role(role)})
         resource = {"attributes": [{"value": cos_instance, "operator": "stringEquals", "key": "serviceInstance"},
                                    {"value": "cloud-object-storage", "operator": "stringEquals", "key": "serviceName"},
                                    {"value": self._account_id, "operator": "stringEquals", "key": "accountId"},
@@ -348,18 +380,19 @@ class CosAccessManager:
         """
         return self._access_groups_service.get_access_group(access_group_id=access_group_id).get_result()["name"]
 
-    def get_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None):
-        """Prints policies for provided COS bucket and path (optional) to stdout in human readable manner.
+    def get_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None, roles: list[str] = None):
+        """Returns policies for provided COS bucket, path (optional) and roles (optional) as dataframe
 
         Parameters:
         cosBucket (str): COS bucket name
         prefix (str): Optional: Prefix path in the bucket
+        roles (list[str]): Optional: Roles for COS access
 
         Returns:
         Pandas dataframe with bucket policies
         """
         data = []
-        for i in self.list_policies_for_cos_bucket(cosBucket, prefix):
+        for i in self.list_policies_for_cos_bucket(cosBucket=cosBucket, prefix=prefix, roles=roles):
             policy = {"instance": "", "bucket": "", "paths": "", "roles": [], "user": "", "service_id": "",
                       "access_group": "", "access_group_id": "", "iam_id": "", "other_subject": ""}
             for j in i["resource"]["attributes"]:
@@ -370,14 +403,7 @@ class CosAccessManager:
             policy["policy_id"] = i["id"]
             roles = []
             for j in i["control"]["grant"]["roles"]:
-                if "crn:v1:bluemix:public:iam::::role:" in j["role_id"]: # Platform role
-                    roles.append(j["role_id"][34:])
-                elif "crn:v1:bluemix:public:iam::::serviceRole:" in j["role_id"]: # Bucket role
-                    roles.append(j["role_id"][41:]) # Service role
-                elif "crn:v1:bluemix:public:cloud-object-storage::::serviceRole:" in j["role_id"]: # Object role
-                    roles.append(j["role_id"][58:])  # Service role
-                else:
-                    roles.append(j["role_id"])  # Whatever
+                roles.append(self._parse_role(j["role_id"]))
             policy["roles"] = roles
             for j in i["subject"]["attributes"]:
                 if j["key"] == "iam_id" and j["value"].startswith("IBMid-"):
