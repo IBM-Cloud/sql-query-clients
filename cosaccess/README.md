@@ -1,5 +1,10 @@
 # cosaccess
 
+## Setup
+```
+pip install coaccess
+```
+
 Manage IBM Cloud COS access privileges on bucket and object level
 
 ## Example usage
