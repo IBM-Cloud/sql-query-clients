@@ -16,7 +16,7 @@ cosaccess.get_policies_for_cos_bucket('<your bucket name>')
 
 ## CosAccessManager method list
  * `CosAccessManager(apikey, account_id=None)` Constructor
- * `get_policies_for_cos_bucket(cosBucket, prefix = None):` Returns a dataframe with all policies defined on the COS bucket. When prefix is provided the results only show polcies that are relevant for access to that prefix path.
+ * `get_policies_for_cos_bucket(cosBucket, prefix = None, roles = None):` Returns a dataframe with all policies defined on the COS bucket. When prefix is provided the results only show polcies that are relevant for access to that prefix path. When a list of roles is provided only policies that assign at least on of these roles are returned.
  * `grant_bucket_access(roles, cos_instance, cos_bucket, prefixes = None, access_group = None, iam_id = None)` Create new access policy for the COS bucket and optionally prefix
  * `update_bucket_access(policy_id, roles, cos_instance, cos_bucket, prefixes = None, access_group = None, iam_id = None)` Overwrites an existing access policy for the COS bucket and optionally prefix
  * `remove_bucket_access(policy_id)` Deletes an existing access policy
@@ -30,10 +30,10 @@ cosaccess.get_policies_for_cos_bucket('<your bucket name>')
  * `get_access_group_id(access_group):` Get the access group ID for an access group name
  * `get_access_group_name(access_group_id)` et the access group name for an access group ID
  * `get_policy(policy_id)` Returns a JSON dict with all policy details for the provided policy ID
- * `list_policies()` Returns an array of JSON dicts with all policies and their details in the account
- * `list_policies_for_service(serviceName)` Returns an array of JSON dicts with all policies and their details specified for the provided service type (e.g., `cloud-object-storage`)
- * `list_policies_for_cos_instance(cosServiceInstance)` Returns an array of JSON dicts with all policies and their details specified COS service instance ID
- * `list_policies_for_cos_bucket(cosBucket, prefix = None):` Returns an array of JSON dicts with all policies defined on the COS bucket. When prefix is provided the results only show polcies that are relevant for access to that prefix path.
+ * `list_policies(roles = None)` Returns an array of JSON dicts with all policies and their details in the account. When a list of roles is provided only policies that assign at least on of these roles are returned.
+ * `list_policies_for_service(serviceName, roles = None)` Returns an array of JSON dicts with all policies and their details specified for the provided service type (e.g., `cloud-object-storage`). When a list of roles is provided only policies that assign at least on of these roles are returned.
+ * `list_policies_for_cos_instance(cosServiceInstance, roles = None)` Returns an array of JSON dicts with all policies and their details specified COS service instance ID. When a list of roles is provided only policies that assign at least on of these roles are returned.
+ * `list_policies_for_cos_bucket(cosBucket, prefix = None, roles = None):` Returns an array of JSON dicts with all policies defined on the COS bucket. When prefix is provided the results only show polcies that are relevant for access to that prefix path. When a list of roles is provided only policies that assign at least on of these roles are returned.
 ## Constructor options
  * `apikey`: IAM API key.
  * `account_id`: The IBM Cloud account holding the COS instance(s) for which you want to manage access. Default is the account of the provided API Key.
