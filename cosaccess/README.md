@@ -14,6 +14,10 @@ cosaccess = CosAccessManager('<your api key here>')
 cosaccess.get_policies_for_cos_bucket('<your bucket name>')
 ```
 
+## Demo
+Here is a little [demo notebook](https://dataplatform.cloud.ibm.com/analytics/notebooks/v2/2471b8af-1ee2-4b57-a81e-5de09199fe49/view?access_token=f5b64c8129c72ec65dc1a898146bb28723205dbb4b31827d19180c3bae7902df&context=cpdaas) that shows a few more usage examples.
+
+
 ## CosAccessManager method list
  * `CosAccessManager(apikey, account_id=None)` Constructor
  * `get_policies_for_cos_bucket(cosBucket, prefix = None, roles = None):` Returns a dataframe with all policies defined on the COS bucket. When prefix is provided the results only show polcies that are relevant for access to that prefix path. When a list of roles is provided only policies that assign at least on of these roles are returned.
