@@ -150,8 +150,22 @@ class CosAccessManager:
     def grant_bucket_access(self, roles: list[str],
                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
                             access_group: str = None, iam_id: str = None):
+        return self._write_bucket_policy(policy_id=None, roles=roles, cos_instance=cos_instance, cos_bucket=cos_bucket,
+                                         prefixes=prefixes, access_group=access_group, iam_id=iam_id)
+
+    def update_bucket_access(self, policy_id: None,
+                             roles: list[str],
+                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
+                             access_group: str = None, iam_id: str = None):
+        return self._write_bucket_policy(policy_id=policy_id, roles=roles, cos_instance=cos_instance, cos_bucket=cos_bucket,
+                                         prefixes=prefixes, access_group=access_group, iam_id=iam_id)
+
+    def _write_bucket_policy(self, policy_id: None,
+                             roles: list[str],
+                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
+                             access_group: str = None, iam_id: str = None):
         if bool(access_group) == bool(iam_id):
-            raise ValueError("You must provide at exactly one of the parameters access_groups or iam_ids.")
+            raise ValueError("You must provide exactly one of the parameters access_groups or iam_ids.")
         control = {"grant": {"roles": []}}
         for role in roles:
             if role not in ["Manager", "Reader", "Writer"]:
@@ -174,12 +188,18 @@ class CosAccessManager:
             rule = {"operator": "or", "conditions": []}
             for idx, prefix in enumerate(prefixes):
                 if prefix[-1] != "*": prefixes[idx] = prefix + "*"
+            if len(prefixes) == 1:
+                prefix_value = prefixes[0]
+                prefixMatchOperator = "stringMatch"
+            else:
+                prefix_value = prefixes
+                prefixMatchOperator = "stringMatchAnyOf"
             rule["conditions"].append({
                 "operator": "and",
                 "conditions": [{
                     "key": "{{resource.attributes.prefix}}",
-                    "operator": "stringMatchAnyOf",
-                    "value": prefixes
+                    "operator": prefixMatchOperator,
+                    "value": prefix_value
                 }, {
                     "key": "{{resource.attributes.delimiter}}",
                     "operator": "stringEqualsAnyOf",
@@ -188,13 +208,21 @@ class CosAccessManager:
             })
             rule["conditions"].append({
                 "key": "{{resource.attributes.path}}",
-                "operator": "stringMatchAnyOf",
-                "value": prefixes
+                "operator": prefixMatchOperator,
+                "value": prefix_value
             })
         else:
             rule = None
-        result = self._policy_service.create_v2_policy(type="access", control=control, subject=subject,
-                                                       resource=resource, rule=rule, pattern=pattern).get_result()
+        if policy_id:
+            etag = self.get_policy(policy_id)["Etag"]
+            result = self._policy_service.replace_v2_policy(id=policy_id, if_match=etag,
+                                                            type="access", control=control,
+                                                            subject=subject, resource=resource, rule=rule,
+                                                            pattern=pattern).get_result()
+        else:
+            result = self._policy_service.create_v2_policy(type="access", control=control,
+                                                           subject=subject, resource=resource, rule=rule,
+                                                           pattern=pattern).get_result()
         return result["id"]
 
     def remove_bucket_access(self, policy_id: str):
