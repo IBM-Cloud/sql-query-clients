@@ -57,7 +57,7 @@ setup(
         "ibm-cos-sdk>=2.10.0",
         "numpy>=1.20.3",
         "pyarrow",
-        "backoff==1.10.0",
+        "backoff==2.2.1",
         "sqlparse>=0.4.2",
         "packaging",
         "pre-commit",
