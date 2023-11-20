@@ -187,8 +187,9 @@ class CosAccessManager:
                             else:
                                 conditions = condition["value"]
                             for condition in conditions:
-                                # For Python regex we need to escape literal dots in the condition string and replace asterisk with dot
-                                condition_expression = re.compile(condition.replace(".", "\\.").replace("*", "."))
+                                # For Python regex we need to escape literal dots in the condition string and
+                                # then replace asterisk with dot + asterisk (zero or more of any character)
+                                condition_expression = re.compile(condition.replace(".", "\\.").replace("*", ".")+"*")
                                 if condition_expression.match(prefix):
                                     policies.append(bucket_policy)
                                     break
