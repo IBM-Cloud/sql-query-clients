@@ -1,6 +1,9 @@
 """Catalog Table."""
 import logging
 import time
+import requests
+from requests.exceptions import HTTPError
+from json import JSONDecodeError
 
 from deprecated import deprecated
 
@@ -575,3 +578,37 @@ class HiveMetastore:
             return self.run_sql(sql_stmt)
         except Exception:
             return None
+
+    def get_table_details(self, table_name):
+        """Get the detailed properties of a table definiton."""
+
+        def get_table_details(table_name):
+            self.logon()
+
+            try:
+                response = requests.get(
+                    "https://{}/v3/tables/{}?instance_crn={}".format(
+                        self.api_hostname, table_name, self.instance_crn
+                    ),
+                    headers=self.request_headers,
+                )
+            except HTTPError as e:
+                if e.response.status_code == 403:
+                    raise ValueError("You are not authorized to retrieve table details for this service instance")
+                elif e.response.status_code == 404:
+                    raise ValueError("Table {} unknown".format(table_name))
+                else:
+                    raise e
+
+            return response.json()
+
+        if len(table_name) == 0:
+            msg = "Invalid table name: {}".format(table_name)
+            raise ValueError(msg)
+
+        try:
+            result = get_table_details(table_name)
+        except JSONDecodeError as e:
+            print("Error retrieving details for table {}".format(table_name))
+            raise e
+        return result

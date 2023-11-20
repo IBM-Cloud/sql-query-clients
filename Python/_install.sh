@@ -1,2 +1,2 @@
-pip install --no-deps --force-reinstall .
+pip install --force-reinstall .
 
