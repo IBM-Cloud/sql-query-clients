@@ -19,11 +19,11 @@ from ibm_platform_services import IamPolicyManagementV1
 from ibm_platform_services import IamIdentityV1
 from ibm_platform_services import UserManagementV1
 from ibm_platform_services import IamAccessGroupsV2
+from ibm_platform_services.iam_access_groups_v2 import AccessGroupMembersPager
 from ibm_platform_services import ApiException
 import os
 import re
 import pandas as pd
-
 
 class CosAccessManager:
 
@@ -68,7 +68,8 @@ class CosAccessManager:
     def _validate_roles(self, roles: list[str]):
         for role in roles:
             if role not in self._platform_roles and role not in self._bucket_roles and role not in self._object_roles:
-                raise ValueError("Supported roles are " + self._platform_roles + ", " + self._bucket_roles + " and " + self._object_roles)
+                raise ValueError("Supported roles are " + str(self._platform_roles) + ", "
+                                 + str(self._bucket_roles) + " and " + str(self._object_roles))
 
     def list_policies(self, roles: list[str] = None):
         """Returns all policies in the account as JSON, optionally filtered by roles of the policies
@@ -197,23 +198,51 @@ class CosAccessManager:
 
     def grant_bucket_access(self, roles: list[str],
                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
-                            access_group: str = None, iam_id: str = None):
+                            access_group_name: str = None, access_group_id: str = None,
+                            user_id: str = None, user_name: str = None,
+                            service_id: str = None, service_id_name=None):
         return self._write_bucket_policy(policy_id=None, roles=roles, cos_instance=cos_instance, cos_bucket=cos_bucket,
-                                         prefixes=prefixes, access_group=access_group, iam_id=iam_id)
-
+                                         prefixes=prefixes,
+                                         access_group_name=access_group_name, access_group_id=access_group_id,
+                                         user_id=user_id, user_name=user_name,
+                                         service_id=service_id, service_id_name=service_id_name)
     def update_bucket_access(self, policy_id: None,
                              roles: list[str],
                              cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
-                             access_group: str = None, iam_id: str = None):
-        return self._write_bucket_policy(policy_id=policy_id, roles=roles, cos_instance=cos_instance, cos_bucket=cos_bucket,
-                                         prefixes=prefixes, access_group=access_group, iam_id=iam_id)
+                             access_group_name: str = None, access_group_id:str = None,
+                             user_id:str = None, user_name:str = None,
+                             service_id:str = None, service_id_name = None):
+        return self._write_bucket_policy(policy_id=policy_id, roles=roles, cos_instance=cos_instance,
+                                         cos_bucket=cos_bucket, prefixes=prefixes,
+                                         access_group_name=access_group_name, access_group_id=access_group_id,
+                                         user_id=user_id, user_name=user_name,
+                                         service_id=service_id, service_id_name=service_id_name)
 
     def _write_bucket_policy(self, policy_id: None,
                              roles: list[str],
                              cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
-                             access_group: str = None, iam_id: str = None):
-        if bool(access_group) == bool(iam_id):
-            raise ValueError("You must provide exactly one of the parameters access_groups or iam_ids.")
+                             access_group_name: str = None, access_group_id:str = None,
+                             user_id:str = None, user_name:str = None,
+                             service_id:str = None, service_id_name = None):
+        if [bool(user_name), bool(user_id),
+            bool(service_id_name), bool(service_id),
+            bool(access_group_name), bool(access_group_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters user_name, user_id, service_id_name \
+                              service_id, access_group_name or access_group_id.")
+        access_group = None
+        iam_id = None
+        if access_group_id:
+            access_group = access_group_id
+        elif access_group_name:
+            access_group = self.get_access_group_id(access_group_name)
+        elif user_id:
+            iam_id = user_id
+        elif user_name:
+            iam_id = self.get_user_iam_id(user_name)
+        elif service_id:
+            iam_id = service_id
+        else:
+            iam_id = self.get_service_id_iam_id(service_id_name)
         self._validate_roles(roles)
         control = {"grant": {"roles": []}}
         for role in roles:
@@ -379,6 +408,87 @@ class CosAccessManager:
         str:Clear text display name for Access Group
         """
         return self._access_groups_service.get_access_group(access_group_id=access_group_id).get_result()["name"]
+
+    def create_access_group(self, access_group_name):
+        response = self._access_groups_service.create_access_group(account_id=self._account_id, name=access_group_name)
+        return response.get_result()["id"]
+
+    def delete_access_group(self, access_group_name:str = None, access_group_id:str = None, force:bool = False):
+        if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters access_group_name or access_group_id.")
+        if access_group_id:
+            id = access_group_id
+        else:
+            id = self.get_access_group_id(access_group_name)
+        self._access_groups_service.delete_access_group(account_id=self._account_id, access_group_id=id, force=force)
+
+    def get_access_group_members(self, access_group_name:str = None, access_group_id:str = None):
+        if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters access_group_name or access_group_id.")
+        if access_group_id:
+            id = access_group_id
+        else:
+            id = self.get_access_group_id(access_group_name)
+        members = []
+        pager = AccessGroupMembersPager(
+            client=self._access_groups_service,
+            access_group_id=id,
+        )
+        while pager.has_next():
+            next_page = pager.get_next()
+            assert next_page is not None
+            members.extend(next_page)
+        for member in members:
+            if member["type"] == "service":
+                member["service_id_name"] = self.get_service_id_name(member["iam_id"])
+                member["user_name"] = ""
+            else:
+                member["user_name"] = self.get_user_name(member["iam_id"])
+                member["service_id_name"] = ""
+        return pd.DataFrame(members)
+
+    def _parse_member_parms(self, access_group_name:str = None, access_group_id:str = None,
+                            user_name:str = None, user_id:str = None,
+                            service_id_name:str = None, service_id:str = None):
+        if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters access_group_name or access_group_id.")
+        if [bool(user_name), bool(user_id),
+            bool(service_id_name), bool(service_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters user_name, user_id, service_id_name or service_id.")
+        if access_group_id:
+            id = access_group_id
+        else:
+            id = self.get_access_group_id(access_group_name)
+        if user_id:
+            iam_id = user_id
+            type = 'user'
+        elif user_name:
+            iam_id = self.get_user_iam_id(user_name)
+            type = 'user'
+        elif service_id:
+            iam_id = service_id
+            type = 'service'
+        else:
+            iam_id = self.get_service_id_iam_id(service_id_name)
+            type = 'service'
+        return {"id": id, "iam_id": iam_id, "type": type}
+
+    def add_member_to_access_group(self, access_group_name:str = None, access_group_id:str = None,
+                                         user_name:str = None, user_id:str = None,
+                                         service_id_name:str = None, service_id:str = None):
+        parms = self._parse_member_parms(access_group_name=access_group_name, access_group_id=access_group_id,
+                                         user_name=user_name, user_id=user_id,
+                                         service_id_name=service_id_name, service_id=service_id)
+        member = IamAccessGroupsV2.AddGroupMembersRequestMembersItem(iam_id=parms["iam_id"], type=parms["type"])
+        self._access_groups_service.add_members_to_access_group(access_group_id=parms["id"], members=[member])
+
+    def delete_member_from_access_group(self, access_group_name:str = None, access_group_id:str = None,
+                                        user_name:str = None, user_id:str = None,
+                                        service_id_name:str = None, service_id:str = None):
+        parms = self._parse_member_parms(access_group_name=access_group_name, access_group_id=access_group_id,
+                                         user_name=user_name, user_id=user_id,
+                                         service_id_name=service_id_name, service_id=service_id)
+        self._access_groups_service.remove_member_from_access_group(access_group_id=parms["id"], iam_id=parms["iam_id"])
 
     def get_policies_for_cos_bucket(self, cosBucket: str = None, prefix: str = None, roles: list[str] = None):
         """Returns policies for provided COS bucket, path (optional) and roles (optional) as dataframe
