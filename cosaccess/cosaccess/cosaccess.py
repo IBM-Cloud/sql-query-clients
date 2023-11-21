@@ -20,6 +20,7 @@ from ibm_platform_services import IamIdentityV1
 from ibm_platform_services import UserManagementV1
 from ibm_platform_services import IamAccessGroupsV2
 from ibm_platform_services.iam_access_groups_v2 import AccessGroupMembersPager
+from ibm_platform_services.iam_identity_v1 import ApiKeyInsideCreateServiceIdRequest
 from ibm_platform_services import ApiException
 import os
 import re
@@ -374,6 +375,35 @@ class CosAccessManager:
         str:Clear text display name for Service ID
         """
         return self._identity_service.get_service_id(id=iam_id[4:]).get_result()["name"]
+
+    def create_service_id(self, service_id_name, with_apikey = False):
+        apikeyrequest = None
+        if with_apikey:
+            apikeyrequest = ApiKeyInsideCreateServiceIdRequest(name=service_id_name+"_apikey", store_value=True)
+        return self._identity_service.create_service_id(account_id=self._account_id,
+                                                        name=service_id_name,
+                                                        apikey=apikeyrequest).get_result()
+
+    def delete_service_id(self, service_id_name:str = None, service_id:str = None):
+        if [bool(service_id_name), bool(service_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters service_id_name or service_id.")
+        if service_id:
+            id = service_id
+        else:
+            id = self.get_service_id_iam_id(service_id_name)[4:]
+        self._identity_service.delete_service_id(id)
+
+    def get_service_id_details(self, service_id:str = None, service_id_name:str = None):
+        if [bool(service_id_name), bool(service_id)].count(True) != 1:
+            raise ValueError("You must provide exactly one of the parameters service_id_name or service_id.")
+        if service_id:
+            id = service_id
+        else:
+            id = self.get_service_id_iam_id(service_id_name)[4:]
+        response = self._identity_service.get_service_id(id)
+        service_id_details = response.get_result()
+        service_id_details["Etag"]=response.get_headers().get("Etag")
+        return service_id_details
 
     def get_access_groups(self):
         """Returns the access groups in the account
