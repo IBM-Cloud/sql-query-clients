@@ -22,7 +22,7 @@ from ibm_platform_services import IamAccessGroupsV2
 from ibm_platform_services.iam_access_groups_v2 import AccessGroupMembersPager
 from ibm_platform_services.iam_identity_v1 import ApiKeyInsideCreateServiceIdRequest
 from ibm_platform_services import ApiException
-import os
+from ibm_cos_sdk_config.resource_configuration_v1 import ResourceConfigurationV1
 import re
 import pandas as pd
 
@@ -42,6 +42,8 @@ class CosAccessManager:
             authenticator=self._authenticator)  # To resolve clear text user names
         self._access_groups_service = IamAccessGroupsV2(
             authenticator=self._authenticator)  # To resolve clear access group names
+        self._cos_resource_config_service = ResourceConfigurationV1(
+            authenticator=self._authenticator)  # To retrieve COS instance IDs for provided COS bucket names
         pd.set_option('display.max_colwidth', None)
         self._platform_roles = ["Viewer", "Editor", "Operator", "Administrator"]
         self._bucket_roles = ["Manager", "Reader", "Writer"]
@@ -199,22 +201,22 @@ class CosAccessManager:
         return policies
 
     def grant_bucket_access(self, roles: list[str],
-                            cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
+                            cos_bucket: str, prefixes: list[str] = None,
                             access_group_name: str = None, access_group_id: str = None,
                             user_id: str = None, user_name: str = None,
                             service_id: str = None, service_id_name=None):
-        return self._write_bucket_policy(policy_id=None, roles=roles, cos_instance=cos_instance, cos_bucket=cos_bucket,
+        return self._write_bucket_policy(policy_id=None, roles=roles, cos_bucket=cos_bucket,
                                          prefixes=prefixes,
                                          access_group_name=access_group_name, access_group_id=access_group_id,
                                          user_id=user_id, user_name=user_name,
                                          service_id=service_id, service_id_name=service_id_name)
     def update_bucket_access(self, policy_id: None,
                              roles: list[str],
-                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
+                             cos_bucket: str, prefixes: list[str] = None,
                              access_group_name: str = None, access_group_id:str = None,
                              user_id:str = None, user_name:str = None,
                              service_id:str = None, service_id_name = None):
-        return self._write_bucket_policy(policy_id=policy_id, roles=roles, cos_instance=cos_instance,
+        return self._write_bucket_policy(policy_id=policy_id, roles=roles,
                                          cos_bucket=cos_bucket, prefixes=prefixes,
                                          access_group_name=access_group_name, access_group_id=access_group_id,
                                          user_id=user_id, user_name=user_name,
@@ -222,7 +224,7 @@ class CosAccessManager:
 
     def _write_bucket_policy(self, policy_id: None,
                              roles: list[str],
-                             cos_instance: str, cos_bucket: str, prefixes: list[str] = None,
+                             cos_bucket: str, prefixes: list[str] = None,
                              access_group_name: str = None, access_group_id:str = None,
                              user_id:str = None, user_name:str = None,
                              service_id:str = None, service_id_name = None):
@@ -231,6 +233,7 @@ class CosAccessManager:
             bool(access_group_name), bool(access_group_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters user_name, user_id, service_id_name \
                               service_id, access_group_name or access_group_id.")
+        cos_instance = self.get_cos_instance_id(cos_bucket)
         access_group = None
         iam_id = None
         if access_group_id:
@@ -568,3 +571,6 @@ class CosAccessManager:
                             policy["paths"] = condition["value"]
             data.append(policy)
         return pd.DataFrame(data)
+
+    def get_cos_instance_id(self, cosBucket:str):
+        return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_id"]
