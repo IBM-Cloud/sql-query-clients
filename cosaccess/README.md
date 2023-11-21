@@ -42,18 +42,18 @@ Here is a little [demo notebook](https://dataplatform.cloud.ibm.com/analytics/no
  * `get_service_ids()` Returns a dataframe with all Service IDs and their details in the account
  * `get_service_id_iam_id(service_id):` Get the IAM ID of a Service ID specified by Service ID name
  * `get_service_id_name(iam_id)` Get Service ID name for a given IAM ID
- * `get_service_id_details(service_id_name, service_id)` Return the details of a service ID identified by either name of ID.
+ * `get_service_id_details(service_id_name, service_id)` Return the details of a service ID identified by either name or ID.
  * `create_service_id(service_id_name, with_apikey)` Create a new service ID. When optional parameter with_apikey is set to True there will also be an API krey created and assoctiated with the new service ID
- * `delete_service_id(service_id_name, service_id)` Delete a service ID identified by either name of ID.
+ * `delete_service_id(service_id_name, service_id)` Delete a service ID identified by either name or ID.
 ### Working with Access Groups
  * `get_access_groups()` Returns a dataframe with all acces groups and their details in the account
  * `get_access_group_id(access_group)` Get the access group ID for an access group name
  * `get_access_group_name(access_group_id)` Get the access group name for an access group ID
- * `get_access_group_members(access_group_name, access_group_id)` Return a list of all members of an access group identified by either name of ID
- * `add_member_to_access_group(access_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Add a new member (either a user or a Service ID) to an access group identified by either name of ID
- * `delete_member_from_access_groupaccess_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Remove a member (either a user or a Service ID) from an access group identified by either name of ID
+ * `get_access_group_members(access_group_name, access_group_id)` Return a dataframe with all members of an access group identified by either name or ID
+ * `add_member_to_access_group(access_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Add a new member (either a user or a Service ID) to an access group identified by either name or ID
+ * `delete_member_from_access_groupaccess_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Remove a member (either a user or a Service ID) from an access group identified by either name or ID
  * `create_access_group(access_group_name)` Create a new access group
- * `delete_access_group(access_group_name, access_group_id, force)` Delete an access group identified by either name of ID. Set force to True to delete the group also when it still has members.
+ * `delete_access_group(access_group_name, access_group_id, force)` Delete an access group identified by either name or ID. Set force to True to delete the group also when it still has members.
 
 ## Building and testing the library locally
 ### Set up Python environment
