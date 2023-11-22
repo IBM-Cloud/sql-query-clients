@@ -23,6 +23,9 @@ from ibm_platform_services.iam_access_groups_v2 import AccessGroupMembersPager
 from ibm_platform_services.iam_identity_v1 import ApiKeyInsideCreateServiceIdRequest
 from ibm_platform_services import ApiException
 from ibm_cos_sdk_config.resource_configuration_v1 import ResourceConfigurationV1
+import ibm_boto3
+from ibm_botocore.client import Config
+import requests
 import re
 import pandas as pd
 
@@ -577,3 +580,31 @@ class CosAccessManager:
 
     def get_cos_instance_crn(self, cosBucket:str):
         return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_crn"]
+
+    def list_cos_endpoints(self):
+        response = requests.get("https://control.cloud-object-storage.cloud.ibm.com/v2/endpoints").json()
+        return response["service-endpoints"]
+
+    def touch_cos_object(self, cos_endpoint, cos_bucket, object_path):
+        cosresource = ibm_boto3.resource("s3", ibm_api_key_id=self._apikey,
+                                         ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
+                                         config=Config(signature_version="oauth"),
+                                         endpoint_url=cos_endpoint)
+        cosresource.Object(cos_bucket, object_path).put(Body="")
+
+    def delete_cos_object(self, cos_endpoint, cos_bucket, object_path):
+        cosclient = ibm_boto3.client("s3", ibm_api_key_id=self._apikey,
+                                     ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
+                                     config=Config(signature_version="oauth"),
+                                     endpoint_url=cos_endpoint)
+        cosclient.delete_object(Bucket=cos_bucket, Key=object_path)
+
+    def get_cos_objects(self, cos_endpoint, cos_bucket):
+        objects = []
+        cosresource = ibm_boto3.resource("s3", ibm_api_key_id=self._apikey,
+                                         ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
+                                         config=Config(signature_version="oauth"),
+                                         endpoint_url=cos_endpoint)
+        for file in cosresource.Bucket(cos_bucket).objects.all():
+            objects.append({"name": file.key, "last_modified": file.last_modified, "owner": file.owner, "size": file.size})
+        return pd.DataFrame(objects)
