@@ -25,6 +25,7 @@ from ibm_platform_services import ApiException
 from ibm_cos_sdk_config.resource_configuration_v1 import ResourceConfigurationV1
 import ibm_boto3
 from ibm_botocore.client import Config
+from xml.etree import ElementTree
 import requests
 import re
 import pandas as pd
@@ -585,21 +586,53 @@ class CosAccessManager:
         response = requests.get("https://control.cloud-object-storage.cloud.ibm.com/v2/endpoints").json()
         return response["service-endpoints"]
 
-    def touch_cos_object(self, cos_endpoint, cos_bucket, object_path):
+    def get_cos_endpoint(self, cos_bucket):
+        response = requests.post(
+            "https://iam.cloud.ibm.com/identity/token",
+            headers = {"Content-Type": "application/x-www-form-urlencoded"},
+            data="grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={}".format(self._apikey)
+        )
+        token = response.json()["access_token"]
+        response = requests.get(
+            "https://s3.us.cloud-object-storage.appdomain.cloud/?extended",
+            headers={"Content-Type": "text/plain",
+                     "authorization": "Bearer {}".format(token),
+                     "ibm-service-instance-id": self.get_cos_instance_id(cos_bucket)}
+        )
+        xml_response = ElementTree.fromstring(response.content)
+        cos_region = None
+        for bucket in xml_response[5]:
+            if bucket[0].text == cos_bucket:
+                locationConstraint = bucket[2].text
+                cos_region = locationConstraint[:locationConstraint.rfind("-")]
+        if not cos_region:
+            raise ValueError("Bucket {} could not be found.".format(cos_bucket))
+        cos_endpoints = self.list_cos_endpoints()
+        for i in cos_endpoints.keys():
+            for j in cos_endpoints[i]:
+                for k in cos_endpoints[i][j]["public"]:
+                    if k == cos_region:
+                        return "https://" + cos_endpoints[i][j]["public"][k]
+        raise ValueError("Endpoint for region {} could not be found.".format(cos_region))
+
+    def touch_cos_object(self, cos_bucket, object_path):
+        cos_endpoint = self.get_cos_endpoint(cos_bucket)
         cosresource = ibm_boto3.resource("s3", ibm_api_key_id=self._apikey,
                                          ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
                                          config=Config(signature_version="oauth"),
                                          endpoint_url=cos_endpoint)
         cosresource.Object(cos_bucket, object_path).put(Body="")
 
-    def delete_cos_object(self, cos_endpoint, cos_bucket, object_path):
+    def delete_cos_object(self, cos_bucket, object_path):
+        cos_endpoint = self.get_cos_endpoint(cos_bucket)
         cosclient = ibm_boto3.client("s3", ibm_api_key_id=self._apikey,
                                      ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
                                      config=Config(signature_version="oauth"),
                                      endpoint_url=cos_endpoint)
         cosclient.delete_object(Bucket=cos_bucket, Key=object_path)
 
-    def get_cos_objects(self, cos_endpoint, cos_bucket):
+    def get_cos_objects(self, cos_bucket):
+        cos_endpoint = self.get_cos_endpoint(cos_bucket)
         objects = []
         cosresource = ibm_boto3.resource("s3", ibm_api_key_id=self._apikey,
                                          ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
