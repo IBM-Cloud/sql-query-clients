@@ -14,6 +14,6 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 
-__version__ = "0.1.9"
+__version__ = "0.1.10"
 # flake8: noqa F401
 from .cosaccess import CosAccessManager

@@ -454,7 +454,7 @@ class CosAccessManager:
             id = access_group_id
         else:
             id = self.get_access_group_id(access_group_name)
-        self._access_groups_service.delete_access_group(account_id=self._account_id, access_group_id=id, force=force)
+        self._access_groups_service.delete_access_group(access_group_id=id, force=force)
 
     def get_access_group_members(self, access_group_name:str = None, access_group_id:str = None):
         if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
