@@ -574,3 +574,6 @@ class CosAccessManager:
 
     def get_cos_instance_id(self, cosBucket:str):
         return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_id"]
+
+    def get_cos_instance_crn(self, cosBucket:str):
+        return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_crn"]
