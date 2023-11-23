@@ -20,6 +20,7 @@ from ibm_platform_services import IamIdentityV1
 from ibm_platform_services import UserManagementV1
 from ibm_platform_services import IamAccessGroupsV2
 from ibm_platform_services.iam_access_groups_v2 import AccessGroupMembersPager
+from ibm_platform_services.iam_access_groups_v2 import AddGroupMembersRequestMembersItem
 from ibm_platform_services.iam_identity_v1 import ApiKeyInsideCreateServiceIdRequest
 from ibm_platform_services import ApiException
 from ibm_cos_sdk_config.resource_configuration_v1 import ResourceConfigurationV1
@@ -517,7 +518,7 @@ class CosAccessManager:
         parms = self._parse_member_parms(access_group_name=access_group_name, access_group_id=access_group_id,
                                          user_name=user_name, user_id=user_id,
                                          service_id_name=service_id_name, service_id=service_id)
-        member = IamAccessGroupsV2.AddGroupMembersRequestMembersItem(iam_id=parms["iam_id"], type=parms["type"])
+        member = AddGroupMembersRequestMembersItem(iam_id=parms["iam_id"], type=parms["type"])
         self._access_groups_service.add_members_to_access_group(access_group_id=parms["id"], members=[member])
 
     def delete_member_from_access_group(self, access_group_name:str = None, access_group_id:str = None,
