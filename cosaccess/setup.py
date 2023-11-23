@@ -55,6 +55,7 @@ setup(
         "ibm_cloud_sdk_core",
         "ibm_platform_services",
         "ibm-cos-sdk-config",
+        "ibm-cos-sdk"
         "requests",
     ],
     description="Python client for managing IAM policies fine grained access control in IBM Cloud Object Storage",  # noqa
