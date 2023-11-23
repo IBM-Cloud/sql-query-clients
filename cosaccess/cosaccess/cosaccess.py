@@ -631,13 +631,17 @@ class CosAccessManager:
                                      endpoint_url=cos_endpoint)
         cosclient.delete_object(Bucket=cos_bucket, Key=object_path)
 
-    def get_cos_objects(self, cos_bucket):
+    def get_cos_objects(self, cos_bucket, prefix = None):
         cos_endpoint = self.get_cos_endpoint(cos_bucket)
         objects = []
         cosresource = ibm_boto3.resource("s3", ibm_api_key_id=self._apikey,
                                          ibm_service_instance_id=self.get_cos_instance_crn(cos_bucket),
                                          config=Config(signature_version="oauth"),
                                          endpoint_url=cos_endpoint)
-        for file in cosresource.Bucket(cos_bucket).objects.all():
+        if prefix:
+            files = cosresource.Bucket(cos_bucket).objects.filter(Prefix=prefix)
+        else:
+            files = cosresource.Bucket(cos_bucket).objects.all()
+        for file in files:
             objects.append({"name": file.key, "last_modified": file.last_modified, "owner": file.owner, "size": file.size})
         return pd.DataFrame(objects)
