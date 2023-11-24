@@ -58,6 +58,12 @@ jupyter notebook
  * `remove_bucket_access(policy_id)` Deletes an existing access policy
 ### COS Helper Methods
  * `get_cos_instance_id(bucket)` Returns the instance ID of the COS instance holding the provided COS bucket
+ * `get_cos_instance_crn(bucket)` Returns the instance CRN of the COS instance holding the provided COS bucket
+ * `list_cos_endpoints()` Returns a JSON dict with all endpoints for COS supported by IBM Cloud
+ * `get_cos_endpoint(cos_bucket)` Returns the endpoint for a bucket
+ * `touch_cos_object(cos_bucket, object_path)` Creates an empty object in the specified bucket and with the specified path. Similar to `touch` shell command
+ * `delete_cos_object(cos_bucket, object_path)` Delete the object with the specified path from the specified bucket
+ * `get_cos_objects(cos_bucket, prefix)` Returns a dataframe with all objects in the specified bucket and prefix
 ### Working with Users
  * `get_users()` Returns a dataframe with all users and their details in the account
  * `get_user_iam_id(user_id):` Get the IAM ID of a user specified by name (IBM ID email address)
@@ -78,6 +84,9 @@ jupyter notebook
  * `delete_member_from_access_groupaccess_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Remove a member (either a user or a Service ID) from an access group identified by either name or ID
  * `create_access_group(access_group_name)` Create a new access group
  * `delete_access_group(access_group_name, access_group_id, force)` Delete an access group identified by either name or ID. Set force to True to delete the group also when it still has members.
+ * `get_access_group_members(access_group_name, access_group_id)`  Show all members of the access group identified by either name or ID.
+ * `add_member_to_access_group(access_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Add new member (user or service ID, specified by ither ID or name) to the access group identified by either name or ID.
+ * `delete_member_from_access_group(access_group_name, access_group_id, user_name, user_id, service_id_name, service_id)` Remove new member (user or service ID, specified by ither ID or name) from the access group identified by either name or ID.
 
 ## Building and testing the library locally
 ### Set up Python environment
