@@ -15,8 +15,32 @@ cosaccess.get_policies_for_cos_bucket('<your bucket name>')
 ```
 
 ## Demo
-Here is a little [demo notebook](https://dataplatform.cloud.ibm.com/analytics/notebooks/v2/2471b8af-1ee2-4b57-a81e-5de09199fe49/view?access_token=f5b64c8129c72ec65dc1a898146bb28723205dbb4b31827d19180c3bae7902df&context=cpdaas) that shows a few more usage examples.
+Yo can fine a fully reprocible end-to-end demo in the [COS FGAC Demo.ipynb](COS%20FGAC%20Demo.ipynb) notebook here in this repository. An extended variant of the same demo can be found in the [Data Engine FGAC Demo.ipynb](Data%20Engine%20FGAC%20Demo.ipynb) notebook also here in the repository.
 
+You can run these notebooks yourself using Jupyter as follows:
+
+```bash
+# Clone the Repository
+git clone https://github.com/IBM-Cloud/sql-query-clients.git
+
+# Change directory
+cd sql-query-clients/cosaccess
+
+# Set up your virtual environment
+source ./setup_env.sh
+
+# Optionally you can set the following environment variables to avoid entering them in the notebook interactively:
+export FGACDEMO_APIKEY=<your IBM Cloud API key>
+export FGACDEMO_BUCKET=<your COS bucket to use in the demo>
+export FGACDEMO_DATAENGINE_INSTANCE=<the instance CRN of your Data Engine standard plan instance>
+
+# Install Jupyter
+pip install jupyter
+
+# Run Jupyter
+jupyter notebook
+
+```
 
 ## CosAccessManager method list
 ### Initialization
