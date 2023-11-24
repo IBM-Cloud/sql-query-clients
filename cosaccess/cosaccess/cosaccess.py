@@ -59,7 +59,7 @@ class CosAccessManager:
     def _ensure_token(self):
         # Refresh after 10 minutes
         if (datetime.datetime.now() - self._last_token_refresh).total_seconds() / 60 >= 10:
-            self_.init(apikey=self._apikey, account_id=self._account_id)
+            self.__init__(apikey=self._apikey, account_id=self._account_id)
             self._last_token_refresh = datetime.datetime.now()
 
     def _parse_role(self, role_crn: str):
