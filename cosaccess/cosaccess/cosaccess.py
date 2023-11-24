@@ -29,6 +29,7 @@ from ibm_botocore.client import Config
 from xml.etree import ElementTree
 import requests
 import re
+import datetime
 import pandas as pd
 
 class CosAccessManager:
@@ -53,7 +54,13 @@ class CosAccessManager:
         self._platform_roles = ["Viewer", "Editor", "Operator", "Administrator"]
         self._bucket_roles = ["Manager", "Reader", "Writer"]
         self._object_roles = ["ObjectWriter", "ObjectReader", "ContentReader", "NotificationsManager"]
+        self._last_token_refresh = datetime.datetime.now()
 
+    def _ensure_token(self):
+        # Refresh after 10 minutes
+        if (datetime.datetime.now() - self._last_token_refresh).total_seconds() / 60 >= 10:
+            self_.init(apikey=self._apikey, account_id=self._account_id)
+            self._last_token_refresh = datetime.datetime.now()
 
     def _parse_role(self, role_crn: str):
         if "crn:v1:bluemix:public:iam::::role:" in role_crn:  # Platform role
@@ -89,6 +96,7 @@ class CosAccessManager:
         int:JSON dict with all policies of the account
         """
 
+        self._ensure_token()
         policies = []
         for policy in self._policy_service.list_v2_policies(account_id=self._account_id).get_result()["policies"]:
             role_match = False
@@ -100,6 +108,7 @@ class CosAccessManager:
         return policies
 
     def get_policy(self, policy_id: str):
+        self._ensure_token()
         policy_response = self._policy_service.get_v2_policy(id=policy_id)
         policy = policy_response.get_result()
         policy["Etag"]=policy_response.get_headers().get("Etag")
@@ -238,6 +247,7 @@ class CosAccessManager:
             bool(access_group_name), bool(access_group_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters user_name, user_id, service_id_name \
                               service_id, access_group_name or access_group_id.")
+        self._ensure_token()
         cos_instance = self.get_cos_instance_id(cos_bucket)
         access_group = None
         iam_id = None
@@ -312,6 +322,7 @@ class CosAccessManager:
         return result["id"]
 
     def remove_bucket_access(self, policy_id: str):
+        self._ensure_token()
         self._policy_service.delete_v2_policy(policy_id)
 
     def get_users(self):
@@ -320,6 +331,7 @@ class CosAccessManager:
         Returns:
         Pandas dataframe with all user profiles in the account
         """
+        self._ensure_token()
         page = self._user_management_service.list_users(self._account_id, limit=100).get_result()
         users = pd.DataFrame(page["resources"])
         while "next_url" in page:
@@ -331,6 +343,11 @@ class CosAccessManager:
         return users
 
     def get_user_iam_id(self, user_id: str):
+        """Returns the IAM ID for the user with the provided user name
+
+        Returns:
+        IAM ID
+        """
         for idx, user in self.get_users().iterrows():
             if user["user_id"] == user_id:
                 return user["iam_id"]
@@ -346,6 +363,7 @@ class CosAccessManager:
         Returns:
         str:Clear text user name in format <Given Name> <Last Name> <email>
         """
+        self._ensure_token()
         user_profile = self._user_management_service.get_user_profile(account_id=self._account_id,
                                                                       iam_id=iam_id).get_result()
         return user_profile["firstname"] + " " + user_profile["lastname"] + " " + user_profile["user_id"]
@@ -356,6 +374,7 @@ class CosAccessManager:
         Returns:
         Pandas dataframe with all Servie IDs in the account
         """
+        self._ensure_token()
         page = self._identity_service.list_service_ids(account_id=self._account_id, pagesize=100).get_result()
         service_ids = page["serviceids"]
         while "next" in page:
@@ -367,6 +386,11 @@ class CosAccessManager:
         return pd.DataFrame(service_ids)
 
     def get_service_id_iam_id(self, service_id: str):
+        """Returns the IAM ID for the Service ID with the provided name
+
+        Returns:
+        IAM ID
+        """
         for idx, service_id_profile in self.get_service_ids().iterrows():
             if str(service_id_profile["name"]) == service_id:
                 return service_id_profile["iam_id"]
@@ -382,9 +406,20 @@ class CosAccessManager:
         Returns:
         str:Clear text display name for Service ID
         """
+        self._ensure_token()
         return self._identity_service.get_service_id(id=iam_id[4:]).get_result()["name"]
 
     def create_service_id(self, service_id_name, with_apikey = False):
+        """Creates a new service ID
+
+        Parameters:
+        service_id_name (str): Name of the new service ID
+        with_apikey: When set to True a new API key is created and associated with the service ID
+
+        Returns:
+        dict with details of the new Service ID including the API key value when requested
+        """
+        self._ensure_token()
         apikeyrequest = None
         if with_apikey:
             apikeyrequest = ApiKeyInsideCreateServiceIdRequest(name=service_id_name+"_apikey", store_value=True)
@@ -393,6 +428,13 @@ class CosAccessManager:
                                                         apikey=apikeyrequest).get_result()
 
     def delete_service_id(self, service_id_name:str = None, service_id:str = None):
+        """Deletes a service ID with either the provided name or ID. You must specify one of the two parameters.
+
+        Parameters:
+        service_id_name (str): Name of the service ID
+        service_id (str): ID of the service ID
+        """
+        self._ensure_token()
         if [bool(service_id_name), bool(service_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters service_id_name or service_id.")
         if service_id:
@@ -402,6 +444,16 @@ class CosAccessManager:
         self._identity_service.delete_service_id(id)
 
     def get_service_id_details(self, service_id:str = None, service_id_name:str = None):
+        """Returns the details of the service ID with provided name or ID. You must specify one of the two parameters.
+
+        Parameters:
+        service_id_name (str): Name of the service ID
+        service_id (str): ID of the service ID
+
+        Returns:
+        dict with details of the new Service ID including the API key value when requested
+        """
+        self._ensure_token()
         if [bool(service_id_name), bool(service_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters service_id_name or service_id.")
         if service_id:
@@ -419,6 +471,7 @@ class CosAccessManager:
         Returns:
         Pandas dataframe with all access groups in the account
         """
+        self._ensure_token()
         page = self._access_groups_service.list_access_groups(account_id=self._account_id, limit=100).get_result()
         access_groups = pd.DataFrame(page["groups"])
         total_count = page["total_count"] - 1
@@ -446,15 +499,18 @@ class CosAccessManager:
         Returns:
         str:Clear text display name for Access Group
         """
+        self._ensure_token()
         return self._access_groups_service.get_access_group(access_group_id=access_group_id).get_result()["name"]
 
     def create_access_group(self, access_group_name):
+        self._ensure_token()
         response = self._access_groups_service.create_access_group(account_id=self._account_id, name=access_group_name)
         return response.get_result()["id"]
 
     def delete_access_group(self, access_group_name:str = None, access_group_id:str = None, force:bool = False):
         if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters access_group_name or access_group_id.")
+        self._ensure_token()
         if access_group_id:
             id = access_group_id
         else:
@@ -464,6 +520,7 @@ class CosAccessManager:
     def get_access_group_members(self, access_group_name:str = None, access_group_id:str = None):
         if [bool(access_group_name), bool(access_group_id)].count(True) != 1:
             raise ValueError("You must provide exactly one of the parameters access_group_name or access_group_id.")
+        self._ensure_token()
         if access_group_id:
             id = access_group_id
         else:
@@ -515,6 +572,7 @@ class CosAccessManager:
     def add_member_to_access_group(self, access_group_name:str = None, access_group_id:str = None,
                                          user_name:str = None, user_id:str = None,
                                          service_id_name:str = None, service_id:str = None):
+        self._ensure_token()
         parms = self._parse_member_parms(access_group_name=access_group_name, access_group_id=access_group_id,
                                          user_name=user_name, user_id=user_id,
                                          service_id_name=service_id_name, service_id=service_id)
@@ -524,6 +582,7 @@ class CosAccessManager:
     def delete_member_from_access_group(self, access_group_name:str = None, access_group_id:str = None,
                                         user_name:str = None, user_id:str = None,
                                         service_id_name:str = None, service_id:str = None):
+        self._ensure_token()
         parms = self._parse_member_parms(access_group_name=access_group_name, access_group_id=access_group_id,
                                          user_name=user_name, user_id=user_id,
                                          service_id_name=service_id_name, service_id=service_id)
@@ -578,9 +637,11 @@ class CosAccessManager:
         return pd.DataFrame(data)
 
     def get_cos_instance_id(self, cosBucket:str):
+        self._ensure_token()
         return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_id"]
 
     def get_cos_instance_crn(self, cosBucket:str):
+        self._ensure_token()
         return self._cos_resource_config_service.get_bucket_config(cosBucket).get_result()["service_instance_crn"]
 
     def list_cos_endpoints(self):
