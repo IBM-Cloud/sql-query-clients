@@ -1,4 +1,19 @@
 # cosaccess
+The purpose of the `cosaccess` package to provide an easy to use interface to data engineers and data lake adinstrators to set up and manage table level access control for IBM COS based data lakes. It also minimized the required information that you need to have at hand. Basically you just bring your API Key and the COS bucket name for your data lake and you can go from there. The following diagram illustrates the multitudes of SDKs and endpoints that you would normally be required to understand and consume.
+<br>
+
+
+
+![](cosaccess.png?raw=true)
+
+Following list of SDKs and APIs are being consumed and abstracted by `cosaccess`:
+ * [IAM Identity API](https://cloud.ibm.com/apidocs/iam-identity-token-api?code=python#list-service-ids)
+ * [IAM Token Service API](https://cloud.ibm.com/docs/account?topic=account-iamtoken_from_apikey)
+ * [IAM Policy API](https://cloud.ibm.com/apidocs/iam-policy-management?code=python#list-policies)
+ * [IAM Users API](https://cloud.ibm.com/apidocs/user-management?code=python#list-users)
+ * [IAM Access Group API](https://cloud.ibm.com/apidocs/iam-access-groups?code=python#introduction)
+ * [COS API (ibm_boto3)](https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-python)
+ * [COS Resource Configuration API](https://cloud.ibm.com/apidocs/cos/cos-configuration?code=python#getbucketconfig)
 
 ## Setup
 ```
