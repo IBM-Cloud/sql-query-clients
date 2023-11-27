@@ -1,4 +1,4 @@
-# `cosaccess` Package for Fine-grained Access Management on COS via
+# `cosaccess` Package for Fine-grained Access Management on COS
 The purpose of the `cosaccess` package to provide an easy to use interface to data engineers and data lake adinstrators to set up and manage table level access control for IBM COS based data lakes. It also minimized the required information that you need to have at hand. Basically you just bring your API Key and the COS bucket name for your data lake and you can go from there. The following diagram illustrates the multitudes of SDKs and endpoints that you would normally be required to understand and consume.
 <br>
 
