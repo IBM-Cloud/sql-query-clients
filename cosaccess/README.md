@@ -17,7 +17,7 @@ Following list of SDKs and APIs are being consumed and abstracted by `cosaccess`
 
 ## Setup
 ```
-pip install coaccess
+pip install cosaccess
 ```
 
 Manage IBM Cloud COS access privileges on bucket and object level
