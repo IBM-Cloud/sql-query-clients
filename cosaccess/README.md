@@ -1,7 +1,7 @@
 # `cosaccess` Package for Fine-grained Access Management on COS
 See also this [introduction video](https://www.youtube.com/watch?v=pfl0qFRpKc0).
 
-The purpose of the `cosaccess` package to provide an easy to use interface to data engineers and data lake adinstrators to set up and manage table level access control for IBM COS based data lakes. It also minimized the required information that you need to have at hand. Basically you just bring your API Key and the COS bucket name for your data lake and you can go from there. The following diagram illustrates the multitudes of SDKs and endpoints that you would normally be required to understand and consume.
+The purpose of the `cosaccess` package is to provide an easy to use interface to data engineers and data lake administrators to set up and manage table level access control for IBM Cloud Object Storage (COS) based data lakes. It also minimizes the required information that you need to have at hand. Basically, you just bring your API key and the COS bucket name for your data lake and you can go from there. The following diagram illustrates the multitudes of SDKs and endpoints that you would normally be required to understand and consume.
 <br>
 
 
@@ -22,7 +22,7 @@ Following list of SDKs and APIs are being consumed and abstracted by `cosaccess`
 pip install cosaccess
 ```
 
-Manage IBM Cloud COS access privileges on bucket and object level
+Manage IBM COS access privileges on bucket and object level
 
 ## Example usage
 ```
@@ -32,7 +32,7 @@ cosaccess.get_policies_for_cos_bucket('<your bucket name>')
 ```
 
 ## Demo
-Yo can fine a fully reprocible end-to-end demo in the [COS FGAC Demo.ipynb](COS%20FGAC%20Demo.ipynb) notebook here in this repository. An extended variant of the same demo can be found in the [Data Engine FGAC Demo.ipynb](Data%20Engine%20FGAC%20Demo.ipynb) notebook also here in the repository.
+You can find a fully reproducible end-to-end demo in the [COS FGAC Demo.ipynb](COS%20FGAC%20Demo.ipynb) notebook here in this repository. An extended variant of the same demo can be found in the [Data Engine FGAC Demo.ipynb](Data%20Engine%20FGAC%20Demo.ipynb) notebook also here in the repository.
 
 You can run these notebooks yourself using Jupyter as follows:
 
