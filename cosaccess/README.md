@@ -1,6 +1,8 @@
 # `cosaccess` Package for Fine-grained Access Management on COS
 See also this [introduction video](https://www.youtube.com/watch?v=pfl0qFRpKc0).
 
+This library is provided as is and is not an official client sdk library. As such support tickets can not be raised for this package. 
+
 The purpose of the `cosaccess` package is to provide an easy to use interface to data engineers and data lake administrators to set up and manage table level access control for IBM Cloud Object Storage (COS) based data lakes. It also minimizes the required information that you need to have at hand. Basically, you just bring your API key and the COS bucket name for your data lake and you can go from there. The following diagram illustrates the multitudes of SDKs and endpoints that you would normally be required to understand and consume.
 <br>
 
